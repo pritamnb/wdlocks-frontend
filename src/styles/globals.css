@@ -1,0 +1,3 @@
+/* Global styles live in src/app/globals.css (imported by the root layout).
+   This file re-exports it so the brief-specified path also works. */
+@import "../app/globals.css";

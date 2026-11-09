@@ -1,26 +1,123 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+ * WD Locks design tokens
+ * ------------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --cream: #F8F3EC;
+  --cream-mid: #F0E9DF;
+  --cream-dark: #E6DDD0;
+  --warm-white: #FDFAF6;
+  --red: #DA1519;
+  --red-dark: #B8100F;
+  --charcoal: #292734;
+  --near-black: #0A0806;
+
+  /* next/font injects --font-inter / --font-playfair on <html>; fall back to the brief's stacks. */
+  --font-body: var(--font-inter, 'Inter'), 'Inter', sans-serif;
+  --font-serif: var(--font-playfair, 'Playfair Display'), 'Playfair Display', Georgia, serif;
+
+  --background: var(--cream);
+  --foreground: var(--charcoal);
+
+  --shadow-card: 0 1px 2px rgb(41 39 52 / 0.06), 0 8px 24px -12px rgb(41 39 52 / 0.18);
+  --shadow-card-hover: 0 2px 4px rgb(41 39 52 / 0.08), 0 16px 32px -12px rgb(41 39 52 / 0.24);
 }
 
+/* Expose tokens to Tailwind utilities: bg-cream, text-red, font-playfair, shadow-card… */
 @theme inline {
+  --color-cream: var(--cream);
+  --color-cream-mid: var(--cream-mid);
+  --color-cream-dark: var(--cream-dark);
+  --color-warm-white: var(--warm-white);
+  --color-red: var(--red);
+  --color-red-dark: var(--red-dark);
+  --color-charcoal: var(--charcoal);
+  --color-near-black: var(--near-black);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --font-inter: var(--font-body);
+  --font-playfair: var(--font-serif);
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-serif);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--red);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  button, [role='button'] {
+    cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .container-wd {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .heading-display {
+    @apply font-playfair font-semibold tracking-tight text-near-black;
+  }
+  .link-underline {
+    @apply relative transition-colors duration-150;
+  }
+  .link-underline::after {
+    content: '';
+    @apply absolute -bottom-0.5 left-0 h-px w-full origin-left scale-x-0 bg-red transition-transform duration-150;
+  }
+  .link-underline:hover::after,
+  .link-underline:focus-visible::after {
+    @apply scale-x-100;
+  }
+  /* WooCommerce description HTML */
+  .prose-wd h1, .prose-wd h2, .prose-wd h3, .prose-wd h4, .prose-wd h5, .prose-wd h6 {
+    @apply font-playfair text-near-black mt-6 mb-2 text-lg font-semibold;
+  }
+  .prose-wd p { @apply my-3 leading-relaxed text-charcoal/90; }
+  .prose-wd ul { @apply my-3 list-disc pl-5 space-y-1; }
+  .prose-wd ol { @apply my-3 list-decimal pl-5 space-y-1; }
+  .prose-wd strong { @apply font-semibold text-near-black; }
+  .prose-wd a { @apply text-red underline underline-offset-2 hover:text-red-dark; }
+  .prose-wd img { @apply my-4 max-w-full h-auto rounded-lg; }
+  .prose-wd figure { @apply my-4; }
+  .prose-wd figcaption { @apply text-xs text-charcoal/60 mt-1; }
+  .prose-wd table { @apply my-4 w-full text-sm; }
+  .prose-wd td, .prose-wd th { @apply border border-cream-dark px-3 py-2 text-left; }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--cream-dark) transparent;
+  }
 }
