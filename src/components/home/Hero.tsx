@@ -32,15 +32,15 @@ export function Hero({ imageSrc, imageAlt }: { imageSrc?: string; imageAlt?: str
           </div>
           <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-cream-dark pt-6 text-sm">
             <div>
-              <dt className="text-charcoal/60">Rating</dt>
+              <dt className="text-charcoal/75">Rating</dt>
               <dd className="mt-0.5 font-semibold text-near-black">3 Star Kitemark</dd>
             </div>
             <div>
-              <dt className="text-charcoal/60">Delivery</dt>
-              <dd className="mt-0.5 font-semibold text-near-black">Free over £50</dd>
+              <dt className="text-charcoal/75">Dispatch</dt>
+              <dd className="mt-0.5 font-semibold text-near-black">Same day before 3pm</dd>
             </div>
             <div>
-              <dt className="text-charcoal/60">Keys included</dt>
+              <dt className="text-charcoal/75">Keys included</dt>
               <dd className="mt-0.5 font-semibold text-near-black">3 as standard</dd>
             </div>
           </dl>

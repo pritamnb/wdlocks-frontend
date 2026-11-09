@@ -7,6 +7,7 @@ import {
   LOCK_SIZE_ATTRIBUTE,
   COLOUR_ATTRIBUTE,
   VARIATIONS_BY_PRODUCT,
+  EXTERNAL_ONLY_PRODUCT_IDS,
   type CatalogueEntry,
 } from '@/lib/constants';
 import type { WooProduct } from '@/types';
@@ -119,8 +120,14 @@ export function primaryImage(product: WooProduct) {
   return product.images[0] ?? null;
 }
 
+/** True when the product must be ordered on wdlocks.co.uk (needs fields the Store API can't send). */
+export function isExternalOnly(product: WooProduct): boolean {
+  return EXTERNAL_ONLY_PRODUCT_IDS.has(product.id);
+}
+
 export function ctaLabel(product: WooProduct): string {
   if (!product.is_in_stock) return 'Out of stock';
+  if (isExternalOnly(product)) return 'Order with key number';
   if (product.type !== 'variable') return 'Add to basket';
   if (product.id === PRODUCT_IDS.RIM_CYLINDER) return 'Choose finish';
   return 'Choose size';

@@ -4,15 +4,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "outputDirectory": ".next",
-  "regions": ["lhr1"],
-  "env": {
-    "NEXT_PUBLIC_SITE_URL": "https://REPLACE-WITH-PRODUCTION-DOMAIN",
-    "NEXT_PUBLIC_WC_BASE": "https://wdlocks.co.uk"
-  },
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_SITE_URL": "https://REPLACE-WITH-PRODUCTION-DOMAIN",
-      "NEXT_PUBLIC_WC_BASE": "https://wdlocks.co.uk"
-    }
-  }
+  "regions": [
+    "lhr1"
+  ]
 }

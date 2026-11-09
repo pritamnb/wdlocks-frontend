@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import type { WooCart, WooCartItem } from '@/types';
-import { fetchCart, addItem, updateItem, removeItem, friendlyCartError } from '@/lib/cart-client';
+import { fetchCart, addItem, updateItem, removeItem, clearCart as clearCartRequest, friendlyCartError } from '@/lib/cart-client';
 import { sumPence } from '@/lib/wdlocks-api';
 import { useToast } from '@/components/ui/Toast';
 
@@ -38,6 +38,8 @@ export interface CartContextValue {
   addToCart: (input: AddToCartInput) => Promise<boolean>;
   updateCartItem: (key: string, quantity: number) => Promise<boolean>;
   removeCartItem: (key: string) => Promise<boolean>;
+  /** Empties the basket (after handing it to the WooCommerce checkout). Never throws. */
+  clearCart: () => Promise<boolean>;
 }
 
 const CartContext = React.createContext<CartContextValue | null>(null);
@@ -188,15 +190,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (item) toast({ type: 'info', message: `${item.name} removed` });
         return true;
       } catch (err) {
-        setCart(snapshot); // rollback
+        setCart(snapshot); // rollback, then resync with the server's truth
         toast({ type: 'error', message: friendlyCartError(err) });
+        void load();
         return false;
       } finally {
         markPending(key, false);
       }
     },
-    [toast, markPending],
+    [toast, markPending, load],
   );
+
+  const clearCart = React.useCallback(async () => {
+    try {
+      const next = await clearCartRequest();
+      setCart(next);
+      return true;
+    } catch (err) {
+      console.error('[cart] clear failed', err);
+      return false;
+    }
+  }, []);
 
   const updateCartItem = React.useCallback(
     async (key: string, quantity: number) => {
@@ -214,14 +228,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCart(next);
         return true;
       } catch (err) {
-        setCart(snapshot); // rollback
+        setCart(snapshot); // rollback, then resync with the server's truth
         toast({ type: 'error', message: friendlyCartError(err) });
+        void load();
         return false;
       } finally {
         markPending(key, false);
       }
     },
-    [toast, markPending, removeCartItem],
+    [toast, markPending, removeCartItem, load],
   );
 
   const itemCount = cart?.items_count ?? 0;
@@ -243,8 +258,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       addToCart,
       updateCartItem,
       removeCartItem,
+      clearCart,
     }),
-    [cart, status, error, itemCount, subtotalPence, pendingKeys, isAdding, isOpen, openCart, closeCart, refresh, addToCart, updateCartItem, removeCartItem],
+    [cart, status, error, itemCount, subtotalPence, pendingKeys, isAdding, isOpen, openCart, closeCart, refresh, addToCart, updateCartItem, removeCartItem, clearCart],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

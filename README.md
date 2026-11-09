@@ -27,6 +27,7 @@ Environment variables (all public, no secrets):
 |---|---|---|
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL of this frontend (metadata, sitemap, OG) | `https://shop.example.co.uk` |
 | `NEXT_PUBLIC_WC_BASE` | WooCommerce origin | `https://wdlocks.co.uk` |
+| `NEXT_PUBLIC_CART_HANDOFF_PLUGIN` | `true` once `backend/wd-cart-handoff.php` is installed on WordPress (enables multi-line checkout) | `false` |
 
 ## Project structure
 
@@ -41,6 +42,7 @@ src/
     api/cart/add/route.ts       POST   { id, quantity, variation? }
     api/cart/update/route.ts    PUT    { key, quantity }
     api/cart/remove/route.ts    DELETE { key }
+    api/cart/clear/route.ts     DELETE        (empties the basket on checkout handoff)
     sitemap.ts · robots.ts · opengraph-image.tsx · not-found.tsx · error.tsx
   components/
     layout/   AnnouncementBar, Navbar (+MegaMenu, MobileMenu), Footer, Logo, RootLayout
@@ -71,7 +73,7 @@ backend/
 | RIM_CYLINDER | 5112 | variable | Brass 5137 · Nickel 5138 |
 | HALF_CYLINDER | 3861 | simple | |
 | LUBRICANT | 4384 | simple | |
-| EXTRA_KEYS_3 | 4266 | simple | *(brief said variable; live store is simple)* |
+| EXTRA_KEYS_3 | 4266 | simple | *(brief said variable; live store is simple)* — **requires an "Existing Key Number" field the Store API can't send, so the UI links to the WooCommerce product page** |
 | EXTRA_KEYS_1 | 6062 | simple | |
 | KEYED_ALIKE | 5642 | simple | |
 | BRUNO_TEDDY | 5565 | simple | |
@@ -96,20 +98,18 @@ and the WooCommerce session cookie would be a blocked third-party cookie anyway.
 ## Checkout handoff — READ BEFORE GO-LIVE
 
 The basket session lives behind our proxy; the shopper's browser has **no** WooCommerce cookie for
-wdlocks.co.uk. Linking straight to `/checkout/` would show an empty basket. `src/lib/checkout.ts` therefore
-re-adds the lines on arrival using WooCommerce's native add-to-cart URL:
+wdlocks.co.uk, so linking straight to `/checkout/` would show an empty basket. `src/lib/checkout.ts`
+re-creates the basket on arrival, and the headless basket is emptied at the same moment (so a returning
+shopper cannot re-send it). Two modes:
 
-```
-https://wdlocks.co.uk/checkout/?add-to-cart=5168&quantity=1&wd_items=4384:2,5137:1
-```
+| Mode | URL sent | Lines | Refresh-safe | Needs |
+|---|---|---|---|---|
+| **Plugin** (`NEXT_PUBLIC_CART_HANDOFF_PLUGIN=true`) | `/checkout/?wd_items=5168:1,4384:2` | any | yes — plugin *replaces* the WC basket then redirects to a clean URL | `backend/wd-cart-handoff.php` in `wp-content/mu-plugins/` |
+| **Native** (default) | `/checkout/?add-to-cart=5168&quantity=1` | **one line only** (drawer blocks checkout for more and explains why) | no — WooCommerce leaves the query string, a refresh re-adds the line | nothing |
 
-* **One line in the basket** — works today with no backend change (`add-to-cart` accepts variation IDs).
-* **Two or more lines** — WooCommerce core handles only one `add-to-cart` per request. Install
-  `backend/wd-cart-handoff.php` as a must-use plugin (`wp-content/mu-plugins/`) and every line is carried
-  over and the URL is cleaned so a refresh can't double-add. **Without it, only the first line reaches checkout.**
-
-Longer term, replace the redirect with a native checkout (Store API `/checkout` + Stripe; `@stripe/stripe-js`
-is already installed).
+**Recommended for launch: install the mu-plugin and switch the flag to `true`.** It is ~60 lines of PHP,
+auto-activates, and makes the handoff idempotent for any basket. Longer term, replace the redirect with a
+native checkout (Store API `/checkout` + Stripe; `@stripe/stripe-js` is already installed).
 
 ## Deployment (Vercel)
 
@@ -121,8 +121,13 @@ is already installed).
 
 ## Known TODOs
 
-- Confirm the Trustpilot profile URL (`TRUSTPILOT_URL` in `constants.ts`) and the free-delivery threshold.
-- Install the mu-plugin above, or build the native checkout, before accepting multi-line baskets.
+- **Delivery:** the live store charges Royal Mail rates (from £6.40) — the site no longer advertises free
+  delivery. If the client adds a free-shipping rule, reinstate the messaging.
+- Confirm the Trustpilot profile URL (`TRUSTPILOT_URL` in `constants.ts`) and the "5★" claim with the client.
+- Install the mu-plugin above and set `NEXT_PUBLIC_CART_HANDOFF_PLUGIN=true` before launch.
+- Extra Keys (4266) orders go to wdlocks.co.uk until a key-number field is added to the headless flow.
+- Rate-limit `/api/cart/*` (Vercel WAF or `@upstash/ratelimit`); it is an open proxy to wdlocks.co.uk.
+- Replace the regex HTML sanitiser with `sanitize-html`/DOMPurify, or move to a nonce-based CSP.
 - `script-src 'unsafe-inline'` in the CSP is required by static generation; move to nonces if routes go dynamic.
 - Reviews section links out to Trustpilot rather than embedding quotes — wire up the Trustpilot widget.
 - Product descriptions are raw WooCommerce HTML (sanitised) — images inside them are plain `<img>` tags.

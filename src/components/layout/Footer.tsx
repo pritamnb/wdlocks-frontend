@@ -32,7 +32,7 @@ export function Footer() {
     <footer className="mt-24 border-t border-cream-dark bg-cream-dark text-charcoal" id="contact">
       <div className="container-wd grid grid-cols-2 gap-10 py-14 md:grid-cols-4">
         <div>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/60">Products</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">Products</h2>
           <ul className="space-y-2.5">
             {CATALOGUE.map((p) => (
               <li key={p.id}><FooterLink href={`/products/${p.slug}`} label={p.shortName} /></li>
@@ -40,13 +40,13 @@ export function Footer() {
           </ul>
         </div>
         <div>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/60">Help</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">Help</h2>
           <ul className="space-y-2.5">
             {helpLinks.map((l) => <li key={l.label}><FooterLink {...l} /></li>)}
           </ul>
         </div>
         <div>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/60">Company</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">Company</h2>
           <ul className="space-y-2.5">
             {companyLinks.map((l) => <li key={l.label}><FooterLink {...l} /></li>)}
           </ul>
@@ -57,7 +57,7 @@ export function Footer() {
           </address>
         </div>
         <div>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/60">Trusted &amp; accredited</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">Trusted &amp; accredited</h2>
           <ul className="space-y-3">
             {TRUST_SIGNALS.map((t) => (
               <li key={t.id} className="flex items-center gap-3">
@@ -74,7 +74,7 @@ export function Footer() {
                   ) : (
                     <span className="block text-sm font-medium text-near-black">{t.label}</span>
                   )}
-                  <span className="block text-xs text-charcoal/60">{t.detail}</span>
+                  <span className="block text-xs text-charcoal/75">{t.detail}</span>
                 </div>
               </li>
             ))}
@@ -82,7 +82,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-charcoal/10">
-        <div className="container-wd flex flex-col items-start justify-between gap-2 py-5 text-xs text-charcoal/60 sm:flex-row sm:items-center">
+        <div className="container-wd flex flex-col items-start justify-between gap-2 py-5 text-xs text-charcoal/75 sm:flex-row sm:items-center">
           <p>© {year} {SITE.name}. All rights reserved.</p>
           <p>Secure checkout at wdlocks.co.uk · Prices include VAT</p>
         </div>

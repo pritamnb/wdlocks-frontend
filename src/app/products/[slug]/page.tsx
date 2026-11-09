@@ -85,7 +85,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
           <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <p className="font-playfair text-3xl font-semibold tabular-nums text-near-black">{productPriceLabel(product)}</p>
-            <p className="text-sm text-charcoal/60">inc. VAT</p>
+            <p className="text-sm text-charcoal/75">inc. VAT</p>
             <p className={`text-sm font-medium ${product.is_in_stock ? 'text-emerald-700' : 'text-red'}`}>
               {product.is_in_stock ? '● In stock' : '● Out of stock'}
               {product.low_stock_remaining ? ` — only ${product.low_stock_remaining} left` : ''}
@@ -97,7 +97,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           )}
 
           <ul className="mt-5 grid grid-cols-2 gap-2 text-sm text-charcoal/85 sm:grid-cols-3">
-            {['BSI Kitemark TS 007 3★', 'Sold Secure Diamond', 'Free delivery over £50', 'Same-day dispatch < 3pm', '3 keys included', 'Anti-snap guarantee'].map((t) => (
+            {['BSI Kitemark TS 007 3★', 'Sold Secure Diamond', 'Secured by Design', 'Same-day dispatch < 3pm', '3 keys included', 'Tracked UK delivery'].map((t) => (
               <li key={t} className="flex items-center gap-2">
                 <span aria-hidden="true" className="text-red">✓</span>
                 {t}
@@ -111,7 +111,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             </ErrorBoundary>
           </div>
 
-          <p className="mt-4 text-xs text-charcoal/60">
+          <p className="mt-4 text-xs text-charcoal/75">
             Secure checkout on wdlocks.co.uk. Questions? Call{' '}
             <a href={SITE.phoneHref} className="font-medium text-near-black hover:text-red">{SITE.phone}</a>.
           </p>

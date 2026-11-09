@@ -1,5 +1,4 @@
 import { SITE } from '@/lib/constants';
-import { formatPrice } from '@/lib/wdlocks-api';
 
 export function Delivery() {
   return (
@@ -11,8 +10,8 @@ export function Delivery() {
         </div>
         <dl className="grid gap-6 sm:grid-cols-3 lg:col-span-2">
           <div>
-            <dt className="font-semibold text-near-black">Free UK delivery</dt>
-            <dd className="mt-1 text-sm text-charcoal/80">On every order over {formatPrice(SITE.freeDeliveryThresholdPence)}. Calculated at checkout below that.</dd>
+            <dt className="font-semibold text-near-black">Tracked UK delivery</dt>
+            <dd className="mt-1 text-sm text-charcoal/80">Royal Mail Signed For as standard, with express options. Costs are shown at checkout.</dd>
           </div>
           <div>
             <dt className="font-semibold text-near-black">Same-day dispatch</dt>

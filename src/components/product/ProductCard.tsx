@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useCart } from '@/hooks/useCart';
 import { productPriceLabel, decodeEntities } from '@/lib/wdlocks-api';
-import { primaryImage, ctaLabel } from '@/lib/product-helpers';
+import { primaryImage, ctaLabel, isExternalOnly } from '@/lib/product-helpers';
 import { CATALOGUE_BY_ID } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 
@@ -27,6 +27,7 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
   const entry = CATALOGUE_BY_ID[product.id];
   const href = `/products/${entry?.slug ?? product.slug}`;
   const isVariable = product.type === 'variable';
+  const externalOnly = isExternalOnly(product);
 
   const onCta = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (isVariable) {
@@ -68,28 +69,39 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
       </Link>
 
       <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-charcoal/60">{entry?.category ?? product.categories[0]?.name ?? 'Watchdog'}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-charcoal/75">{entry?.category ?? product.categories[0]?.name ?? 'Watchdog'}</p>
         <h3 className="mt-1.5 text-[15px] font-semibold leading-snug text-near-black">
           <Link href={href} className="transition-colors duration-150 hover:text-red focus-visible:text-red">
             {entry?.shortName ?? name}
           </Link>
         </h3>
-        {entry?.blurb && <p className="mt-1 text-xs text-charcoal/65">{entry.blurb}</p>}
+        {entry?.blurb && <p className="mt-1 text-xs text-charcoal/75">{entry.blurb}</p>}
         <div className="mt-auto flex items-end justify-between gap-3 pt-4">
           <p className="font-playfair text-xl font-semibold tabular-nums text-near-black">
-            {isVariable && product.prices.price_range && <span className="mr-1 text-xs font-sans font-normal text-charcoal/60">From</span>}
+            {isVariable && product.prices.price_range && <span className="mr-1 text-xs font-sans font-normal text-charcoal/75">From</span>}
             {productPriceLabel(product)}
           </p>
-          <Button
-            size="sm"
-            variant={isVariable ? 'dark' : 'primary'}
-            onClick={(e) => void onCta(e)}
-            loading={busy}
-            disabled={!product.is_in_stock || !product.is_purchasable}
-            aria-label={`${ctaLabel(product)}: ${name}`}
-          >
-            {ctaLabel(product)}
-          </Button>
+          {externalOnly ? (
+            <a
+              href={product.permalink}
+              rel="noopener"
+              className="inline-flex h-9 items-center justify-center gap-1 rounded-full bg-near-black px-4 text-sm font-medium text-white transition-colors duration-150 hover:bg-charcoal"
+              aria-label={`${ctaLabel(product)} on wdlocks.co.uk: ${name}`}
+            >
+              {ctaLabel(product)} <span aria-hidden="true">↗</span>
+            </a>
+          ) : (
+            <Button
+              size="sm"
+              variant={isVariable ? 'dark' : 'primary'}
+              onClick={(e) => void onCta(e)}
+              loading={busy}
+              disabled={!product.is_in_stock || !product.is_purchasable}
+              aria-label={`${ctaLabel(product)}: ${name}`}
+            >
+              {ctaLabel(product)}
+            </Button>
+          )}
         </div>
       </div>
     </article>

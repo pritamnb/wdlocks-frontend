@@ -41,7 +41,7 @@ function SizingDiagram({ insideLabel }: { insideLabel: string }) {
       </svg>
       <figcaption className="mt-2 text-xs leading-relaxed text-charcoal/75">
         Measure in millimetres from the centre of the fixing screw to each end. <strong className="text-near-black">A</strong> is the
-        {' '}{insideLabel.toLowerCase()} of your door, <strong className="text-near-black">B</strong> is the outside. Round up to the nearest size.
+        {' '}{insideLabel.toLowerCase()} measurement, <strong className="text-near-black">B</strong> is the outside. Round up to the nearest size.
       </figcaption>
     </figure>
   );
@@ -101,7 +101,7 @@ export function VariationSelector({ product, onAdded, headingId, className }: Pr
               Selected: <span className="font-medium text-near-black">{selected.label}</span>
             </p>
           ) : (
-            <p className="text-xs text-charcoal/60">{model.kind === 'size' ? `${model.insideLabel} / Outside, mm` : 'Required'}</p>
+            <p className="text-xs text-charcoal/75">{model.kind === 'size' ? `${model.insideLabel} / Outside, mm` : 'Required'}</p>
           )}
         </div>
         <div
@@ -139,7 +139,7 @@ export function VariationSelector({ product, onAdded, headingId, className }: Pr
                 )}
                 <span className="font-semibold tabular-nums">{opt.short}</span>
                 {model.kind === 'size' && (
-                  <span className={cn('text-[10px] leading-tight', isSelected ? 'text-white/80' : 'text-charcoal/60')}>
+                  <span className={cn('text-[10px] leading-tight', isSelected ? 'text-white/90' : 'text-charcoal/75')}>
                     {opt.inside != null && opt.inside >= 30 ? 'in / out' : 'half'}
                   </span>
                 )}

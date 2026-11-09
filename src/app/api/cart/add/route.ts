@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   if (!body) return errorResponse(400, 'invalid_request', 'Request body must be a JSON object.');
 
   const id = parseProductId(body.id);
-  if (id === null) return errorResponse(404, 'woocommerce_rest_variation_not_found', 'Unknown product or variation.');
+  if (id === null) return errorResponse(404, 'unknown_product', 'Unknown product or variation.');
 
   const quantity = parseQuantity(body.quantity ?? 1);
   if (quantity === null || quantity < 1) return errorResponse(400, 'invalid_request', 'Quantity must be between 1 and 99.');

@@ -31,6 +31,10 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   woocommerce_rest_cart_invalid_product: 'That product is no longer available.',
   woocommerce_rest_variation_not_found: 'That size is no longer available.',
   woocommerce_rest_cart_invalid_key: 'That item is no longer in your basket.',
+  woocommerce_rest_add_to_cart_error: 'This item needs extra details — please order it on wdlocks.co.uk.',
+  woocommerce_rest_invalid_variation_data: 'That option is no longer available.',
+  woocommerce_rest_missing_nonce: 'Your session expired. Please try again.',
+  unknown_product: 'That product is no longer available.',
   upstream_unavailable: 'Our store is temporarily unavailable. Please try again in a moment.',
   invalid_request: 'Something was wrong with that request.',
 };
@@ -85,4 +89,9 @@ export function updateItem(body: UpdateCartItemRequest): Promise<WooCart> {
 
 export function removeItem(body: RemoveCartItemRequest): Promise<WooCart> {
   return request<WooCart>('/remove', { method: 'DELETE', body: JSON.stringify(body) });
+}
+
+/** Empties the headless basket (used when handing off to the WooCommerce checkout). */
+export function clearCart(): Promise<WooCart> {
+  return request<WooCart>('/clear', { method: 'DELETE' });
 }

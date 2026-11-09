@@ -110,7 +110,7 @@
   .prose-wd a { @apply text-red underline underline-offset-2 hover:text-red-dark; }
   .prose-wd img { @apply my-4 max-w-full h-auto rounded-lg; }
   .prose-wd figure { @apply my-4; }
-  .prose-wd figcaption { @apply text-xs text-charcoal/60 mt-1; }
+  .prose-wd figcaption { @apply text-xs text-charcoal/75 mt-1; }
   .prose-wd table { @apply my-4 w-full text-sm; }
   .prose-wd td, .prose-wd th { @apply border border-cream-dark px-3 py-2 text-left; }
 }

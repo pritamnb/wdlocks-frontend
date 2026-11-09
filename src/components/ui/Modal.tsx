@@ -45,6 +45,11 @@ export function Modal({
   const panelRef = React.useRef<HTMLDivElement>(null);
   const lastActive = React.useRef<HTMLElement | null>(null);
   const mounted = useIsClient();
+  // Callers often pass inline arrows; keep the effect keyed on `open` only.
+  const onCloseRef = React.useRef(onClose);
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   // Focus management + scroll lock
   React.useEffect(() => {
@@ -66,7 +71,7 @@ export function Modal({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab' || !panelRef.current) return;
@@ -97,7 +102,8 @@ export function Modal({
       const target = explicitReturnTarget ?? lastActive.current;
       target?.focus?.({ preventScroll: true });
     };
-  }, [open, onClose, returnFocusTo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onClose read via ref; returnFocusTo captured at open
+  }, [open]);
 
   if (!mounted) return null;
 

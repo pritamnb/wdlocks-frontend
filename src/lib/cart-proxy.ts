@@ -30,7 +30,7 @@ const FORWARDED_COOKIE_PREFIXES = ['wp_woocommerce_session_', 'woocommerce_items
 const CART_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 2; // Store API tokens expire after 48h
 const UPSTREAM_TIMEOUT_MS = 10_000;
 
-type CartPath = '/cart' | '/cart/add-item' | '/cart/update-item' | '/cart/remove-item';
+type CartPath = '/cart' | '/cart/items' | '/cart/add-item' | '/cart/update-item' | '/cart/remove-item';
 
 export interface ProxyResult {
   status: number;
@@ -91,7 +91,15 @@ export async function proxyCartRequest(
   init: { method: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: unknown },
 ): Promise<ProxyResult> {
   const cookies = parseCookieHeader(req.headers.get('cookie'));
-  const incomingToken = cookies[WD_CART_COOKIE];
+  let incomingToken: string | undefined = cookies[WD_CART_COOKIE];
+
+  // A mutation without a token would be rejected upstream (401 missing nonce). This happens when the
+  // shopper clicks "Add" before the mount-time GET /cart has set our cookie, or has cookies blocked.
+  // Bootstrap a session first so the very first click succeeds.
+  if (!incomingToken && init.method !== 'GET') {
+    const bootstrap = await proxyCartRequest(req, '/cart', { method: 'GET' });
+    incomingToken = bootstrap.cartToken ?? undefined;
+  }
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -120,7 +128,13 @@ export async function proxyCartRequest(
 
   let body: WooCart | WooStoreError;
   try {
-    body = (await res.json()) as WooCart | WooStoreError;
+    const json: unknown = await res.json();
+    if (Array.isArray(json)) {
+      // DELETE /cart/items answers with an (empty) items array; hand back the real cart instead.
+      const refreshed = await proxyCartRequest(req, '/cart', { method: 'GET' });
+      return refreshed;
+    }
+    body = json as WooCart | WooStoreError;
   } catch {
     body = { code: 'upstream_unavailable', message: 'Invalid response from store', data: { status: 502 } };
   }

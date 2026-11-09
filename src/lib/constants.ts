@@ -9,28 +9,30 @@ export const STORE_API = `${WC_BASE}/wp-json/wc/store/v1`;
 export const CHECKOUT_URL = `${WC_BASE}/checkout/`;
 export const SITE_URL =
   (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+/** true once backend/wd-cart-handoff.php is installed on WordPress — enables multi-line checkout handoff. */
+export const HANDOFF_PLUGIN_INSTALLED = process.env.NEXT_PUBLIC_CART_HANDOFF_PLUGIN === 'true';
 
 export const SITE = {
   name: 'Watchdog Locks',
   shortName: 'WD Locks',
   tagline: 'Security you can trust.',
   description:
-    'BSI Kitemarked 3-star euro cylinder locks. Sold Secure Diamond rated. Free UK delivery.',
+    'BSI Kitemarked 3-star euro cylinder locks. Sold Secure Diamond rated. Same-day dispatch before 3pm.',
   locale: 'en_GB',
   email: 'sales@wdlocks.co.uk',
   phone: '0203 857 4718',
   phoneHref: 'tel:02038574718',
   freephone: '0800 389 9965',
   freephoneHref: 'tel:08003899965',
-  freeDeliveryThresholdPence: 5000,
   dispatchCutoff: '3pm',
 } as const;
 
 /** TODO: confirm the client's Trustpilot profile URL before go-live. */
 export const TRUSTPILOT_URL = 'https://uk.trustpilot.com/review/wdlocks.co.uk';
 
+/** NOTE: the live store charges for delivery (Royal Mail from £6.40) — do not advertise free delivery. */
 export const ANNOUNCEMENT =
-  'Free UK delivery on orders over £50 · Same-day dispatch before 3pm · 5★ Rated';
+  'Same-day dispatch before 3pm · BSI Kitemarked 3 Star · 3 keys with every lock';
 
 export const TRUST_SIGNALS = [
   { id: 'bsi', label: 'BSI Kitemarked', detail: 'TS 007 3-star rated', image: '/brand/bsi-kitemark.webp' },
@@ -285,3 +287,9 @@ export const PURCHASABLE_IDS: ReadonlySet<number> = new Set<number>([
 ]);
 
 export const MAX_CART_QUANTITY = 99;
+
+/**
+ * Products the Store API cannot add because WooCommerce requires extra per-order fields
+ * (4266 "Extra Keys" needs an "Existing Key Number"). These link out to the WooCommerce product page.
+ */
+export const EXTERNAL_ONLY_PRODUCT_IDS: ReadonlySet<number> = new Set<number>([PRODUCT_IDS.EXTRA_KEYS_3]);

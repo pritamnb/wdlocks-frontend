@@ -34,7 +34,7 @@ export function MegaMenu({ id, open, onNavigate }: MegaMenuProps) {
           <div className="container-wd grid grid-cols-4 gap-8 py-8">
             {MENU_GROUPS.map((group) => (
               <div key={group.title}>
-                <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/60">{group.title}</h3>
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">{group.title}</h3>
                 <ul className="space-y-1">
                   {group.keys.map((key) => {
                     const p = byKey[key];
@@ -48,7 +48,7 @@ export function MegaMenu({ id, open, onNavigate }: MegaMenuProps) {
                           <span className="block text-[15px] font-medium text-near-black group-hover/item:text-red transition-colors duration-150">
                             {p.shortName}
                           </span>
-                          <span className="block text-xs text-charcoal/60">{p.blurb}</span>
+                          <span className="block text-xs text-charcoal/75">{p.blurb}</span>
                         </Link>
                       </li>
                     );

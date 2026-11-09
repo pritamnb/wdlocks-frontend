@@ -31,7 +31,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
           ))}
         </ul>
         <div className="mt-4 border-t border-cream-dark pt-4">
-          <Link href="/products" onClick={onClose} className="block px-2 pb-2 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/60 hover:text-red">
+          <Link href="/products" onClick={onClose} className="block px-2 pb-2 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75 hover:text-red">
             All products →
           </Link>
           {MENU_GROUPS.map((group) => (

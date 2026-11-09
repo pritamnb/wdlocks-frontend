@@ -25,7 +25,7 @@ export function SizePicker({ product, open, onClose, returnFocusTo }: Props) {
         <>
           <div className="flex items-start justify-between gap-4 border-b border-cream-dark px-5 py-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/60">Select options</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">Select options</p>
               <h2 id={titleId} className="mt-1 font-playfair text-xl font-semibold leading-snug text-near-black">
                 {decodeEntities(product.name)}
               </h2>

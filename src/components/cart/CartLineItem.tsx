@@ -63,7 +63,7 @@ export function CartLineItem({ item, pending, onQuantity, onRemove, onNavigate }
             type="button"
             onClick={() => onRemove(item.key)}
             disabled={pending}
-            className="text-xs font-medium text-charcoal/60 underline-offset-2 transition-colors duration-150 hover:text-red hover:underline disabled:opacity-50"
+            className="text-xs font-medium text-charcoal/75 underline-offset-2 transition-colors duration-150 hover:text-red hover:underline disabled:opacity-50"
             aria-label={`Remove ${name} from basket`}
           >
             Remove

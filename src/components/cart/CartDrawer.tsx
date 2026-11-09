@@ -7,19 +7,31 @@ import { CartLineItem } from '@/components/cart/CartLineItem';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/wdlocks-api';
-import { buildCheckoutUrl } from '@/lib/checkout';
+import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
 import { SITE } from '@/lib/constants';
 
 export function CartDrawer() {
-  const { cart, status, error, isOpen, closeCart, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh } = useCart();
+  const { cart, status, error, isOpen, closeCart, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, clearCart } = useCart();
   const [checkingOut, setCheckingOut] = React.useState(false);
   const items = cart?.items ?? [];
-  const remainingForFree = Math.max(0, SITE.freeDeliveryThresholdPence - subtotalPence);
+  const checkout = canCheckout(cart);
 
-  const goToCheckout = () => {
-    if (!cart || items.length === 0) return;
+  // If the shopper comes back via bfcache / back button, re-enable the button.
+  React.useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setCheckingOut(false);
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
+
+  const goToCheckout = async () => {
+    if (!cart || !checkout.ok) return;
     setCheckingOut(true);
-    window.location.assign(buildCheckoutUrl(cart));
+    const url = buildCheckoutUrl(cart); // snapshot the lines BEFORE clearing
+    // The WooCommerce checkout now owns the basket: empty ours so a returning shopper can't re-send it.
+    await clearCart();
+    window.location.assign(url);
   };
 
   return (
@@ -27,7 +39,7 @@ export function CartDrawer() {
       <div className="flex items-center justify-between border-b border-cream-dark px-5 py-4">
         <h2 id="cart-title" className="font-playfair text-xl font-semibold text-near-black">
           Your basket
-          <span className="ml-2 text-sm font-normal text-charcoal/60" aria-live="polite">
+          <span className="ml-2 text-sm font-normal text-charcoal/75" aria-live="polite">
             {itemCount} {itemCount === 1 ? 'item' : 'items'}
           </span>
         </h2>
@@ -82,19 +94,18 @@ export function CartDrawer() {
 
       {items.length > 0 && (
         <div className="border-t border-cream-dark bg-warm-white px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4">
-          <div className="mb-3 rounded-xl bg-cream px-3 py-2 text-xs text-charcoal/80">
-            {remainingForFree > 0 ? (
-              <>Add <strong className="text-near-black">{formatPrice(remainingForFree)}</strong> more for free UK delivery.</>
-            ) : (
-              <>✓ You qualify for <strong className="text-near-black">free UK delivery</strong>.</>
-            )}
-          </div>
+          {!checkout.ok && (
+            <div role="alert" className="mb-3 rounded-xl border border-red/30 bg-red/5 px-3 py-2 text-xs text-charcoal">
+              {checkout.reason}{' '}
+              <a href={SITE.phoneHref} className="font-semibold text-near-black hover:text-red">{SITE.phone}</a>
+            </div>
+          )}
           <dl className="flex items-baseline justify-between">
             <dt className="text-sm text-charcoal/80">Subtotal <span className="text-xs">(inc. VAT)</span></dt>
             <dd className="font-playfair text-2xl font-semibold tabular-nums text-near-black">{formatPrice(subtotalPence)}</dd>
           </dl>
-          <p className="mt-1 text-xs text-charcoal/60">Delivery calculated at checkout.</p>
-          <Button size="lg" className="mt-4 w-full" onClick={goToCheckout} loading={checkingOut} disabled={pendingKeys.size > 0}>
+          <p className="mt-1 text-xs text-charcoal/75">Royal Mail tracked delivery, calculated at checkout.</p>
+          <Button size="lg" className="mt-4 w-full" onClick={() => void goToCheckout()} loading={checkingOut} disabled={pendingKeys.size > 0 || !checkout.ok}>
             Checkout securely
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
           </Button>

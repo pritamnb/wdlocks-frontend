@@ -7,12 +7,32 @@ import { QuantityControl } from '@/components/cart/QuantityControl';
 import { VariationSelector } from '@/components/product/VariationSelector';
 import { useCart } from '@/hooks/useCart';
 import { decodeEntities, formatPrice } from '@/lib/wdlocks-api';
+import { isExternalOnly } from '@/lib/product-helpers';
 
 /** Product-page purchase box: inline size/finish picker for variable products, qty + add for simple ones. */
 export function AddToCart({ product }: { product: WooProduct }) {
   const { addToCart, isAdding } = useCart();
   const [quantity, setQuantity] = React.useState(1);
   const name = decodeEntities(product.name);
+
+  if (isExternalOnly(product)) {
+    return (
+      <div className="rounded-2xl border border-cream-dark bg-warm-white p-5">
+        <p className="text-sm font-semibold text-near-black">This item is cut to your existing key</p>
+        <p className="mt-1 text-sm text-charcoal/80">
+          We need the key number stamped on your Watchdog key, so this product is ordered on wdlocks.co.uk where you can
+          enter it securely.
+        </p>
+        <a
+          href={product.permalink}
+          rel="noopener"
+          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-red px-6 text-sm font-medium text-white transition-colors duration-150 hover:bg-red-dark"
+        >
+          Order on wdlocks.co.uk <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    );
+  }
 
   if (product.type === 'variable') {
     return (
