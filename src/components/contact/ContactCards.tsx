@@ -109,7 +109,7 @@ export function VisitCard() {
         <p className="mt-4 text-sm text-charcoal/70">On Greenford Road in the heart of Greenford, with locks, keys and advice over the counter.</p>
         <a href={directions} rel="noopener" target="_blank" className={`${pill} mt-6`}>Open in maps</a>
       </div>
-      <div className="relative min-h-[280px] bg-cream lg:min-h-full">
+      <div className="relative min-h-[280px] bg-cream lg:min-h-[380px]">
         <iframe title={`Map of ${CONTACT.address.line1}, ${CONTACT.address.postcode}`} src={src} loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full border-0 grayscale-[0.3]" />
       </div>
     </div>
