@@ -546,6 +546,12 @@ follow the scroll: the 2 s explosion now plays once when any part of the block o
 viewport (IntersectionObserver with a −40 % / −40 % root margin), holds on the exploded frame, pauses on a hidden
 tab, and resets when the block leaves so it plays again next time. Re-verified the two phone-layout fixes live.
 
+### Pass 28 — 10 Nov 2026, exploded lock reassembles in reverse
+The reset after the block leaves was an abrupt snap; the lock now closes back up with a reverse transition
+(frames stepped backwards over ~1.1 s, eased, proportional to how far it had exploded; browsers cannot play video
+in reverse natively, and the all-keyframe encode makes reverse seeking smooth). Re-entering while it is closing
+resumes the explosion from where it is.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
