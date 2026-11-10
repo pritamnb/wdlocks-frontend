@@ -9,11 +9,11 @@ export function Logo({ className, priority = false }: { className?: string; prio
       <Image
         src="/brand/wd-locks-logo.png"
         alt={SITE.name}
-        width={900}
-        height={117}
+        width={822}
+        height={106}
         priority={priority}
-        className="h-6 w-auto sm:h-7"
-        sizes="(max-width: 640px) 180px, 220px"
+        className="h-7 w-auto sm:h-8"
+        sizes="(max-width: 640px) 220px, 250px"
       />
     </Link>
   );
