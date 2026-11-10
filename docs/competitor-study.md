@@ -355,6 +355,16 @@ product page), the X-ray panel, and the Reviews section (no verified source yet)
 product: Bolt/Nuki smart locks, KeyTag, Ultion Sweet. Asset gaps unchanged (hero door film, exploded render, keyed-alike clip,
 Home Truths photo).
 
+### Pass 9 — 10 Nov 2026, cylinder product page rebuilt to Ultion's configurator
+Per `docs/product-page-replication-spec.md`: certification pills + H1 + price + six benefit bullets; configurator card with
+"includes 3 keys", Key operated / Thumb turn switch (links between the two products carrying the size), Satin nickel finish
+chip, Inside/Outside size selects driven by the 17 live variations with the "composite doors are usually 35mm and 35mm" hint,
+keyed-alike toggle, quantity, [Add to basket] + [Checkout now] (adds, then hands the line to the WooCommerce checkout), and a
+sticky "Total · Qty · Checkout now" bar once the configurator scrolls away. Gallery gets a 3★ badge. Below: dark "ALPS" section
+with the cam clip, red "Anti-snap, by design", six "As safe as houses" tiles from the Allegion renders, and a dark "Fitted by
+locksmiths across the UK" CTA, then the existing inline film, description accordion, FAQ. Skipped: Ultion's keycode field
+(our keyed-alike/extra-keys products carry the key number) and the Trustpilot slider (no verified source).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

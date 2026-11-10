@@ -5,7 +5,7 @@ import Image from 'next/image';
 import type { WooImage } from '@/types';
 import { cn } from '@/lib/cn';
 
-export function ProductGallery({ images, name }: { images: WooImage[]; name: string }) {
+export function ProductGallery({ images, name, badge }: { images: WooImage[]; name: string; badge?: string }) {
   const [index, setIndex] = React.useState(0);
   const current = images[index] ?? images[0];
 
@@ -16,6 +16,12 @@ export function ProductGallery({ images, name }: { images: WooImage[]; name: str
   return (
     <div className="space-y-3">
       <div className="relative aspect-square w-full overflow-hidden rounded-[2rem] bg-warm-white shadow-card">
+        {badge && (
+          <span className="absolute left-4 top-4 z-10 flex h-14 w-14 flex-col items-center justify-center rounded-full bg-red text-center text-white shadow-lg">
+            <span className="font-playfair text-xl font-semibold leading-none">3</span>
+            <span className="text-[8px] font-semibold uppercase leading-tight tracking-wide">{badge}</span>
+          </span>
+        )}
         <Image
           key={current.id}
           src={current.src}

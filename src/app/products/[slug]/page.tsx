@@ -12,7 +12,8 @@ import { faqsForProduct } from '@/lib/faqs';
 import { decodeEntities, productPriceLabel, stripHtml } from '@/lib/wdlocks-api';
 import { sanitizeProductHtml } from '@/lib/sanitize';
 import { galleryImagesFor } from '@/lib/product-helpers';
-import { BRAND_VIDEO, BROCHURE, CATALOGUE_BY_ID, KEY_PRODUCT_IDS, PRODUCT_IDS, SITE, SITE_URL } from '@/lib/constants';
+import { BRAND_VIDEO, BROCHURE, CATALOGUE_BY_ID, KEY_PRODUCT_IDS, PRODUCT_BULLETS, PRODUCT_IDS, PRODUCT_PILLS, SITE, SITE_URL } from '@/lib/constants';
+import { LockFeatureSections } from '@/components/product/LockFeatureSections';
 import { InlineFilm } from '@/components/media/InlineFilm';
 import { ChapterLoop } from '@/components/media/ChapterLoop';
 
@@ -97,7 +98,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
       <div className="mt-6 grid gap-10 lg:grid-cols-2 lg:gap-14">
         <div>
-          <ProductGallery images={gallery} name={name} />
+          <ProductGallery images={gallery} name={name} badge={PRODUCT_PILLS[product.id]?.[0]?.includes('3★') ? 'star security' : undefined} />
           {KEY_PRODUCT_IDS.has(product.id) && (
             <figure className="mt-4 overflow-hidden rounded-[1.5rem] bg-near-black shadow-card">
               <ChapterLoop clip="keyTurntable" blend="plain" />
@@ -107,8 +108,18 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         </div>
 
         <div>
-          {category && <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">{category}</p>}
-          <h1 className="heading-display mt-2 text-3xl leading-tight sm:text-4xl">{name}</h1>
+          {PRODUCT_PILLS[product.id] ? (
+            <ul className="flex flex-wrap gap-2" aria-label="Certifications">
+              {PRODUCT_PILLS[product.id]!.map((pill, i) => (
+                <li key={pill} className={i === 0 ? 'inline-flex h-7 items-center gap-1.5 rounded-full bg-near-black px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white' : 'inline-flex h-7 items-center gap-1.5 rounded-full border border-charcoal/30 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-near-black'}>
+                  {i === 0 ? '🛡' : '✓'} {pill}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            category && <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">{category}</p>
+          )}
+          <h1 className="heading-display mt-3 text-3xl leading-tight sm:text-4xl">{name}</h1>
 
           <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <p className="font-playfair text-3xl font-semibold tabular-nums text-near-black">{productPriceLabel(product)}</p>
@@ -120,7 +131,15 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           </div>
 
           {product.short_description && (
+            PRODUCT_BULLETS[product.id] ? (
+              <ul className="mt-5 space-y-2 text-[15px] text-charcoal/90">
+                {PRODUCT_BULLETS[product.id]!.map((b) => (
+                  <li key={b} className="flex gap-2.5"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-red" aria-hidden="true" />{b}</li>
+                ))}
+              </ul>
+            ) : (
             <div className="prose-wd mt-4 text-[15px]" dangerouslySetInnerHTML={{ __html: sanitizeProductHtml(product.short_description) }} />
+            )
           )}
 
           <ul className="mt-5 grid grid-cols-2 gap-2 text-sm text-charcoal/85 sm:grid-cols-3">
@@ -144,6 +163,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           </p>
         </div>
       </div>
+
+      {(product.id === PRODUCT_IDS.CYLINDER_LOCK || product.id === PRODUCT_IDS.THUMB_TURN) && <LockFeatureSections />}
 
       {product.id === PRODUCT_IDS.CYLINDER_LOCK && (
         <section className="mt-16 border-t border-cream-dark pt-14" aria-labelledby="product-film-title">

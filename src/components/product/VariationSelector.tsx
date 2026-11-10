@@ -1,14 +1,17 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import type { WooProduct } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { QuantityControl } from '@/components/cart/QuantityControl';
 import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
+import { fetchCart } from '@/lib/cart-client';
+import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
 import { getVariationModel, type VariationOption } from '@/lib/product-helpers';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
-import { DEFAULT_VARIATION_ID, PRODUCT_IDS, WC_BASE } from '@/lib/constants';
+import { DEFAULT_VARIATION_ID, PRODUCT_IDS, WC_BASE, CATALOGUE_BY_ID } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import { useSearchParams } from 'next/navigation';
 
@@ -19,7 +22,7 @@ interface Props {
   /** Id of the heading element that labels this group. */
   headingId: string;
   className?: string;
-  /** Show the keyed-alike / extra-keys upsells (product page). */
+  /** Full configurator (product page): control switch, keyed-alike, checkout now, sticky total bar. */
   showUpsells?: boolean;
 }
 
@@ -46,17 +49,24 @@ function SizingDiagram({ insideLabel }: { insideLabel: string }) {
       <figcaption className="mt-2 text-xs leading-relaxed text-charcoal/80">
         Measure in millimetres from the centre of the fixing screw to each end. <strong className="text-near-black">A</strong> is the
         {' '}{insideLabel.toLowerCase()} measurement, <strong className="text-near-black">B</strong> is the outside. Round up to the nearest size.
-        Composite doors are usually <strong className="text-near-black">35 / 35</strong>.
       </figcaption>
     </figure>
   );
 }
 
+const selectCls =
+  'h-12 w-full appearance-none rounded-xl border border-cream-dark bg-warm-white px-4 pr-10 text-sm font-semibold text-near-black transition-[border-color,box-shadow] duration-150 focus:border-red focus:outline-none focus:ring-2 focus:ring-red/30';
+
+function Chevron() {
+  return (
+    <svg className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-charcoal/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+  );
+}
+
 export function VariationSelector({ product, onAdded, headingId, className, showUpsells = false }: Props) {
   const model = React.useMemo(() => getVariationModel(product), [product]);
-  const { addToCart, isAdding } = useCart();
+  const { addToCart, isAdding, openCart, clearCart } = useCart();
   const searchParams = useSearchParams();
-  // Preselect: ?variation=<id> or ?size=35-35 (deep links), else the most common option so a shopper can buy with zero decisions.
   const [selected, setSelected] = React.useState<VariationOption | null>(() => {
     const byId = Number(searchParams.get('variation'));
     const bySize = searchParams.get('size')?.replace('-', '/');
@@ -68,148 +78,231 @@ export function VariationSelector({ product, onAdded, headingId, className, show
   const [quantity, setQuantity] = React.useState(1);
   const [keyedAlike, setKeyedAlike] = React.useState(false);
   const [touched, setTouched] = React.useState(false);
-  const groupRef = React.useRef<HTMLDivElement>(null);
+  const [checkingOut, setCheckingOut] = React.useState(false);
+  const [barVisible, setBarVisible] = React.useState(false);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+
+  // Sticky total bar appears once the configurator has scrolled out of view (Ultion pattern).
+  React.useEffect(() => {
+    if (!showUpsells) return;
+    const el = panelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setBarVisible(!e.isIntersecting && e.boundingClientRect.top < 0), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [showUpsells]);
 
   if (!model) return null;
   const name = decodeEntities(product.name);
   const unitPence = Number.parseInt(product.prices.price, 10);
   const totalPence = unitPence * quantity + (keyedAlike ? KEYED_ALIKE_PRICE_PENCE : 0);
   const isLock = product.id === PRODUCT_IDS.CYLINDER_LOCK || product.id === PRODUCT_IDS.THUMB_TURN;
+  const isSize = model.kind === 'size';
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
-    const radios = Array.from(groupRef.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]:not([disabled])') ?? []);
-    if (radios.length === 0) return;
-    const idx = radios.findIndex((r) => r === document.activeElement);
-    let next = idx;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (idx + 1) % radios.length;
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (idx - 1 + radios.length) % radios.length;
-    if (e.key === 'Home') next = 0;
-    if (e.key === 'End') next = radios.length - 1;
-    e.preventDefault();
-    radios[next].focus();
-    radios[next].click();
+  // Size selects: inside list from the real variations; outside list filtered by the chosen inside.
+  const insides = Array.from(new Set(model.options.filter((o) => o.available).map((o) => o.inside ?? 0))).sort((a, b) => a - b);
+  const currentInside = selected?.inside ?? null;
+  const outsides = model.options.filter((o) => o.available && (o.inside ?? 0) === (currentInside ?? insides[0] ?? 0));
+  const pickInside = (v: number) => {
+    const sameOutside = model.options.find((o) => o.available && (o.inside ?? 0) === v && o.outside === selected?.outside);
+    setSelected(sameOutside ?? model.options.find((o) => o.available && (o.inside ?? 0) === v) ?? null);
+    setTouched(false);
+  };
+  const pickOutside = (variationId: number) => {
+    setSelected(model.options.find((o) => o.variationId === variationId) ?? null);
+    setTouched(false);
   };
 
-  const submit = async () => {
+  const otherLockId = product.id === PRODUCT_IDS.CYLINDER_LOCK ? PRODUCT_IDS.THUMB_TURN : PRODUCT_IDS.CYLINDER_LOCK;
+  const otherLock = CATALOGUE_BY_ID[otherLockId];
+  const sizeQuery = selected?.short ? `?size=${selected.short.replace('/', '-')}` : '';
+
+  const add = async (openDrawer: boolean) => {
     setTouched(true);
-    if (!selected) return;
+    if (!selected) return false;
     const ok = await addToCart({
       id: selected.variationId,
       quantity,
       variation: [{ attribute: selected.attribute, value: selected.termSlug }],
       name: `${name} (${selected.label})`,
-      openDrawer: !keyedAlike,
+      openDrawer: openDrawer && !keyedAlike,
     });
     if (ok && keyedAlike) {
-      await addToCart({ id: PRODUCT_IDS.KEYED_ALIKE, quantity: 1, name: 'Keyed-alike service' });
+      await addToCart({ id: PRODUCT_IDS.KEYED_ALIKE, quantity: 1, name: 'Keyed-alike service', openDrawer });
     }
     if (ok) onAdded?.();
+    return ok;
+  };
+
+  const checkoutNow = async () => {
+    setCheckingOut(true);
+    try {
+      const ok = await add(false);
+      if (!ok) return;
+      const cart = await fetchCart();
+      const gate = canCheckout(cart);
+      if (!gate.ok) {
+        openCart();
+        return;
+      }
+      const url = buildCheckoutUrl(cart);
+      await clearCart();
+      window.location.assign(url);
+    } finally {
+      setCheckingOut(false);
+    }
   };
 
   const showError = touched && !selected;
 
   return (
-    <div className={cn('space-y-5', className)}>
-      {model.kind === 'size' && <SizingDiagram insideLabel={model.insideLabel} />}
-
-      <div>
-        <div className="mb-2 flex items-baseline justify-between">
-          <p id={`${headingId}-label`} className="text-sm font-semibold text-near-black">{model.heading}</p>
-          {selected ? (
-            <p className="text-xs text-charcoal/75">
-              Selected: <span className="font-medium text-near-black">{selected.label}</span>
-            </p>
-          ) : (
-            <p className="text-xs text-charcoal/75">{model.kind === 'size' ? `${model.insideLabel} / Outside, mm` : 'Required'}</p>
-          )}
-        </div>
-        <div
-          ref={groupRef}
-          role="radiogroup"
-          aria-labelledby={`${headingId}-label`}
-          aria-required="true"
-          aria-invalid={showError || undefined}
-          aria-describedby={showError ? `${headingId}-error` : undefined}
-          onKeyDown={onKeyDown}
-          className={cn('grid gap-2', model.kind === 'size' ? 'grid-cols-3 sm:grid-cols-4' : 'grid-cols-2')}
-        >
-          {model.options.map((opt) => {
-            const isSelected = selected?.variationId === opt.variationId;
-            return (
-              <button
-                key={opt.variationId}
-                type="button"
-                role="radio"
-                aria-checked={isSelected}
-                aria-label={`${opt.label}${opt.available ? '' : ', unavailable'}`}
-                tabIndex={isSelected || (!selected && opt === model.options.find((o) => o.available)) ? 0 : -1}
-                disabled={!opt.available}
-                onClick={() => { setSelected(opt); setTouched(false); }}
-                className={cn(
-                  'relative flex min-h-12 flex-col items-center justify-center rounded-xl border px-2 py-2 text-sm transition-[border-color,background-color,color,transform,box-shadow] duration-150',
-                  isSelected
-                    ? 'border-red bg-red text-white shadow-[0_6px_14px_-8px_rgb(218_21_25/0.7)]'
-                    : 'border-cream-dark bg-warm-white text-near-black hover:border-charcoal/50 hover:shadow-[0_0_0_3px_var(--cream-dark)]',
-                  !opt.available && 'cursor-not-allowed opacity-40 line-through',
-                )}
-              >
-                {opt.hex && (
-                  <span aria-hidden="true" className="mb-1 h-4 w-4 rounded-full ring-1 ring-black/10" style={{ background: opt.hex }} />
-                )}
-                <span className="font-semibold tabular-nums">{opt.short}</span>
-                {model.kind === 'size' && (
-                  <span className={cn('text-[10px] leading-tight', isSelected ? 'text-white/90' : 'text-charcoal/75')}>
-                    {opt.inside != null && opt.inside >= 30 ? 'in / out' : 'half'}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-        {showError && (
-          <p id={`${headingId}-error`} role="alert" className="mt-2 text-sm font-medium text-red">
-            Please choose {model.kind === 'size' ? 'a size' : 'an option'} first.
-          </p>
-        )}
-      </div>
-
+    <div className={cn('space-y-5', className)} ref={panelRef}>
       {showUpsells && isLock && (
-        <div className="rounded-xl border border-cream-dark bg-cream p-4 text-sm">
-          <p className="font-semibold text-near-black">Securing more than one door?</p>
-          <p className="mt-0.5 text-xs text-charcoal/80">Set the quantity below and have every lock cut to the same key — one key for the whole house.</p>
-          <label className="mt-3 flex cursor-pointer items-start gap-3">
-            <input
-              type="checkbox"
-              checked={keyedAlike}
-              onChange={(e) => setKeyedAlike(e.target.checked)}
-              className="mt-0.5 h-4 w-4 accent-red"
-            />
-            <span>
-              <span className="font-medium text-near-black">Key my locks alike</span>{' '}
-              <span className="text-charcoal/80">(+{formatPrice(KEYED_ALIKE_PRICE_PENCE)} service, adds the Keyed-alike item to your basket)</span>
+        <div className="rounded-xl border border-cream-dark bg-cream p-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-red/10 text-red" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="15" r="4" /><path d="M10.85 12.15 19 4l2 2-2 2-2-2-2 2 2 2" /></svg>
             </span>
-          </label>
-          <p className="mt-3 text-xs text-charcoal/80">
-            Need spares? <a href={`${WC_BASE}/product/watchdog-3-star-alps-extra-keys/`} rel="noopener" className="font-medium text-red underline-offset-2 hover:underline">Order extra keys cut to your key number ↗</a>
+            <p className="text-sm font-semibold text-near-black">This lock includes 3 Watchdog keys as standard</p>
+          </div>
+          <p className="mt-2 text-xs text-charcoal/80">
+            Need spares later? Extra keys are cut to the key number on your key.{' '}
+            <a href={`${WC_BASE}/product/watchdog-3-star-alps-extra-keys/`} rel="noopener" className="font-medium text-red underline-offset-2 hover:underline">Order extra keys ↗</a>
           </p>
         </div>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <QuantityControl value={quantity} onChange={setQuantity} itemName={name} min={1} max={product.sold_individually ? 1 : 99} disabled={isAdding} />
-        <Button size="lg" className="flex-1" onClick={() => void submit()} loading={isAdding} disabled={!product.is_in_stock}>
-          {product.is_in_stock ? (
-            <>
-              Add to basket <span aria-hidden="true" className="opacity-70">·</span> {formatPrice(totalPence)}
-            </>
-          ) : (
-            'Out of stock'
+      {showUpsells && isLock && otherLock && (
+        <fieldset>
+          <legend className="mb-2 text-sm font-semibold text-near-black">Internal control</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <span className="flex h-12 items-center gap-3 rounded-xl border border-red bg-warm-white px-4 text-sm font-semibold text-near-black" aria-current="true">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-red" aria-hidden="true"><span className="h-2.5 w-2.5 rounded-full bg-red" /></span>
+              {product.id === PRODUCT_IDS.CYLINDER_LOCK ? 'Key operated' : 'Thumb turn'}
+            </span>
+            <Link href={`/products/${otherLock.slug}${sizeQuery}`} className="flex h-12 items-center gap-3 rounded-xl border border-cream-dark bg-warm-white px-4 text-sm font-semibold text-near-black transition-colors duration-150 hover:border-charcoal/50">
+              <span className="h-5 w-5 rounded-full border-2 border-cream-dark" aria-hidden="true" />
+              {product.id === PRODUCT_IDS.CYLINDER_LOCK ? 'Thumb turn' : 'Key operated'}
+            </Link>
+          </div>
+        </fieldset>
+      )}
+
+      {showUpsells && isLock && (
+        <div>
+          <p className="mb-2 text-sm font-semibold text-near-black">Finish</p>
+          <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-red bg-warm-white px-4 text-sm font-medium text-near-black">
+            <span className="h-4 w-4 rounded-full bg-[linear-gradient(135deg,#d9d9d9,#8f9397)] ring-1 ring-black/10" aria-hidden="true" />
+            Satin nickel
+          </span>
+        </div>
+      )}
+
+      {isSize ? (
+        <div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-near-black">{model.insideLabel} size</span>
+              <span className="relative block">
+                <select className={selectCls} value={currentInside ?? ''} onChange={(e) => pickInside(Number(e.target.value))} aria-describedby={showError ? `${headingId}-error` : undefined}>
+                  {currentInside == null && <option value="">Choose</option>}
+                  {insides.map((v) => (
+                    <option key={v} value={v}>{v === 0 ? 'Half (10mm)' : `${v}mm`}</option>
+                  ))}
+                </select>
+                <Chevron />
+              </span>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-near-black">Outside size</span>
+              <span className="relative block">
+                <select className={selectCls} value={selected?.variationId ?? ''} onChange={(e) => pickOutside(Number(e.target.value))} disabled={currentInside == null}>
+                  {!selected && <option value="">Choose</option>}
+                  {outsides.map((o) => (
+                    <option key={o.variationId} value={o.variationId}>{o.outside}mm</option>
+                  ))}
+                </select>
+                <Chevron />
+              </span>
+            </label>
+          </div>
+          <p className="mt-3 flex items-start gap-2 text-xs text-charcoal/80">
+            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-charcoal/40 text-[10px] font-bold" aria-hidden="true">i</span>
+            <span>Composite doors are usually <strong className="text-near-black">35mm and 35mm</strong>. <a href="#measuring" className="font-medium text-red underline-offset-2 hover:underline">View lock measuring guide.</a></span>
+          </p>
+          {showError && (
+            <p id={`${headingId}-error`} role="alert" className="mt-2 text-sm font-medium text-red">Please choose both sizes first.</p>
           )}
+        </div>
+      ) : (
+        <div>
+          <p id={`${headingId}-label`} className="mb-2 text-sm font-semibold text-near-black">{model.heading}</p>
+          <div role="radiogroup" aria-labelledby={`${headingId}-label`} className="grid grid-cols-2 gap-2">
+            {model.options.map((opt) => {
+              const isSelected = selected?.variationId === opt.variationId;
+              return (
+                <button key={opt.variationId} type="button" role="radio" aria-checked={isSelected} disabled={!opt.available} onClick={() => { setSelected(opt); setTouched(false); }}
+                  className={cn('flex h-12 items-center gap-3 rounded-xl border px-4 text-sm font-semibold transition-colors duration-150', isSelected ? 'border-red bg-warm-white text-near-black' : 'border-cream-dark bg-warm-white text-near-black hover:border-charcoal/50', !opt.available && 'cursor-not-allowed opacity-40 line-through')}>
+                  {opt.hex && <span aria-hidden="true" className="h-5 w-5 rounded-full ring-1 ring-black/10" style={{ background: opt.hex }} />}
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          {showError && <p id={`${headingId}-error`} role="alert" className="mt-2 text-sm font-medium text-red">Please choose an option first.</p>}
+        </div>
+      )}
+
+      {showUpsells && isLock && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-cream-dark bg-cream p-4 text-sm">
+          <input type="checkbox" checked={keyedAlike} onChange={(e) => setKeyedAlike(e.target.checked)} className="mt-0.5 h-4 w-4 accent-red" />
+          <span>
+            <span className="font-semibold text-near-black">Key my locks alike</span>{' '}
+            <span className="text-charcoal/80">(+{formatPrice(KEYED_ALIKE_PRICE_PENCE)}) — set the quantity below and every lock is cut to one key.</span>
+          </span>
+        </label>
+      )}
+
+      <div className="flex items-center gap-3">
+        <QuantityControl value={quantity} onChange={setQuantity} itemName={name} min={1} max={product.sold_individually ? 1 : 99} disabled={isAdding || checkingOut} />
+        <p className="text-sm text-charcoal/75">{quantity === 1 ? '1 lock' : `${quantity} locks`}</p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Button size="lg" variant="secondary" onClick={() => void add(true)} loading={isAdding && !checkingOut} disabled={!product.is_in_stock}>
+          Add to basket
+        </Button>
+        <Button size="lg" onClick={() => void checkoutNow()} loading={checkingOut} disabled={!product.is_in_stock}>
+          {product.is_in_stock ? <>Checkout now <span aria-hidden="true" className="opacity-70">·</span> {formatPrice(totalPence)}</> : 'Out of stock'}
         </Button>
       </div>
-      <p className="text-xs text-charcoal/75">Includes 3 keys. Prices include VAT. Delivery chosen at checkout.</p>
+      <p className="text-xs text-charcoal/75">Prices include VAT. Delivery chosen at checkout on wdlocks.co.uk.</p>
       <DeliveryPromise />
+
+      <div id="measuring" className="scroll-mt-32">{isSize && <SizingDiagram insideLabel={model.insideLabel} />}</div>
+
+      {showUpsells && (
+        <div
+          className={cn(
+            'fixed inset-x-0 bottom-0 z-30 border-t border-cream-dark bg-warm-white/95 backdrop-blur transition-transform duration-200',
+            barVisible ? 'translate-y-0' : 'translate-y-full',
+          )}
+          aria-hidden={!barVisible}
+        >
+          <div className="container-wd flex items-center justify-between gap-4 py-3">
+            <p className="text-sm text-charcoal/80">
+              <span className="text-xs font-semibold uppercase tracking-wide text-charcoal/60">Total</span>{' '}
+              <span className="font-playfair text-xl font-semibold text-near-black">{formatPrice(totalPence)}</span>
+              <span className="mx-2 text-charcoal/40">|</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-charcoal/60">Qty</span> {quantity} {quantity === 1 ? 'lock' : 'locks'}
+              {selected && <span className="ml-2 hidden text-charcoal/60 sm:inline">· {selected.short}</span>}
+            </p>
+            <Button size="md" onClick={() => void checkoutNow()} loading={checkingOut} disabled={!product.is_in_stock} tabIndex={barVisible ? 0 : -1}>
+              Checkout now
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

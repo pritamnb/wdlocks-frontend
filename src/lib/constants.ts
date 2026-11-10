@@ -253,6 +253,32 @@ export const CARD_HOVER_CLIPS: Readonly<Partial<Record<number, ClipId>>> = {
   [PRODUCT_IDS.KEYED_ALIKE]: 'dimpleKey',
 };
 
+/** Ultion-style header pills and benefit bullets per product (falls back to the WooCommerce short description). */
+export const PRODUCT_PILLS: Readonly<Partial<Record<number, string[]>>> = {
+  [PRODUCT_IDS.CYLINDER_LOCK]: ['TS 007 3★ certified', 'Anti-snap'],
+  [PRODUCT_IDS.THUMB_TURN]: ['TS 007 3★ certified', 'Anti-snap'],
+  [PRODUCT_IDS.HALF_CYLINDER]: ['TS 007 3★ certified', 'Anti-snap'],
+  [PRODUCT_IDS.RIM_CYLINDER]: ['Nightlatch cylinder', 'Brass or nickel'],
+};
+export const PRODUCT_BULLETS: Readonly<Partial<Record<number, string[]>>> = {
+  [PRODUCT_IDS.CYLINDER_LOCK]: [
+    '£5,000 security guarantee on registration.',
+    'Sold Secure Diamond. Tested and approved by locksmiths.',
+    'Police Preferred Specification. Secured by Design.',
+    'BSI Kitemark TS 007 3 Star, the highest cylinder rating.',
+    '11 pins and 800,000+ combinations; hardened anti-drill inserts.',
+    'ALPS locks the cam the instant you remove your key.',
+  ],
+  [PRODUCT_IDS.THUMB_TURN]: [
+    '£5,000 security guarantee on registration.',
+    'Sold Secure Diamond. Tested and approved by locksmiths.',
+    'Police Preferred Specification. Secured by Design.',
+    'BSI Kitemark TS 007 3 Star, the highest cylinder rating.',
+    'Thumb turn inside: no key needed to get out in an emergency.',
+    'ALPS locks the cam the instant you remove your key.',
+  ],
+};
+
 /** Products whose page shows the dimple-key chapter under the gallery. */
 export const KEY_PRODUCT_IDS: ReadonlySet<number> = new Set([PRODUCT_IDS.EXTRA_KEYS_3, PRODUCT_IDS.EXTRA_KEYS_1, PRODUCT_IDS.KEYED_ALIKE]);
 
