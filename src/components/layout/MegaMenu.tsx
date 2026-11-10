@@ -68,13 +68,13 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
                     <div className="p-3.5">
                       <p className="text-[17px] font-semibold leading-snug text-white">{entry.shortName}</p>
                       <p className="mt-0.5 line-clamp-2 text-xs text-white/60">{entry.blurb}</p>
-                      <div className="mt-3 flex items-center justify-between">
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                         <span className="text-sm font-semibold tabular-nums text-white/85">{live ? productPriceLabel(live) : ''}</span>
                         <span className="relative z-20 inline-flex gap-1.5">
-                          <Link href={href} onClick={onNavigate} className="rounded-[4px] border border-red bg-red px-2.5 py-1 text-[12px] font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
+                          <Link href={href} onClick={onNavigate} className="whitespace-nowrap rounded-[4px] border border-red bg-red px-2 py-1 text-[12px] font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
                             Buy online
                           </Link>
-                          <Link href={href} onClick={onNavigate} className="rounded-[4px] border border-red px-2.5 py-1 text-[12px] font-semibold text-red transition-colors duration-150 hover:bg-red hover:text-white">
+                          <Link href={href} onClick={onNavigate} className="whitespace-nowrap rounded-[4px] border border-red px-2 py-1 text-[12px] font-semibold text-red transition-colors duration-150 hover:bg-red hover:text-white">
                             Explore
                           </Link>
                         </span>
