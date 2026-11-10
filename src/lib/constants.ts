@@ -261,6 +261,9 @@ export const PRODUCT_PILLS: Readonly<Partial<Record<number, string[]>>> = {
   [PRODUCT_IDS.RIM_CYLINDER]: ['Nightlatch cylinder', 'Brass or nickel'],
   [PRODUCT_IDS.EXTRA_KEYS_3]: ['Genuine Watchdog key', 'Cut to your number'],
   [PRODUCT_IDS.EXTRA_KEYS_1]: ['Genuine Watchdog key', 'Precision cut'],
+  [PRODUCT_IDS.KEYED_ALIKE]: ['One key, every door', 'Service'],
+  [PRODUCT_IDS.LUBRICANT]: ['Approved for Watchdog', 'Every 6 months'],
+  [PRODUCT_IDS.BRUNO_TEDDY]: ['Blocks relay theft', 'Fits every car key'],
 };
 export const PRODUCT_BULLETS: Readonly<Partial<Record<number, string[]>>> = {
   [PRODUCT_IDS.CYLINDER_LOCK]: [
@@ -294,7 +297,93 @@ export const PRODUCT_BULLETS: Readonly<Partial<Record<number, string[]>>> = {
     'Thick, durable bow stamped Watchdog Stays Locked.',
     'Dispatched the same day before 3pm.',
   ],
+  [PRODUCT_IDS.RIM_CYLINDER]: [
+    'Replacement for Yale-type night latch cylinders on timber doors.',
+    'Brass or satin nickel finish to match your door furniture.',
+    'Three keys as standard, cut to your key number.',
+    'Fits standard rim night latches; fixing screws included.',
+    'Dispatched the same day before 3pm.',
+  ],
+  [PRODUCT_IDS.HALF_CYLINDER]: [
+    'Half euro cylinder, 10mm inside / 35mm outside, for garages, shutters and key switches.',
+    'Same 3 Star ALPS anti-snap body as the full cylinder.',
+    'BSI Kitemark TS 007 3 Star and Sold Secure Diamond.',
+    'Three keys as standard; can be keyed alike with your door locks.',
+    'Dispatched the same day before 3pm.',
+  ],
+  [PRODUCT_IDS.KEYED_ALIKE]: [
+    'Every Watchdog cylinder in your order pinned to one key number.',
+    'One key for the front, back, side doors and garage.',
+    'Three keys with each lock, all the same.',
+    'Match locks to a key you already hold by giving us its number.',
+    'Added once per order, whatever the number of locks.',
+  ],
+  [PRODUCT_IDS.LUBRICANT]: [
+    'Approved for Watchdog and Brisant Secure cylinders.',
+    'Dry graphite formula: no oil, no WD-40, no gumming.',
+    'Keeps the eleven pins turning freely and protects your guarantee.',
+    'Apply into the keyway every six months, or sooner if the key stiffens.',
+    'Dispatched the same day before 3pm.',
+  ],
+  [PRODUCT_IDS.BRUNO_TEDDY]: [
+    'Blocks the relay signal thieves use for keyless-entry theft.',
+    'Pop your car key inside and the fob is silent to scanners.',
+    'Fits every keyless fob; a soft toy on the hall table, not a metal pouch.',
+    'Tested signal-blocking lining; machine washable cover.',
+    'Dispatched the same day before 3pm.',
+  ],
 };
+
+export interface ProductFeature {
+  eyebrow: string;
+  title: string;
+  body: string;
+  /** Optional image; the product's own photo is used when omitted. */
+  image?: string;
+}
+
+/** Short H2 under the product title (Ultion: "Stops key jamming + protects guarantees"). */
+export const PRODUCT_SUBTITLES: Readonly<Partial<Record<number, string>>> = {
+  [PRODUCT_IDS.CYLINDER_LOCK]: 'Anti-snap, anti-bump, anti-drill. Locks itself the moment the key comes out.',
+  [PRODUCT_IDS.THUMB_TURN]: 'Key outside, thumb turn inside. Same 3 Star ALPS protection.',
+  [PRODUCT_IDS.RIM_CYLINDER]: 'The Yale-type night latch cylinder, in brass or nickel.',
+  [PRODUCT_IDS.HALF_CYLINDER]: '3 Star protection for garages, shutters and key switches.',
+  [PRODUCT_IDS.KEYED_ALIKE]: 'Same key, different locks. One key for every door.',
+  [PRODUCT_IDS.LUBRICANT]: 'Stops key jamming and protects your guarantee.',
+  [PRODUCT_IDS.BRUNO_TEDDY]: 'The signal blocker that looks like a teddy, not a tin.',
+  [PRODUCT_IDS.EXTRA_KEYS_3]: 'Genuine keys cut to the number stamped on yours.',
+  [PRODUCT_IDS.EXTRA_KEYS_1]: 'Genuine keys for Watchdog 1 Star cylinders.',
+};
+
+/** Ultion-style feature tiles for products that don't use the lock or keys sections. */
+export const PRODUCT_FEATURES: Readonly<Partial<Record<number, ReadonlyArray<ProductFeature>>>> = {
+  [PRODUCT_IDS.RIM_CYLINDER]: [
+    { eyebrow: 'Timber doors', title: 'Made for night latches.', body: 'Drops into the standard rim night latch found on most timber front doors, replacing the old Yale-type cylinder in minutes.' },
+    { eyebrow: 'Two finishes', title: 'Brass or satin nickel.', body: 'Choose the finish that matches your knocker, letterplate and handle. Both carry the Watchdog name on the face.' },
+    { eyebrow: 'Your key number', title: 'Three keys, cut to you.', body: 'Every rim cylinder ships with three keys cut to your own number, so spares come from us and nobody else.', image: '/brand/product/keys-engraved.png' },
+  ],
+  [PRODUCT_IDS.HALF_CYLINDER]: [
+    { eyebrow: 'Outbuildings', title: 'Garages, shutters, key switches.', body: 'A half cylinder works from one side only, which is exactly what a garage door, roller shutter or key switch needs.', image: '/brand/product/cylinder-side.png' },
+    { eyebrow: 'Same protection', title: 'Still a 3 Star ALPS.', body: 'The 10/35 half body carries the same anti-snap section, hardened inserts and eleven-pin stack as the full cylinder.', image: '/brand/product/cylinder-detail.png' },
+    { eyebrow: 'One key', title: 'Key it alike with the house.', body: 'Add the keyed-alike service and the garage opens with the same key as the front door.', image: '/brand/product/key-single.png' },
+  ],
+  [PRODUCT_IDS.KEYED_ALIKE]: [
+    { eyebrow: 'Convenience', title: 'One key on the ring.', body: 'Front, back, side and garage on a single Watchdog key. No more fumbling for the right one in the dark.', image: '/brand/product/key-single.png' },
+    { eyebrow: 'Security', title: 'No weak door.', body: 'Every door gets the same 3 Star ALPS cylinder, so a burglar cannot pick the softest lock on the house.', image: '/brand/product/cylinder-angled.png' },
+    { eyebrow: 'Family', title: 'Share one key, safely.', body: 'Spares for family are cut to your number by us, never copied at a kiosk, so you always know how many exist.', image: '/brand/product/keys-engraved.png' },
+  ],
+  [PRODUCT_IDS.LUBRICANT]: [
+    { eyebrow: 'Simple and effective', title: 'Stops key jamming.', body: 'A dry graphite formula made for precision pin cylinders. No more stuck keys or stiff turns on a cold morning.' },
+    { eyebrow: 'Extra protection', title: 'Protects your guarantee.', body: 'A lubricated Watchdog is a lock in warranty. Apply every six months and the mechanical guarantee stays intact.', image: '/brand/product/guarantee-keytag.png' },
+    { eyebrow: 'Tip-top condition', title: 'Smooth operator.', body: 'Spray into the keyway, work the key in and out a few times, and the eleven pins glide again. Never oil, never WD-40.', image: '/brand/product/cylinder-xray.jpg' },
+  ],
+  [PRODUCT_IDS.BRUNO_TEDDY]: [
+    { eyebrow: 'Relay theft', title: 'Silences your key fob.', body: 'Keyless cars are stolen by relaying the fob signal from your hallway to the drive. Inside Bruno, the fob cannot be read.' },
+    { eyebrow: 'Design', title: 'A teddy, not a tin.', body: 'A signal-blocking lining inside a soft toy that sits happily on the hall table, so you actually use it every night.' },
+    { eyebrow: 'Everyday', title: 'Fits every fob.', body: 'Room for two keys, a washable cover, and a Watchdog tag so visitors know what it is for.' },
+  ],
+};
+
 
 /** Products whose page shows the dimple-key chapter under the gallery. */
 export const KEY_PRODUCT_IDS: ReadonlySet<number> = new Set([PRODUCT_IDS.EXTRA_KEYS_3, PRODUCT_IDS.EXTRA_KEYS_1, PRODUCT_IDS.KEYED_ALIKE]);

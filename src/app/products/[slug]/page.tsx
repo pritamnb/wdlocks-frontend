@@ -12,10 +12,11 @@ import { faqsForProduct } from '@/lib/faqs';
 import { decodeEntities, productPriceLabel, stripHtml } from '@/lib/wdlocks-api';
 import { sanitizeProductHtml } from '@/lib/sanitize';
 import { galleryImagesFor } from '@/lib/product-helpers';
-import { BRAND_VIDEO, BROCHURE, CATALOGUE_BY_ID, KEY_PRODUCT_IDS, PRODUCT_BULLETS, PRODUCT_IDS, PRODUCT_PILLS, SITE, SITE_URL } from '@/lib/constants';
+import { BRAND_VIDEO, BROCHURE, CATALOGUE_BY_ID, KEY_PRODUCT_IDS, PRODUCT_BULLETS, PRODUCT_FEATURES, PRODUCT_IDS, PRODUCT_PILLS, PRODUCT_SUBTITLES, SITE, SITE_URL } from '@/lib/constants';
 import { LockFeatureSections } from '@/components/product/LockFeatureSections';
 import { KeysConfigurator } from '@/components/product/KeysConfigurator';
 import { KeysFeatureSections } from '@/components/product/KeysFeatureSections';
+import { ProductFeatureTiles, KeyedAlikeDoors, ProductCloser } from '@/components/product/ProductFeatureTiles';
 import { InlineFilm } from '@/components/media/InlineFilm';
 import { ChapterLoop } from '@/components/media/ChapterLoop';
 
@@ -127,6 +128,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             category && <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">{category}</p>
           )}
           <h1 className="heading-display mt-3 text-3xl leading-tight sm:text-4xl">{name}</h1>
+          {PRODUCT_SUBTITLES[product.id] && <p className="mt-2 text-lg text-charcoal/75">{PRODUCT_SUBTITLES[product.id]}</p>}
 
           <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <p className="font-playfair text-3xl font-semibold tabular-nums text-near-black">{productPriceLabel(product)}</p>
@@ -173,6 +175,19 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
       {(product.id === PRODUCT_IDS.CYLINDER_LOCK || product.id === PRODUCT_IDS.THUMB_TURN) && <LockFeatureSections />}
       {(product.id === PRODUCT_IDS.EXTRA_KEYS_3 || product.id === PRODUCT_IDS.EXTRA_KEYS_1) && <KeysFeatureSections />}
+      {PRODUCT_FEATURES[product.id] && (
+        <>
+          {product.id === PRODUCT_IDS.KEYED_ALIKE && <KeyedAlikeDoors />}
+          <ProductFeatureTiles features={PRODUCT_FEATURES[product.id]!} fallbackImage={product.images[0]?.src} />
+          <ProductCloser
+            eyebrow="Get the 3 Star lock"
+            title={<>Fitted by locksmiths <span className="text-red">across the UK</span>.</>}
+            body="Every Watchdog door lock carries the BSI Kitemark 3 Star and ships the same day before 3pm with three keys in the box."
+            cta="Choose a Watchdog lock"
+            href="/products/3-star-alps-cylinder-door-lock"
+          />
+        </>
+      )}
 
       {product.id === PRODUCT_IDS.CYLINDER_LOCK && (
         <section className="mt-16 border-t border-cream-dark pt-14" aria-labelledby="product-film-title">

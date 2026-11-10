@@ -385,6 +385,14 @@ noindex. Single-line guard unchanged until the handoff plugin is installed. Stil
 template (hide theme nav, trust strip, cards first) — not possible from this repo. Coupons: enter on the payment page (no proxy
 endpoint yet).
 
+### Pass 12 — 10 Nov 2026, remaining product pages on Ultion's standard template
+Per `docs/other-products-replication-spec.md`: every product now carries certification pills, an H2 subtitle under the title
+and benefit bullets (`PRODUCT_PILLS`, `PRODUCT_SUBTITLES`, `PRODUCT_BULLETS`). Rim cylinder, half cylinder, keyed-alike
+service, lock lubricant and Bruno Teddy get three Ultion-style feature tiles (eyebrow · H3 · body · image, `PRODUCT_FEATURES`)
+and a dark closer; the keyed-alike page also gets the "Front door + Back door + Side door + Garage = 1 key" graphic. Thumb turn
+already shared the cylinder configurator and lock sections. FAQ accordions and the inline film stay where they were. Skipped:
+Trustpilot bars and review sliders; Apple/Google Pay (payment is on wdlocks.co.uk).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
