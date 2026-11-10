@@ -24,24 +24,27 @@ export function useInViewPlayback(ref: React.RefObject<HTMLVideoElement | null>,
   React.useEffect(() => {
     const video = ref.current;
     if (!video || !enabled) return;
+    let inView = false;
+    const sync = () => {
+      if (inView && !document.hidden) {
+        if (video.preload === 'none') video.preload = 'auto';
+        void video.play().catch(() => undefined);
+      } else {
+        video.pause();
+      }
+    };
     const io = new IntersectionObserver(
       ([entry]) => {
         // Decide on the visible ratio, not just "touching the viewport": with a single threshold the
         // callback fires while the element is still partly visible, which used to restart playback
-        // as the visitor scrolled away. Observe 0 and the threshold so leaving the viewport also fires.
-        const visible = entry.isIntersecting && entry.intersectionRatio >= threshold;
-        if (visible) {
-          if (video.preload === 'none') video.preload = 'auto';
-          void video.play().catch(() => undefined);
-        } else {
-          video.pause();
-        }
+        // as the visitor scrolled away. Several thresholds mean leaving the viewport always fires too.
+        inView = entry.isIntersecting && entry.intersectionRatio >= threshold;
+        sync();
       },
       { threshold: Array.from(new Set([0, 0.25, 0.5, 0.75, 1, threshold])).sort() },
     );
-    const onVisibility = () => {
-      if (document.hidden) video.pause();
-    };
+    // Pause in a background tab and resume when the visitor comes back, if the player is still on screen.
+    const onVisibility = () => sync();
     document.addEventListener('visibilitychange', onVisibility);
     io.observe(video);
     return () => {
