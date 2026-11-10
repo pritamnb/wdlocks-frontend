@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "pw": "node \"$HOME/.claude/plugins/marketplaces/playwright-skill/skills/playwright-skill/run.js\"",
+    "pw:shots": "npm run pw -- scripts/pw/responsive-screenshots.js"
   },
   "dependencies": {
     "@stripe/stripe-js": "^10.2.1",

@@ -57,3 +57,6 @@ yarn-error.log*
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# review screenshots from scripts/pw
+/screenshots/
