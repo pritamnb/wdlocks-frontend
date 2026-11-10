@@ -173,6 +173,12 @@ export const BRAND_RENDERS = {
 
 /** Manufacturer turntable animation (10 s, silent, black background). Encoded from client-assets/wetransfer-2026-11-10. */
 export const BRAND_VIDEO = {
+  /** Hero background: 15 s silent cut (16–31 s) of the inside-the-lock film — SnapStop, hardened steel drill protection, pick protection, springs. */
+  heroLoop: {
+    mp4: '/brand/video/hero-inside.mp4',
+    poster: '/brand/video/hero-inside-poster.jpg',
+    alt: 'Inside a Watchdog cylinder: the hardened steel anti-drill pin beside the red cam, the anti-pick pins and the springs',
+  },
   /** 2 s exploded-view animation of the cylinder (client file home-lock-exploded.mp4, 10 Nov). All-intra encode so it can be scrubbed by scroll; background lifted to white for multiply blending. */
   exploded: {
     mp4: '/brand/video/exploded.mp4',

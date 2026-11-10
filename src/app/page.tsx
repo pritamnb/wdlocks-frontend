@@ -58,8 +58,8 @@ export default async function HomePage() {
 
       <Protection />
       <WhyWatchdog />
-      <HomeTruths />
       <BuyBand />
+      <HomeTruths />
       <KeySection />
       <KeyedAlikeSection />
       <InsideTheLock />

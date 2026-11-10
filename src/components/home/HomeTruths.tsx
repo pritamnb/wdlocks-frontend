@@ -1,49 +1,40 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import { BRAND_RENDERS } from '@/lib/constants';
+import { HOME_TRUTHS, HOME_TRUTHS_SOURCE } from '@/lib/constants';
 
-const facts = [
-  { stat: '11', unit: 'pins', body: '800,000+ key combinations. Most cylinders use 5 or 6.' },
-  { stat: '0', unit: 'seconds exposed', body: 'ALPS locks the cam the instant you remove your key.' },
-  { stat: '5', unit: 'minute fit', body: 'One screw, one cylinder, three keys in the box.' },
-];
-
-/** Ultion's "Home Truths" pattern: one giant, defensible figure on a dark full-bleed panel, then the supporting facts. */
+/**
+ * Ultion's `section-home-truths`: dark full-bleed panel, "Home Truths" title, one giant figure with its claim, Learn more.
+ * Ours uses the first sourced truth (ONS CSEW) and adds the postcode crime checker as the second call to action.
+ */
 export function HomeTruths() {
+  const truth = HOME_TRUTHS[0];
   return (
-    <section className="relative overflow-hidden bg-near-black py-20 text-white lg:py-28" aria-labelledby="truths-title">
-      <Image
-        src={BRAND_RENDERS.cylinderFront.src}
-        alt=""
-        aria-hidden="true"
-        width={BRAND_RENDERS.cylinderFront.width}
-        height={BRAND_RENDERS.cylinderFront.height}
-        sizes="420px"
-        className="pointer-events-none absolute -right-10 top-1/2 hidden w-[380px] -translate-y-1/2 rotate-[14deg] opacity-80 drop-shadow-[0_40px_60px_rgb(0_0_0/0.6)] lg:block xl:w-[440px]"
-      />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_50%,rgb(218_21_25/0.18),transparent_55%)]" aria-hidden="true" />
+    <section className="relative overflow-hidden bg-[#1b1a1c] py-20 text-white lg:py-28" aria-labelledby="truths-title">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_40%,rgb(218_21_25/0.2),transparent_55%)]" aria-hidden="true" />
       <div className="container-wd relative">
-        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-red">Home truths</p>
-        <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-end lg:gap-10">
-          <p className="font-playfair text-[7rem] font-semibold leading-[0.85] text-red sm:text-[10rem] lg:text-[12rem]" aria-hidden="true">3★</p>
-          <h2 id="truths-title" className="heading-display max-w-xl text-3xl text-white sm:text-4xl lg:pb-4">
-            <span className="sr-only">3 star: </span>the highest Kitemark rating a euro cylinder can hold. Your door is only as strong as the cylinder in it.
-          </h2>
-        </div>
-        <Link href="/home-truths" className="mt-8 inline-flex h-12 items-center rounded-full bg-red px-7 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
-          Learn more
-        </Link>
-        <dl className="mt-14 grid max-w-3xl gap-6 border-t border-white/10 pt-8 sm:grid-cols-3">
-          {facts.map((f) => (
-            <div key={f.unit}>
-              <dt className="flex items-baseline gap-2">
-                <span className="font-playfair text-4xl font-semibold text-white">{f.stat}</span>
-                <span className="text-xs font-semibold uppercase tracking-wide text-red">{f.unit}</span>
-              </dt>
-              <dd className="mt-2 text-sm text-white/70">{f.body}</dd>
+        <p className="heading-display text-2xl text-white/80 sm:text-3xl">Home truths</p>
+        <div className="mt-8 grid items-end gap-6 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <p className="font-playfair text-[7rem] font-semibold leading-[0.85] text-red sm:text-[10rem] lg:text-[13rem]" aria-hidden="true">{truth.stat}</p>
+            <h2 id="truths-title" className="heading-display mt-4 max-w-xl text-3xl text-white sm:text-4xl lg:text-5xl">
+              <span className="sr-only">{truth.stat} </span>{truth.claim}
+            </h2>
+          </div>
+          <div className="lg:col-span-5 lg:pb-3">
+            <p className="max-w-md text-white/75">{truth.body}</p>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link href="/home-truths" className="inline-flex h-12 items-center justify-center rounded-full bg-red px-7 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
+                Learn more
+              </Link>
+              <Link href="/home-truths#crime-checker" className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/30 px-7 text-sm font-semibold text-white transition-colors duration-150 hover:border-red hover:text-red">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s7-5.5 7-12a7 7 0 1 0-14 0c0 6.5 7 12 7 12Z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                How secure is your home?
+              </Link>
             </div>
-          ))}
-        </dl>
+            <p className="mt-5 text-xs text-white/45">
+              Source: <a href={HOME_TRUTHS_SOURCE.href} rel="noopener" target="_blank" className="underline decoration-white/30 underline-offset-2 hover:text-white">ONS Crime Survey for England and Wales</a>, year ending March 2025. Check recorded crime around your own postcode on the Home truths page.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );

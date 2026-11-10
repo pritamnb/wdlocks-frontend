@@ -27,6 +27,7 @@ Locations: `~/Downloads/WD/` (raw downloads) · `~/Documents/wdlocks/client-asse
 | 13 renders: angled, detail, front, engraved keys, £5,000 key tag, rim JPEGs, KeysOnRing | Allegion via Paramjit, 10 Nov ("watchdog lock images required") | client-assets (processed into public/brand/product) | 5 live |
 | Cylinder turntable, black bg (10 s) + explainer film 16:9 (40 s) | Allegion WeTransfer, 10 Nov | client-assets/wetransfer-2026-11-10 | Both live |
 | Exploded-view animation `home-lock-exploded.mp4` (2 s, 1080p, grey bg) | Pritam, 10 Nov (Downloads/WD/videos) | public/brand/video/exploded.mp4 (720p all-intra, bg lifted to white) + posters | Live: homepage Protection section, scrubbed by scroll |
+| Hero loop: 15 s cut (16–31 s) of the inside-the-lock film | Vijay, 6 Nov (Downloads/WD/Images/3d) | public/brand/video/hero-inside.mp4 (720p, silent) + poster at 19 s | Live: homepage hero background (client's pick, 10 Nov) |
 | Old-site product photos (300×300) + logo | Downloads/WD/Images, LOGO1 | — | Logo rebuilt; photos come from the Store API |
 
 ## Ultion-branded — NOT usable (engraving says Ultion)

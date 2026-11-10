@@ -4,7 +4,7 @@ import { BRAND_VIDEO } from '@/lib/constants';
 /** Ultion's centred statement ("Fitting the highest security protection is the key") followed by the explainer with chapters. */
 export function WhyWatchdog() {
   return (
-    <section id="why-watchdog" className="scroll-mt-24 py-20" aria-labelledby="why-title">
+    <section id="why-watchdog" className="scroll-mt-24 bg-white py-20" aria-labelledby="why-title">
       <div className="container-wd">
         <div className="mx-auto max-w-3xl text-center">
           <h2 id="why-title" className="heading-display text-3xl sm:text-4xl">

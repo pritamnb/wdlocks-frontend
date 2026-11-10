@@ -16,20 +16,20 @@ export function MobileMenu({ open, onClose, products }: { open: boolean; onClose
   const productById = new Map(products.map((p) => [p.id, p]));
 
   return (
-    <Modal open={open} onClose={onClose} variant="left" labelledBy="mobile-menu-title" className="flex flex-col !bg-near-black text-white !w-full !max-w-none">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+    <Modal open={open} onClose={onClose} variant="left" labelledBy="mobile-menu-title" className="flex flex-col !bg-warm-white text-near-black !w-full !max-w-none">
+      <div className="flex items-center justify-between border-b border-cream-dark px-4 py-3">
         <h2 id="mobile-menu-title" className="sr-only">Site navigation</h2>
-        <Logo tone="light" />
-        <CloseButton onClick={onClose} label="Close menu" className="!text-white hover:!bg-white/10" />
+        <Logo />
+        <CloseButton onClick={onClose} label="Close menu" />
       </div>
       <nav className="flex-1 overflow-y-auto px-4 py-2 scrollbar-thin" aria-label="Mobile">
-        <ul className="divide-y divide-white/10">
+        <ul className="divide-y divide-cream-dark">
           {NAV_LINKS.map((l) =>
             l.menu ? (
               <li key={l.label}>
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between py-4 text-left text-2xl font-semibold text-white"
+                  className="flex w-full items-center justify-between py-4 text-left text-2xl font-semibold text-near-black"
                   aria-expanded={expanded === l.menu}
                   onClick={() => setExpanded((e) => (e === l.menu ? null : l.menu))}
                 >
@@ -45,11 +45,11 @@ export function MobileMenu({ open, onClose, products }: { open: boolean; onClose
                       const img = productById.get(entry.id)?.images[0];
                       return (
                         <li key={entry.id} className="flex items-center gap-3">
-                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[#111013]">
-                            {img && <Image src={img.thumbnail || img.src} alt="" fill sizes="56px" className="object-contain p-1.5 opacity-80" />}
+                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-cream">
+                            {img && <Image src={img.thumbnail || img.src} alt="" fill sizes="56px" className="object-contain p-1.5" />}
                           </div>
                           <div className="min-w-0">
-                            <Link href={`/products/${entry.slug}`} onClick={onClose} className="block text-lg font-semibold leading-tight text-white">{entry.shortName}</Link>
+                            <Link href={`/products/${entry.slug}`} onClick={onClose} className="block text-lg font-semibold leading-tight text-near-black">{entry.shortName}</Link>
                             <div className="mt-1 flex gap-4 text-sm font-medium text-red">
                               <Link href={`/products/${entry.slug}`} onClick={onClose}>Explore</Link>
                               <Link href={`/products/${entry.slug}#sizing`} onClick={onClose}>Buy online</Link>
@@ -61,9 +61,9 @@ export function MobileMenu({ open, onClose, products }: { open: boolean; onClose
                     {MENU_GROUPS[l.menu].more.map((m) => (
                       <li key={m.label}>
                         {m.external ? (
-                          <a href={m.href} rel="noopener" className="block py-1 text-base text-white/75 hover:text-red">{m.label} ↗</a>
+                          <a href={m.href} rel="noopener" className="block py-1 text-base text-charcoal/75 hover:text-red">{m.label} ↗</a>
                         ) : (
-                          <Link href={m.href} onClick={onClose} className="block py-1 text-base text-white/75 hover:text-red">{m.label}</Link>
+                          <Link href={m.href} onClick={onClose} className="block py-1 text-base text-charcoal/75 hover:text-red">{m.label}</Link>
                         )}
                       </li>
                     ))}
@@ -72,7 +72,7 @@ export function MobileMenu({ open, onClose, products }: { open: boolean; onClose
               </li>
             ) : (
               <li key={l.label}>
-                <Link href={l.href} onClick={onClose} className="block py-4 text-2xl font-semibold text-white hover:text-red">
+                <Link href={l.href} onClick={onClose} className="block py-4 text-2xl font-semibold text-near-black hover:text-red">
                   {l.label}
                 </Link>
               </li>
@@ -85,20 +85,20 @@ export function MobileMenu({ open, onClose, products }: { open: boolean; onClose
           <ul className="mt-3 space-y-2">
             {MOST_VIEWED.map((m) =>
               'external' in m && m.external ? (
-                <li key={m.label}><a href={m.href} rel="noopener" className="text-base font-medium text-white hover:text-red">{m.label} ↗</a></li>
+                <li key={m.label}><a href={m.href} rel="noopener" className="text-base font-medium text-near-black hover:text-red">{m.label} ↗</a></li>
               ) : (
-                <li key={m.label}><Link href={m.href} onClick={onClose} className="text-base font-medium text-white hover:text-red">{m.label}</Link></li>
+                <li key={m.label}><Link href={m.href} onClick={onClose} className="text-base font-medium text-near-black hover:text-red">{m.label}</Link></li>
               ),
             )}
           </ul>
         </div>
 
-        <div className="mt-8 text-sm text-white/70">
-          <a href={SITE.phoneHref} className="block font-medium text-white">{SITE.phone}</a>
+        <div className="mt-8 text-sm text-charcoal/75">
+          <a href={SITE.phoneHref} className="block font-medium text-near-black">{SITE.phone}</a>
           <a href={`mailto:${SITE.email}`} className="block">{SITE.email}</a>
         </div>
       </nav>
-      <div className="border-t border-white/10 bg-near-black p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="border-t border-cream-dark bg-warm-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <a
           href={GUARANTEE.href}
           className="flex h-12 w-full items-center justify-center rounded-full bg-red text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep"

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { CONTACT, SITE, SITE_URL } from '@/lib/constants';
 import { CallbackForm, MessageForm } from '@/components/contact/ContactForms';
-import { CallCard, EmailCard, VisitCard } from '@/components/contact/ContactCards';
+import { CallCard, EmailCard, QuickActions, VisitCard } from '@/components/contact/ContactCards';
 import { TrustStrip } from '@/components/home/TrustStrip';
 import { BuyBand } from '@/components/home/BuyBand';
 
@@ -44,29 +44,34 @@ export default function ContactPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
 
       <section className="bg-cream pt-16 lg:pt-24" aria-labelledby="contact-h1">
-        <div className="container-wd text-center">
-          <span className="inline-block rounded-full bg-red px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">Here to help</span>
-          <h1 id="contact-h1" className="heading-display mt-5 text-5xl sm:text-6xl lg:text-7xl">Talk to an expert.</h1>
-          <p className="mx-auto mt-5 max-w-xl text-charcoal/75">Our team fits and sells Watchdog locks every day. Whatever the question, from sizing to a guarantee claim, they are on hand to answer it.</p>
+        <div className="container-wd">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-block rounded-full bg-red px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">Here to help</span>
+            <h1 id="contact-h1" className="heading-display mt-5 text-5xl sm:text-6xl lg:text-7xl">Talk to an expert.</h1>
+            <p className="mx-auto mt-5 max-w-xl text-charcoal/75">Our team fits and sells Watchdog locks every day. Whatever the question, from sizing to a guarantee claim, they are on hand to answer it.</p>
+          </div>
+          <div className="mt-12">
+            <QuickActions />
+          </div>
         </div>
       </section>
 
-      <section className="bg-cream py-14 lg:py-20" aria-label="Ways to get in touch">
+      <section className="bg-cream py-14 lg:py-20" aria-label="Request a callback or send a message">
         <div className="container-wd grid gap-6 lg:grid-cols-2">
           <div className="rounded-2xl bg-warm-white p-7 shadow-card sm:p-8">
             <CallbackForm />
           </div>
-          <div className="grid gap-6">
-            <CallCard />
-            <EmailCard />
+          <div className="rounded-2xl bg-warm-white p-7 shadow-card sm:p-8">
+            <MessageForm />
           </div>
         </div>
       </section>
 
-      <section className="bg-cream pb-20 lg:pb-28" aria-label="Message and shop">
-        <div className="container-wd grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl bg-warm-white p-7 shadow-card sm:p-8">
-            <MessageForm />
+      <section className="bg-cream pb-20 lg:pb-28" aria-label="Call, email or visit">
+        <div className="container-wd grid gap-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <CallCard />
+            <EmailCard />
           </div>
           <VisitCard />
         </div>

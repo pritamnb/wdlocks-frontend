@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
 import type { WooProduct } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { QuantityControl } from '@/components/cart/QuantityControl';
@@ -9,7 +8,7 @@ import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
 import { getVariationModel, type VariationOption } from '@/lib/product-helpers';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
-import { DEFAULT_VARIATION_ID, PRODUCT_IDS, WC_BASE, CATALOGUE_BY_ID } from '@/lib/constants';
+import { CHECKOUT_URL, DEFAULT_VARIATION_ID, PRODUCT_IDS, WC_BASE, CATALOGUE_BY_ID } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -133,12 +132,27 @@ export function VariationSelector({ product, onAdded, headingId, className, show
     return ok;
   };
 
-  const checkoutNow = async () => {
+  /**
+   * Buy now: straight to secure payment on wdlocks.co.uk with this one line (WooCommerce adds it natively).
+   * With the keyed-alike add-on there are two lines, which native handoff cannot carry, so that path goes
+   * through the basket review page instead.
+   */
+  const buyNow = async () => {
+    setTouched(true);
+    if (!selected) return;
     setCheckingOut(true);
     try {
-      const ok = await add(false);
-      if (!ok) return;
-      router.push('/checkout');
+      if (keyedAlike) {
+        const ok = await add(false);
+        if (!ok) return;
+        router.push('/checkout');
+        return;
+      }
+      const url = new URL(CHECKOUT_URL);
+      url.searchParams.set('add-to-cart', String(selected.variationId));
+      url.searchParams.set('quantity', String(quantity));
+      url.searchParams.set('utm_source', 'headless');
+      window.location.assign(url.toString());
     } finally {
       setCheckingOut(false);
     }
@@ -171,10 +185,14 @@ export function VariationSelector({ product, onAdded, headingId, className, show
               <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-red" aria-hidden="true"><span className="h-2.5 w-2.5 rounded-full bg-red" /></span>
               {product.id === PRODUCT_IDS.CYLINDER_LOCK ? 'Key operated' : 'Thumb turn'}
             </span>
-            <Link href={`/products/${otherLock.slug}${sizeQuery}`} className="flex h-12 items-center gap-3 rounded-xl border border-cream-dark bg-warm-white px-4 text-sm font-semibold text-near-black transition-colors duration-150 hover:border-charcoal/50">
+            <button
+              type="button"
+              onClick={() => router.push(`/products/${otherLock.slug}${sizeQuery}`, { scroll: false })}
+              className="flex h-12 items-center gap-3 rounded-xl border border-cream-dark bg-warm-white px-4 text-sm font-semibold text-near-black transition-colors duration-150 hover:border-charcoal/50"
+            >
               <span className="h-5 w-5 rounded-full border-2 border-cream-dark" aria-hidden="true" />
               {product.id === PRODUCT_IDS.CYLINDER_LOCK ? 'Thumb turn' : 'Key operated'}
-            </Link>
+            </button>
           </div>
         </fieldset>
       )}
@@ -263,11 +281,11 @@ export function VariationSelector({ product, onAdded, headingId, className, show
         <Button size="lg" variant="secondary" onClick={() => void add(true)} loading={isAdding && !checkingOut} disabled={!product.is_in_stock}>
           Add to basket
         </Button>
-        <Button size="lg" onClick={() => void checkoutNow()} loading={checkingOut} disabled={!product.is_in_stock}>
-          {product.is_in_stock ? <>Checkout now <span aria-hidden="true" className="opacity-70">·</span> {formatPrice(totalPence)}</> : 'Out of stock'}
+        <Button size="lg" onClick={() => void buyNow()} loading={checkingOut} disabled={!product.is_in_stock}>
+          {product.is_in_stock ? <>Buy now <span aria-hidden="true" className="opacity-70">·</span> {formatPrice(totalPence)}</> : 'Out of stock'}
         </Button>
       </div>
-      <p className="text-xs text-charcoal/75">Prices include VAT. Delivery chosen at checkout on wdlocks.co.uk.</p>
+      <p className="text-xs text-charcoal/75">Buy now goes straight to secure payment on wdlocks.co.uk. Prices include VAT; delivery is chosen at checkout.</p>
       <DeliveryPromise />
 
       <div id="measuring" className="scroll-mt-32">{isSize && <SizingDiagram insideLabel={model.insideLabel} />}</div>
@@ -288,8 +306,8 @@ export function VariationSelector({ product, onAdded, headingId, className, show
               <span className="text-xs font-semibold uppercase tracking-wide text-charcoal/60">Qty</span> {quantity} {quantity === 1 ? 'lock' : 'locks'}
               {selected && <span className="ml-2 hidden text-charcoal/60 sm:inline">· {selected.short}</span>}
             </p>
-            <Button size="md" onClick={() => void checkoutNow()} loading={checkingOut} disabled={!product.is_in_stock} tabIndex={barVisible ? 0 : -1}>
-              Checkout now
+            <Button size="md" onClick={() => void buyNow()} loading={checkingOut} disabled={!product.is_in_stock} tabIndex={barVisible ? 0 : -1}>
+              Buy now
             </Button>
           </div>
         </div>

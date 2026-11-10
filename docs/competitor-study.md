@@ -451,6 +451,22 @@ JSON-LD. Delivery: `/api/contact` emails both forms to sales@wdlocks.co.uk throu
 (README); until then the API answers 503 and the page opens the visitor's mail app with the request pre-filled.
 Header, Keys menu and footer "Contact" now go to `/contact`. No opening hours shown (none published; client to confirm).
 
+### Pass 19 — 10 Nov 2026, client feedback batch
+From Pritam's review: **hero** now runs a 15 s silent cut of the inside-the-lock film (SnapStop → hardened steel drill
+protection → pick protection → springs) behind the headline; **header is white** (warm-white navbar, red guarantee
+button, light mega-menu cards and a light mobile menu; footer stays black); "Fitting the highest security protection"
+section on **white**; **Home Truths** rebuilt on Ultion's `section-home-truths` pattern (dark panel, "Home truths",
+giant sourced figure 63 % + "of burglaries happen while someone is at home", Learn more + "How secure is your home?" →
+the crime checker); the red **buy band now sits above** Home Truths; **accreditations** are three large alternating
+explainers using the client's own copy (Sold Secure Diamond "The toughest test ever", BSI Kitemark "British Standards",
+Secured by Design); **footer** bottom bar has Facebook and Instagram icons; **configurator**: Key operated / Thumb turn
+now switches in place (route change without scrolling, size carried over) and the primary button is **Buy now**, which
+goes straight to secure payment on wdlocks.co.uk with that line (keyed-alike still goes via the basket review);
+**contact page** reworked (three dark quick-action tiles, callback and message forms side by side, call/email cards with
+icons, full-width shop card with address beside the map — the "Visit the shop" heading glitch is gone). Trade
+application: plan written in `docs/trade-application-plan.md` (the WordPress page's body is a stray Bristol locksmith
+article; the Elementor form is reusable with the guarantee-form pattern).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

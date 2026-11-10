@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CATALOGUE, SITE, WC_BASE, TRUST_SIGNALS, BROCHURE } from '@/lib/constants';
+import { CATALOGUE, CONTACT, SITE, WC_BASE, TRUST_SIGNALS, BROCHURE } from '@/lib/constants';
 
 const helpLinks = [
   { label: 'Sizing guide', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
@@ -85,8 +85,21 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="container-wd flex flex-col items-start justify-between gap-2 py-5 text-xs text-white/60 sm:flex-row sm:items-center">
+        <div className="container-wd flex flex-col items-start justify-between gap-3 py-5 text-xs text-white/60 sm:flex-row sm:items-center">
           <p>© {year} {SITE.name}. All rights reserved.</p>
+          <ul className="flex items-center gap-2" aria-label="Social media">
+            {CONTACT.social.map((s) => (
+              <li key={s.label}>
+                <a href={s.href} rel="noopener" target="_blank" aria-label={`${SITE.name} on ${s.label}`} className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white/80 transition-colors hover:border-red hover:bg-red hover:text-white">
+                  {s.label === 'Facebook' ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 22v-8h2.7l.4-3.2h-3.1V8.8c0-.9.3-1.6 1.6-1.6h1.7V4.3c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v2.4H7.4V14h2.8v8h3.3Z" /></svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>
+                  )}
+                </a>
+              </li>
+            ))}
+          </ul>
           <p>Secure checkout at wdlocks.co.uk · Prices include VAT</p>
         </div>
       </div>

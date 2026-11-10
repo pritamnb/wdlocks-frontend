@@ -1,25 +1,50 @@
 import Image from 'next/image';
 
+/** Copy from the client's own accreditation panels on wdlocks.co.uk (10 Nov 2026). */
 const items = [
-  { src: '/brand/sold-secure-diamond.png', title: 'Approved by locksmiths.', body: 'Sold Secure Diamond. Few cylinders survive the test designed with the Master Locksmiths Association and carried out by working locksmiths.' },
-  { src: '/brand/secured-by-design.png', title: 'Police Preferred Specification.', body: 'Secured by Design, the official UK Police initiative that combines designing out crime with proven physical security.' },
-  { src: '/brand/bsi-kitemark.webp', title: 'Approved by British Standards.', body: 'The BSI Kitemark is the standard recognised around the world. Watchdog holds the highest 3 Star TS 007 rating, licence KM597142.' },
+  {
+    src: '/brand/sold-secure-diamond.png',
+    eyebrow: 'The Sold Secure Diamond Standard 2024',
+    title: 'The toughest test ever.',
+    body: 'The Watchdog lock passes even the most robust security standard, the Sold Secure Diamond Standard 2024. The trusted anti-snap and anti-bump lock that keeps your property secure.',
+  },
+  {
+    src: '/brand/bsi-kitemark.webp',
+    eyebrow: 'BSI Kitemark',
+    title: 'British Standards.',
+    body: 'The BSI Kitemark is one of the most recognised symbols of quality and safety in the UK, and is acknowledged around the world too. Watchdog holds the highest 3 Star TS 007 rating, licence KM597142.',
+  },
+  {
+    src: '/brand/secured-by-design.png',
+    eyebrow: 'Secured by Design (SBD) locks',
+    title: 'Secured by Design.',
+    body: 'Secured by Design operates an accreditation scheme on behalf of the UK police for products or services that have met recognised security standards: the Police Preferred Specification.',
+  },
 ];
 
-/** Ultion's three stacked accreditation explainers, as three columns on desktop. */
+/** Ultion's three stacked accreditation explainers: big mark, eyebrow, large headline and the explanation, alternating sides. */
 export function Accreditations() {
   return (
-    <section className="py-20" aria-label="Accreditations explained">
-      <div className="container-wd grid gap-12 md:grid-cols-3">
-        {items.map((i) => (
-          <article key={i.title} className="text-center">
-            <div className="relative mx-auto h-28 w-28">
-              <Image src={i.src} alt="" fill sizes="112px" className="object-contain" />
-            </div>
-            <h3 className="mt-6 text-xl font-semibold text-near-black">{i.title}</h3>
-            <p className="mt-3 text-sm leading-relaxed text-charcoal/80">{i.body}</p>
-          </article>
-        ))}
+    <section className="bg-white py-20 lg:py-28" aria-labelledby="accreditations-title">
+      <div className="container-wd">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-block rounded-full bg-red px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">Approved by locksmiths</span>
+          <h2 id="accreditations-title" className="heading-display mt-5 text-4xl sm:text-5xl">Tested, not claimed.</h2>
+        </div>
+        <ol className="mt-16 space-y-16 lg:space-y-24">
+          {items.map((i, idx) => (
+            <li key={i.title} className={`grid items-center gap-10 lg:grid-cols-12 ${idx % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
+              <div className="relative mx-auto flex h-56 w-56 items-center justify-center rounded-full bg-cream sm:h-64 sm:w-64 lg:col-span-5 lg:h-72 lg:w-72">
+                <Image src={i.src} alt="" width={240} height={240} sizes="(min-width: 1024px) 220px, 180px" className="h-[62%] w-[62%] object-contain" />
+              </div>
+              <div className="text-center lg:col-span-7 lg:text-left">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-red">{i.eyebrow}</p>
+                <h3 className="heading-display mt-3 text-3xl sm:text-4xl lg:text-5xl">{i.title}</h3>
+                <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-charcoal/80 lg:mx-0">{i.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

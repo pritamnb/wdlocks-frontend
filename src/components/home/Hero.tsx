@@ -9,8 +9,8 @@ import { useInViewPlayback, usePrefersReducedMotion } from '@/hooks/useInViewPla
 
 /**
  * Full-bleed cinematic hero (Ultion pattern): a muted looping film behind the headline, two
- * calls to action, and a floating £5,000 guarantee card. Until the client supplies a door film,
- * the background is the manufacturer's turntable render.
+ * calls to action, and a floating £5,000 guarantee card. The background is a silent cut of the
+ * inside-the-lock film (drill, pick and snap protection close-ups), per the client's choice.
  */
 export function Hero() {
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -24,18 +24,18 @@ export function Hero() {
     <section className="relative isolate overflow-hidden bg-near-black text-white" aria-labelledby="hero-title">
       <video
         ref={videoRef}
-        className="absolute inset-0 h-full w-full object-cover opacity-70"
+        className="absolute inset-0 h-full w-full object-cover opacity-90"
         muted
         loop
         playsInline
         preload="none"
-        poster={BRAND_VIDEO.turntable.poster}
+        poster={BRAND_VIDEO.heroLoop.poster}
         aria-hidden="true"
         tabIndex={-1}
       >
-        <source src={BRAND_VIDEO.turntable.mp4} type="video/mp4" />
+        <source src={BRAND_VIDEO.heroLoop.mp4} type="video/mp4" />
       </video>
-      <div className="absolute inset-0 bg-gradient-to-r from-near-black via-near-black/80 to-near-black/20" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-r from-near-black/95 via-near-black/70 to-near-black/10" aria-hidden="true" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-near-black to-transparent" aria-hidden="true" />
 
       <div className="container-wd relative grid min-h-[78vh] items-center gap-10 py-20 lg:grid-cols-12 lg:py-28">
