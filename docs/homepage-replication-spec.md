@@ -35,7 +35,7 @@ under the header: "Looking to buy extra keys? Click here". Mobile: logo + basket
 | 18 | `section-home-sweet` | Door furniture range promo with photo | Static | **No equivalent** — omit, or promote Bruno Teddy car-key signal blocker | product photo | Skip / optional |
 | F | footer | Black: 6 link columns (Popular with 2 orange buttons, Locks, Handles, Accessories, Furniture, Support), phone pill, Trustpilot, address, socials, legal, "THE HOME OF HOME SECURITY", Allegion logo | Static | Black footer (have); add "Popular" column with [Get Watchdog keys] [Activate guarantee] buttons, tagline "Stays locked.", Brisant Secure "powered by" mark | — | Have; extend |
 
-## Proposed Watchdog homepage order
+## Watchdog homepage order (built 10 Nov 2026, commit b347859)
 
 1. Utility bar (red) · 2. Hero (video/dark) · 3. Thin accreditation bar · 4. "Find the right protection for you" + 9 product
 cards · 5. "The very best protection for British homes" (dark, exploded/X-ray) · 6. "Fitting the highest security protection

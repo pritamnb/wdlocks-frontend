@@ -342,6 +342,19 @@ four cards (explainer 0:40, Inside the lock 0:38, cylinder turntable 0:10, key t
 two film panels only. Customer-story / CCTV films like Ultion's do not
 exist yet — the bar is built to take them when they do (add entries to `VIDEO_BAR`).
 
+### Pass 8 — 10 Nov 2026, homepage rebuilt in Ultion's order
+Per Pritam ("replicate this website for wdlocks, home page first"), the homepage now follows the section map in
+`docs/homepage-replication-spec.md`: sticky black header + red utility bar · cinematic hero (turntable film behind the
+headline, Watch full video, floating £5,000 card) · thin dark accreditation bar · centred "Find the right protection for you"
+with Ultion-style product cards (all 9 products) · "The very best protection for British homes" (turntable + engraved marks) ·
+"Fitting the highest security protection is the key" + inline explainer with chapters · Home Truths as one giant 3★ figure ·
+red "Buy more Watchdog locks and keys" band · "The Watchdog dimple key" · "One key for all locks" (keyed-alike) · Inside the
+lock · dark "Register your £5,000 guarantee" · See Watchdog in action · three accreditation explainers · delivery · footer with
+a Popular column. Dropped from the homepage: the feature cards + Standard-vs-Watchdog comparison table (candidate for the
+product page), the X-ray panel, and the Reviews section (no verified source yet). Skipped Ultion sections with no Watchdog
+product: Bolt/Nuki smart locks, KeyTag, Ultion Sweet. Asset gaps unchanged (hero door film, exploded render, keyed-alike clip,
+Home Truths photo).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
