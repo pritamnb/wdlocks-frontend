@@ -401,6 +401,13 @@ panel, three-line headline with red "very best", Learn more, engraved-marks row 
 slot (the turntable still runs behind the hero and in the action bar). Replace with the real exploded render when Allegion
 supplies it.
 
+### Pass 14 — 10 Nov 2026, menus on Ultion's dark pattern
+Per `docs/menus-replication-spec.md`: desktop mega-menu is now a dark panel under the black header with dark product cards
+(photo at 20 % opacity / 30 % grayscale brightening to colour on hover, POPULAR pill, white title, muted one-liner, price,
+filled red "Buy online" + outline red "Explore"), a red "More products" column and a dark accreditation strip. Mobile menu is a
+full-screen black panel with the light logo, 2xl white top-level items, expanded groups listing products with red Explore /
+Buy online links, a MOST VIEWED block, contact details and a sticky red guarantee button.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

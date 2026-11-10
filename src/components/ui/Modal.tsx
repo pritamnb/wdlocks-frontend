@@ -160,13 +160,13 @@ export function Modal({
   );
 }
 
-export function CloseButton({ onClick, label = 'Close' }: { onClick: () => void; label?: string }) {
+export function CloseButton({ onClick, label = 'Close', className }: { onClick: () => void; label?: string; className?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full text-charcoal transition-colors duration-150 hover:bg-cream-mid"
+      className={cn('inline-flex h-10 w-10 items-center justify-center rounded-full text-charcoal transition-colors duration-150 hover:bg-cream-mid', className)}
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
         <path d="M18 6 6 18M6 6l12 12" />
