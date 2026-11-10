@@ -9,7 +9,8 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { useCart } from '@/hooks/useCart';
 import { productPriceLabel, decodeEntities } from '@/lib/wdlocks-api';
 import { primaryImage, ctaLabel, isExternalOnly } from '@/lib/product-helpers';
-import { CATALOGUE_BY_ID } from '@/lib/constants';
+import { BRAND_VIDEO, CARD_HOVER_CLIPS, CATALOGUE_BY_ID } from '@/lib/constants';
+import { HoverPreview } from '@/components/media/HoverPreview';
 import { cn } from '@/lib/cn';
 
 interface Props {
@@ -28,6 +29,7 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
   const href = `/products/${entry?.slug ?? product.slug}`;
   const isVariable = product.type === 'variable';
   const externalOnly = isExternalOnly(product);
+  const hoverClip = CARD_HOVER_CLIPS[product.id];
 
   const onCta = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (isVariable) {
@@ -49,14 +51,13 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
     >
       <Link href={href} className="relative block aspect-square overflow-hidden bg-warm-white" aria-label={name} tabIndex={-1}>
         {image ? (
-          <Image
-            src={image.src}
-            alt={image.alt || name}
-            fill
-            priority={priority}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="brighten-img object-contain p-6"
-          />
+          hoverClip ? (
+            <HoverPreview src={BRAND_VIDEO.clips[hoverClip].mp4} className="absolute inset-0">
+              <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" className="brighten-img object-contain p-6" />
+            </HoverPreview>
+          ) : (
+            <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" className="brighten-img object-contain p-6" />
+          )
         ) : (
           <div className="flex h-full items-center justify-center text-charcoal/40">No image</div>
         )}

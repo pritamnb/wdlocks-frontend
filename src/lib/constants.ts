@@ -172,6 +172,16 @@ export const BRAND_VIDEO = {
 
 export type ClipId = keyof typeof BRAND_VIDEO.clips;
 
+/** Silent chapter clip that plays when a product card or menu tile is hovered. */
+export const CARD_HOVER_CLIPS: Readonly<Partial<Record<number, ClipId>>> = {
+  [PRODUCT_IDS.CYLINDER_LOCK]: 'alps',
+  [PRODUCT_IDS.THUMB_TURN]: 'pins',
+  [PRODUCT_IDS.HALF_CYLINDER]: 'pins',
+  [PRODUCT_IDS.EXTRA_KEYS_3]: 'dimpleKey',
+  [PRODUCT_IDS.EXTRA_KEYS_1]: 'dimpleKey',
+  [PRODUCT_IDS.KEYED_ALIKE]: 'dimpleKey',
+};
+
 /** Products whose page shows the dimple-key chapter under the gallery. */
 export const KEY_PRODUCT_IDS: ReadonlySet<number> = new Set([PRODUCT_IDS.EXTRA_KEYS_3, PRODUCT_IDS.EXTRA_KEYS_1, PRODUCT_IDS.KEYED_ALIKE]);
 

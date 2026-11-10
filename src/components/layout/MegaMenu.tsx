@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { WooProduct } from '@/types';
-import { BRAND_RENDERS, CATALOGUE, MENU_GROUPS, type MenuGroupId } from '@/lib/constants';
+import { BRAND_RENDERS, BRAND_VIDEO, CARD_HOVER_CLIPS, CATALOGUE, MENU_GROUPS, type MenuGroupId } from '@/lib/constants';
+import { HoverPreview } from '@/components/media/HoverPreview';
 import { productPriceLabel } from '@/lib/wdlocks-api';
 import { cn } from '@/lib/cn';
 
@@ -50,7 +51,13 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
                     <Link href={href} onClick={onNavigate} className="absolute inset-0 z-10" aria-label={entry.shortName} />
                     <div className="relative h-32 overflow-hidden bg-warm-white">
                       {image ? (
-                        <Image src={image.src} alt="" fill sizes="220px" className="brighten-img object-contain p-4" />
+                        CARD_HOVER_CLIPS[entry.id] ? (
+                          <HoverPreview src={BRAND_VIDEO.clips[CARD_HOVER_CLIPS[entry.id]!].mp4} className="absolute inset-0">
+                            <Image src={image.src} alt="" fill sizes="220px" className="brighten-img object-contain p-4" />
+                          </HoverPreview>
+                        ) : (
+                          <Image src={image.src} alt="" fill sizes="220px" className="brighten-img object-contain p-4" />
+                        )
                       ) : (
                         <div className="h-full w-full bg-cream-mid" />
                       )}

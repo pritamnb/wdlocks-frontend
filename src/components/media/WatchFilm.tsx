@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { Modal } from '@/components/ui/Modal';
+import { HoverPreview } from '@/components/media/HoverPreview';
 import { BRAND_VIDEO } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 
@@ -28,7 +29,9 @@ export function WatchFilm({ className, compact = false }: { className?: string; 
         aria-haspopup="dialog"
       >
         <div className={cn('relative w-full', compact ? 'aspect-[21/9]' : 'aspect-video')}>
-          <Image src={film.poster} alt="" fill sizes="(max-width: 1024px) 100vw, 640px" className="object-cover opacity-90 transition-[opacity,transform] duration-500 group-hover:scale-[1.02] group-hover:opacity-100" />
+          <HoverPreview src={BRAND_VIDEO.turntable.mp4} blend="plain" className="absolute inset-0 [&>video]:object-cover">
+            <Image src={film.poster} alt="" fill sizes="(max-width: 1024px) 100vw, 640px" className="object-cover opacity-90 transition-[opacity,transform] duration-500 group-hover:scale-[1.02] group-hover:opacity-100" />
+          </HoverPreview>
           <div className="absolute inset-0 bg-gradient-to-t from-near-black/80 via-near-black/10 to-transparent" aria-hidden="true" />
           <span className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red text-white shadow-xl ring-4 ring-white/20 transition-transform duration-150 group-hover:scale-105" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>

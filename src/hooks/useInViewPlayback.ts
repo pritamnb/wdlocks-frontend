@@ -39,3 +39,16 @@ export function useInViewPlayback(ref: React.RefObject<HTMLVideoElement | null>,
     return () => io.disconnect();
   }, [ref, enabled, threshold]);
 }
+
+/** True on devices with a real hover pointer (mouse/trackpad); false on touch, and before mount. */
+export function useHoverCapable() {
+  const [canHover, setCanHover] = React.useState(false);
+  React.useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const update = () => setCanHover(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return canHover;
+}

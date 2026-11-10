@@ -5,7 +5,12 @@
  */
 export function sanitizeProductHtml(html: string): string {
   return html
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<\/?(script|style|iframe|object|embed|form|input|link|meta)\b[^>]*>/gi, '')
+    // WordPress wraps CSS the editor pasted as plain text in <p>…</p> (wpautop). Drop paragraphs that
+    // are CSS rules, e.g. ".watchdog-video-wrapper { position: relative; … }".
+    .replace(/<p\b[^>]*>\s*[.#@:\w][^<{}]{0,200}\{[\s\S]*?\}\s*<\/p>/gi, '')
     .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
     .replace(/\s(href|src)\s*=\s*("|')\s*javascript:[^"']*("|')/gi, '')
