@@ -39,10 +39,11 @@ for (const route of ROUTES) {
   });
 }
 
-test('header is white with the expected links, in order', async ({ page, isMobile }) => {
+test('header is translucent black with the expected links, in order', async ({ page, isMobile }) => {
   await page.goto('/');
-  const bg = await page.locator('header').evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(bg).toBe('rgb(253, 250, 246)');
+  const header = await page.locator('header').evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, blur: getComputedStyle(el).backdropFilter }));
+  expect(header.bg, 'translucent near-black header').toMatch(/\/ 0\.(7|8)\d*\)$/);
+  expect(header.blur).toContain('blur');
   if (isMobile) {
     await page.getByRole('button', { name: 'Open menu' }).click();
     const dialog = page.getByRole('dialog');

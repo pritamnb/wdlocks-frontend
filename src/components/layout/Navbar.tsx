@@ -61,8 +61,8 @@ export function Navbar({ products }: { products: WooProduct[] }) {
     <header
       ref={headerRef}
       className={cn(
-        'relative z-40 border-b bg-warm-white text-near-black transition-[box-shadow,border-color] duration-150',
-        scrolled ? 'border-cream-dark shadow-[0_8px_24px_-16px_rgb(10_8_6/0.35)]' : 'border-cream-dark',
+        'relative z-40 border-b bg-near-black/85 text-white backdrop-blur-md transition-[box-shadow,border-color,background-color] duration-150 supports-[backdrop-filter]:bg-near-black/75',
+        scrolled ? 'border-white/15 shadow-[0_12px_32px_-16px_rgb(0_0_0/0.7)]' : 'border-white/10',
       )}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpenGroup(null);
@@ -71,7 +71,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
       <div className="container-wd flex h-16 items-center justify-between gap-3 sm:h-[72px]">
         <button
           type="button"
-          className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full text-near-black transition-colors duration-150 hover:bg-cream-mid lg:hidden"
+          className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full text-white transition-colors duration-150 hover:bg-white/10 lg:hidden"
           aria-label="Open menu"
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen(true)}
@@ -81,7 +81,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
           </svg>
         </button>
 
-        <Logo priority className="lg:mr-4" />
+        <Logo priority tone="light" className="lg:mr-4" />
 
         <nav className="hidden flex-1 lg:block" aria-label="Primary">
           <ul className="flex items-center gap-0.5">
@@ -95,8 +95,8 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                   <button
                     type="button"
                     className={cn(
-                      'inline-flex h-10 items-center gap-1 rounded-full px-3.5 text-sm font-medium transition-colors duration-150 hover:bg-cream-mid hover:text-red',
-                      openGroup === link.menu ? 'text-red' : 'text-near-black',
+                      'inline-flex h-10 items-center gap-1 rounded-full px-3.5 text-sm font-medium transition-colors duration-150 hover:bg-white/10 hover:text-red',
+                      openGroup === link.menu ? 'text-red' : 'text-white',
                     )}
                     aria-expanded={openGroup === link.menu}
                     aria-controls={MEGA_ID}
@@ -118,7 +118,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                 </li>
               ) : (
                 <li key={link.label}>
-                  <Link href={link.href} className="inline-flex h-10 items-center rounded-full px-3.5 text-sm font-medium text-near-black transition-colors duration-150 hover:bg-cream-mid hover:text-red">
+                  <Link href={link.href} className="inline-flex h-10 items-center rounded-full px-3.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-white/10 hover:text-red">
                     {link.label}
                   </Link>
                 </li>
@@ -137,7 +137,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
           <button
             type="button"
             onClick={openCart}
-            className="relative -mr-2 inline-flex h-10 items-center gap-2 rounded-full px-3 text-near-black transition-colors duration-150 hover:bg-cream-mid"
+            className="relative -mr-2 inline-flex h-10 items-center gap-2 rounded-full px-3 text-white transition-colors duration-150 hover:bg-white/10"
             aria-label={`Open basket, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
             aria-haspopup="dialog"
           >
@@ -148,7 +148,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
             <span className="hidden text-sm font-medium sm:inline">Basket</span>
             <span
               className={cn(
-                'absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1 text-[11px] font-semibold text-white ring-2 ring-warm-white transition-transform duration-150',
+                'absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1 text-[11px] font-semibold text-white ring-2 ring-near-black transition-transform duration-150',
                 itemCount === 0 && status !== 'loading' ? 'scale-0' : 'scale-100',
               )}
               aria-hidden="true"

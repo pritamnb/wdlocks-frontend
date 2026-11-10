@@ -502,6 +502,13 @@ pills and bullets, delivery panels, checkout review, FAQs, guarantee and trade c
 (`DISPATCH.cutoffHour` 14, Europe/London). Note: wdlocks.co.uk still says "cut-off time to 3pm" in its side cart; the
 client should align the WordPress copy.
 
+### Pass 23 — 10 Nov 2026, header back to black, translucent
+Pritam liked the white header but asked for black with a little transparency: header is now near-black at 75 % with a
+12 px backdrop blur, white links, red guarantee button; the mega-menu panel is near-black at 92 % with blur, its product
+cards stay light (warm-white, photos in colour) and turn black with white text on hover, keeping the lift, image zoom
+and the red Buy online / outline Explore buttons; the aside card does the same; the mobile menu is dark again. e2e
+header test updated for the oklab colour string browsers now report.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
