@@ -12,8 +12,8 @@ export function Guarantee() {
             Register your <span className="text-red">{GUARANTEE.amountLabel}</span> guarantee.
           </h2>
           <p className="mt-5 max-w-lg text-white/75">{GUARANTEE.blurb} Register your key number at the same time and nobody can have a key cut to it without your say-so.</p>
-          <a href={GUARANTEE.registerUrl} rel="noopener" className="mt-7 inline-flex h-12 items-center gap-2 rounded-full bg-red px-7 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
-            Activate {GUARANTEE.amountLabel} guarantee <span aria-hidden="true">↗</span>
+          <a href={GUARANTEE.href} className="mt-7 inline-flex h-12 items-center gap-2 rounded-full bg-red px-7 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
+            Activate {GUARANTEE.amountLabel} guarantee
           </a>
         </div>
         <div className="relative lg:col-span-5">

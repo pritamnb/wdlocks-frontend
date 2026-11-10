@@ -59,7 +59,22 @@ export const TRUST_SIGNALS = [
 /** £5,000 security guarantee — registration lives on the WooCommerce site. */
 export const GUARANTEE = {
   amountLabel: '£5,000',
+  /** Our guarantee page (Ultion's activation layout). */
+  href: '/guarantee',
+  /** The WordPress (Elementor) registration form, where activations are actually recorded. */
   registerUrl: `${WC_BASE}/guarantee-registration/`,
+  termsUrl: `${WC_BASE}/terms/`,
+  /**
+   * 'handoff': the panel explains what is needed and sends people to the WordPress form.
+   * 'proxy': the full form on our page posts to /api/guarantee, which forwards to the Elementor endpoint.
+   * Keep 'handoff' until a live test submission has been approved and verified.
+   */
+  formMode: 'handoff' as 'handoff' | 'proxy',
+  form: { endpoint: `${WC_BASE}/wp-admin/admin-ajax.php`, postId: 5203, formId: '73d0ba3', refererTitle: 'Guarantee Registration | Watchdog Locks' },
+  /** Key numbers are stamped on the key bow; the WordPress form's example is WD12345678. */
+  keyNumberExample: 'WD12345678',
+  keyNumberPattern: /^[A-Z0-9-]{4,12}$/i,
+  maxKeys: 5,
   blurb: 'Once your Watchdog lock is fitted, register it with us. Registration switches on key-copy protection and activates your £5,000 security guarantee.',
 } as const;
 
@@ -121,7 +136,7 @@ export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured
     featured: ['EXTRA_KEYS_3', 'EXTRA_KEYS_1', 'LUBRICANT', 'BRUNO_TEDDY'],
     more: [
       { label: 'Keyed-alike service', href: '/products/watchdog-keyed-a-like' },
-      { label: 'Activate £5,000 guarantee', href: `${WC_BASE}/guarantee-registration/`, external: true },
+      { label: 'Activate £5,000 guarantee', href: '/guarantee' },
       { label: 'Why Watchdog', href: '/#why-watchdog' },
       { label: 'Home truths', href: '/home-truths' },
       { label: 'Contact us', href: '/#contact' },
@@ -158,6 +173,14 @@ export const BRAND_RENDERS = {
 
 /** Manufacturer turntable animation (10 s, silent, black background). Encoded from client-assets/wetransfer-2026-11-10. */
 export const BRAND_VIDEO = {
+  /** 2 s exploded-view animation of the cylinder (client file home-lock-exploded.mp4, 10 Nov). All-intra encode so it can be scrubbed by scroll; background lifted to white for multiply blending. */
+  exploded: {
+    mp4: '/brand/video/exploded.mp4',
+    poster: '/brand/video/exploded-poster.jpg',
+    endPoster: '/brand/video/exploded-end.jpg',
+    duration: 2,
+    alt: 'The Watchdog 3 Star cylinder flying apart into its housing, plug, eleven pins, springs, anti-drill inserts and the red ALPS cam',
+  },
   turntable: {
     mp4: '/brand/video/turntable.mp4',
     poster: '/brand/video/turntable-poster.jpg',
@@ -732,5 +755,44 @@ export const BEHIND_WATCHDOG = {
     { eyebrow: 'Made by', title: 'Brisant Secure, Dewsbury', body: 'Designed and supplied from West Yorkshire by Brisant Secure, part of Allegion since August 2025.' },
     { eyebrow: 'Fitted by', title: 'Watchdog Locksmiths, London', body: 'A team of professional locksmiths with over ten years on doors, windows and vehicle locks.' },
     { eyebrow: 'Tested to', title: 'Kitemark 3 Star, Sold Secure Diamond', body: 'BSI Kitemark TS 007 3 Star, Sold Secure Diamond and Secured by Design, the Police Preferred Specification.' },
+  ],
+} as const;
+
+/** Guarantee page copy. Every condition is from clause 14 of wdlocks.co.uk/terms (read 10 Nov 2026). */
+export const GUARANTEE_PAGE = {
+  benefits: [
+    { title: '£5,000 if a burglar snaps your lock', body: 'If a burglary happens within 5 years of installation and entry was gained by snapping your registered Watchdog lock, we pay the first £5,000 of your uninsured loss.' },
+    { title: 'Key-copy protection for life', body: 'Register the number stamped on your key and nobody can order a key cut to it without your say-so.' },
+    { title: 'Free, in two minutes', body: 'Your name, your email and your key number. Nothing to pay, no property address, no marketing.' },
+  ],
+  figures: [
+    { value: '£5,000', label: 'first of your uninsured loss' },
+    { value: '5 years', label: 'from the date of installation' },
+    { value: '28 days', label: 'to register after fitting' },
+    { value: '14 days', label: 'to submit a claim after a burglary' },
+  ],
+  conditions: [
+    'A burglary took place at your premises and items belonging to you were stolen.',
+    'The Watchdog lock that entry was gained through was installed within the five years before the incident.',
+    'Entry was achieved solely by a lock-snapping attack on the registered Watchdog lock.',
+    'You registered the lock on the Watchdog website within 28 days of installation.',
+    'The burglary happened after the date of registration.',
+    'A completed claim form, with the documents and items on its checklist, is submitted within 14 days of the incident.',
+    'The lock has only ever been operated with genuine Watchdog keys.',
+    'The lock has been lubricated with Lution XM every 6 months or 5,000 cycles, whichever comes first.',
+    'The claim is accepted at our discretion, as set out in the terms.',
+  ],
+  steps: [
+    { title: 'Report it', body: 'Call the police, get a crime reference number and keep the snapped cylinder exactly as you found it.' },
+    { title: 'Complete the claim form', body: 'Within 14 days of the burglary. The checklist tells you which documents, photos and items to include.' },
+    { title: 'Send it to us', body: 'Post the form, the snapped lock and your documents to Watchdog Locksmith Ltd, 397-399 Greenford Road, Greenford, UB6 8RF, or email sales@wdlocks.co.uk to start.' },
+  ],
+  faq: [
+    { q: 'Do I have to register to be covered?', a: 'Yes. Registration within 28 days of installation is a condition of the guarantee, and the burglary must happen after the date you registered. It is free and takes two minutes.' },
+    { q: 'Where do I find my key number?', a: 'It is stamped on the bow (the flat part you hold) of every genuine Watchdog key, for example WD12345678. It is also printed on the security card in the box.' },
+    { q: 'Does the guarantee replace my home insurance?', a: 'No. It pays the first £5,000 of your uninsured loss when a burglar got in by snapping your registered Watchdog lock. Keep your contents insurance in place.' },
+    { q: 'What if the burglar got in another way?', a: 'The guarantee covers lock-snapping attacks on the registered Watchdog lock only. Entry through a window, an unlocked door or another lock is not covered.' },
+    { q: 'Will copied keys or no lubrication void it?', a: 'Yes. The lock must only ever have been used with genuine Watchdog keys and lubricated with Lution XM every 6 months or 5,000 cycles. Extra keys and lubricant are on this site.' },
+    { q: 'How long does the guarantee last?', a: 'Five years from the date the lock was installed.' },
   ],
 } as const;

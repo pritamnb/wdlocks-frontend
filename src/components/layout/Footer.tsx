@@ -5,7 +5,7 @@ import { CATALOGUE, SITE, WC_BASE, TRUST_SIGNALS, BROCHURE } from '@/lib/constan
 const helpLinks = [
   { label: 'Sizing guide', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
   { label: 'Delivery & dispatch', href: '/#delivery' },
-  { label: 'Guarantee registration', href: `${WC_BASE}/guarantee-registration/`, external: true },
+  { label: 'Guarantee registration', href: '/guarantee' },
   { label: 'Brochure (PDF)', href: BROCHURE.href, external: true },
   { label: 'Trade application', href: `${WC_BASE}/trade-application/`, external: true },
   { label: 'Terms & conditions', href: `${WC_BASE}/terms-and-conditions/`, external: true },
@@ -36,7 +36,7 @@ export function Footer() {
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Popular</h2>
           <div className="flex flex-col gap-2.5">
             <Link href="/products/watchdog-3-star-alps-extra-keys" className="inline-flex h-10 items-center justify-center rounded-md bg-red px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">Get Watchdog keys</Link>
-            <a href={`${WC_BASE}/guarantee-registration/`} rel="noopener" className="inline-flex h-10 items-center justify-center rounded-md border border-white/30 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-white hover:text-near-black">Activate guarantee</a>
+            <a href="/guarantee" className="inline-flex h-10 items-center justify-center rounded-md border border-white/30 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-white hover:text-near-black">Activate guarantee</a>
           </div>
           <p className="mt-6 font-playfair text-lg font-semibold text-white">Watchdog. Stays locked.</p>
         </div>

@@ -100,8 +100,7 @@ export function MobileMenu({ open, onClose, products }: { open: boolean; onClose
       </nav>
       <div className="border-t border-white/10 bg-near-black p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <a
-          href={GUARANTEE.registerUrl}
-          rel="noopener"
+          href={GUARANTEE.href}
           className="flex h-12 w-full items-center justify-center rounded-full bg-red text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep"
         >
           Activate your {GUARANTEE.amountLabel} guarantee

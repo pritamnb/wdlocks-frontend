@@ -71,7 +71,7 @@ export function Hero() {
           <div className="w-full max-w-xs rounded-2xl bg-white p-6 text-near-black shadow-2xl">
             <p className="font-playfair text-2xl font-semibold leading-tight">Get your {GUARANTEE.amountLabel} guarantee</p>
             <p className="mt-2 text-sm text-charcoal/75">Register your lock and key number in two minutes. Free for every genuine Watchdog.</p>
-            <a href={GUARANTEE.registerUrl} rel="noopener" className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-near-black px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red">
+            <a href={GUARANTEE.href} className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-near-black px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red">
               Activate now
             </a>
           </div>

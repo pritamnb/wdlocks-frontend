@@ -425,6 +425,22 @@ place of Ultion's founder quote and timeline, then the existing accreditations, 
 "Reviews" (pointing at a removed section) → "Home truths"; homepage Home Truths "Learn more" → the page; sitemap entry;
 CSP now allows OpenStreetMap frames and same-origin geolocation. Skipped: success stories (reviews source pending).
 
+### Pass 17 — 10 Nov 2026, Guarantee page + real exploded lock
+Per `docs/guarantee-replication-spec.md`: new `/guarantee` route on Ultion's `/guarantee-registration/` layout — dark
+activation panel ("Activate your **protection**.", three red-tick benefits, key-tag render, activation card), then the
+guarantee itself from clause 14 of wdlocks.co.uk/terms (four figures, nine conditions, link to the terms), "How to
+claim" in three steps, "Keep it valid" (genuine keys → extra keys, Lution XM every 6 months → lubricant), key-copy
+protection panel, six-question FAQ with FAQPage JSON-LD, accreditations and buy band. The activation card ships in
+**handoff** mode (explains the three things needed, "Where is my key number?" and "About your data" modals, Activate
+now → the WordPress form). A **proxy** mode is built (`/api/guarantee` → Elementor `elementor_pro_forms_send_form`,
+post 5203 / form 73d0ba3) but stays off until a live test submission is approved. Every "Activate £5,000 guarantee"
+button (header, mobile menu, hero card, homepage panel, Keys menu, footer) now goes to `/guarantee`; sitemap entry.
+Client file `home-lock-exploded.mp4` (2 s exploded-view animation) replaces the CSS slice-explode in "The very best
+protection for British homes": all-keyframe 720p encode, background lifted to white and multiply-blended on a light
+panel (Ultion's is #f0f0f0), **scrubbed by scroll** so the cylinder flies apart as the section rises and reassembles on
+the way back; reduced motion shows the exploded still. Noted for the client: clause 14.1.5 says the claim form is
+"available here" but the terms page has no link.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
