@@ -46,17 +46,17 @@ export function WhyWatchdog() {
           </div>
         </div>
         <div className="mt-12 grid gap-6 lg:grid-cols-12">
-          <figure className="cream-panel relative hidden overflow-hidden rounded-2xl border border-cream-dark lg:col-span-4 lg:block">
+          <figure className="relative hidden overflow-hidden rounded-2xl bg-near-black lg:col-span-4 lg:block">
             <Image
-              src={BRAND_RENDERS.mechanismExploded.src}
-              alt={BRAND_RENDERS.mechanismExploded.alt}
+              src={BRAND_RENDERS.cylinderXray.src}
+              alt={BRAND_RENDERS.cylinderXray.alt}
               fill
               sizes="(min-width: 1024px) 30vw, 0px"
-              className="object-contain p-6 pb-20 drop-shadow-[0_18px_24px_rgb(10_8_6/0.22)]"
+              className="object-cover object-[70%_40%]"
             />
-            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-cream via-cream/90 to-transparent px-5 pb-5 pt-10 text-sm">
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-near-black via-near-black/85 to-transparent px-5 pb-5 pt-14 text-sm text-white">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-red">What&rsquo;s inside</p>
-              <p className="mt-1 text-charcoal/85">The red ALPS cam carrier, hardened anti-drill pins and the spring-loaded pin stack that every Watchdog is built around.</p>
+              <p className="mt-1 text-white/85">X-ray of a Watchdog: eleven spring-loaded pins, anti-drill inserts and the red ALPS cam carrier.</p>
             </figcaption>
           </figure>
           <ul className="grid gap-6 sm:grid-cols-2 lg:col-span-8">

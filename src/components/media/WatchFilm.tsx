@@ -4,17 +4,18 @@ import * as React from 'react';
 import Image from 'next/image';
 import { Modal } from '@/components/ui/Modal';
 import { HoverPreview } from '@/components/media/HoverPreview';
-import { BRAND_VIDEO } from '@/lib/constants';
+import { BRAND_VIDEO, type FilmId } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 
 /**
  * Poster with a play button that opens the 40-second manufacturer film (with sound) in the
  * site modal. Nothing downloads until the visitor asks for it.
  */
-export function WatchFilm({ className, compact = false }: { className?: string; compact?: boolean }) {
+export function WatchFilm({ className, compact = false, film: filmId = 'explainer' }: { className?: string; compact?: boolean; film?: FilmId }) {
   const [open, setOpen] = React.useState(false);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
-  const film = BRAND_VIDEO.film;
+  const film = filmId === 'inside' ? BRAND_VIDEO.insideFilm : BRAND_VIDEO.film;
+  const titleId = `film-title-${filmId}`;
 
   return (
     <>
@@ -46,9 +47,9 @@ export function WatchFilm({ className, compact = false }: { className?: string; 
         </div>
       </button>
 
-      <Modal open={open} onClose={() => setOpen(false)} labelledBy="film-title" variant="center" size="wide" returnFocusTo={triggerRef} className="overflow-hidden rounded-[1.5rem] bg-near-black p-0">
+      <Modal open={open} onClose={() => setOpen(false)} labelledBy={titleId} variant="center" size="wide" returnFocusTo={triggerRef} className="overflow-hidden rounded-[1.5rem] bg-near-black p-0">
         <div className="flex items-center justify-between gap-4 px-5 py-3 text-white">
-          <h2 id="film-title" className="font-playfair text-lg font-semibold">{film.title}</h2>
+          <h2 id={titleId} className="font-playfair text-lg font-semibold">{film.title}</h2>
           <button type="button" onClick={() => setOpen(false)} className="rounded-full px-3 py-1 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">
             Close
           </button>
@@ -59,7 +60,7 @@ export function WatchFilm({ className, compact = false }: { className?: string; 
             Your browser cannot play this video. <a href={film.mp4} className="underline">Download it instead</a>.
           </video>
         )}
-        <p className="px-5 py-3 text-xs text-white/60">Manufacturer film. Chapters: dimple and snake key · 11 pins, 870,000 combinations · Always Locked Protection System · engraved markings.</p>
+        <p className="px-5 py-3 text-xs text-white/60">Manufacturer film. {film.chapters}</p>
       </Modal>
     </>
   );

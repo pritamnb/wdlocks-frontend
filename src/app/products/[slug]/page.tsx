@@ -12,7 +12,7 @@ import { faqsForProduct } from '@/lib/faqs';
 import { decodeEntities, productPriceLabel, stripHtml } from '@/lib/wdlocks-api';
 import { sanitizeProductHtml } from '@/lib/sanitize';
 import { galleryImagesFor } from '@/lib/product-helpers';
-import { BRAND_VIDEO, CATALOGUE_BY_ID, KEY_PRODUCT_IDS, PRODUCT_IDS, SITE, SITE_URL } from '@/lib/constants';
+import { BRAND_VIDEO, BROCHURE, CATALOGUE_BY_ID, KEY_PRODUCT_IDS, PRODUCT_IDS, SITE, SITE_URL } from '@/lib/constants';
 import { WatchFilm } from '@/components/media/WatchFilm';
 import { ChapterLoop } from '@/components/media/ChapterLoop';
 
@@ -100,9 +100,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           <ProductGallery images={gallery} name={name} />
           {product.id === PRODUCT_IDS.CYLINDER_LOCK && <WatchFilm compact className="mt-4" />}
           {KEY_PRODUCT_IDS.has(product.id) && (
-            <figure className="cream-panel mt-4 overflow-hidden rounded-[1.5rem] border border-cream-dark p-4">
-              <ChapterLoop clip="dimpleKey" className="rounded-xl" />
-              <figcaption className="mt-2 text-center text-xs text-charcoal/70">Dimple and snake key — every Watchdog key is cut against your key number.</figcaption>
+            <figure className="mt-4 overflow-hidden rounded-[1.5rem] bg-near-black shadow-card">
+              <ChapterLoop clip="keyTurntable" blend="plain" />
+              <figcaption className="px-4 pb-4 text-center text-xs text-white/60">The Watchdog Stays Locked key — dimple cuts and snake groove, cut against your key number.</figcaption>
             </figure>
           )}
         </div>
@@ -150,6 +150,12 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         <section className="mt-16 max-w-3xl" aria-labelledby="description-title">
           <h2 id="description-title" className="heading-display text-2xl">About this product</h2>
           <div className="prose-wd mt-4" dangerouslySetInnerHTML={{ __html: sanitizeProductHtml(product.description) }} />
+          <p className="mt-6 text-sm text-charcoal/80">
+            Prefer it on paper?{' '}
+            <a href={BROCHURE.href} className="link-underline font-medium text-near-black hover:text-red" download>
+              Download the {BROCHURE.label}
+            </a>
+          </p>
         </section>
       )}
 

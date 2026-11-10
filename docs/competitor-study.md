@@ -327,6 +327,12 @@ Watchdog.mp4 202 MB) arrived by WeTransfer; downloaded 10 Nov 2026 to
   engraving — is used in the Why Watchdog section (`public/brand/product/mechanism-exploded.png`). Replace it with the Watchdog
   exploded render when it arrives.
 
+### Pass 6 — 10 Nov 2026, existing client assets put to work
+Audit of Pritam's Mac and mailbox found most imagery had already been supplied on 6 Nov (see `docs/asset-register.md`). Now
+live: 5000 px Watchdog render as the hero; Watchdog X-ray in Why Watchdog (the Ultion-derived crop is gone); Watchdog key
+turntable on the keys pages; the 38 s "Inside the lock" macro film as a second click-to-play; brochure PDF in the footer and
+on product pages. Only a Watchdog exploded view and keyed-alike clip remain to ask Allegion for.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

@@ -143,8 +143,12 @@ export const BRAND_RENDERS = {
   cylinderFront: { src: '/brand/product/cylinder-front.png', width: 470, height: 900, alt: 'Front view of the Watchdog cylinder showing the 3 Star Kitemark and red cam' },
   /** Three engraved Watchdog Locksmiths keys on a ring. */
   keysEngraved: { src: '/brand/product/keys-engraved.png', width: 928, height: 1000, alt: 'Three Watchdog dimple keys engraved with Watchdog Locksmiths 0800 389 9965' },
-  /** Exploded mechanism: ALPS cam carrier, anti-drill pins, springs. Cropped from Allegion's exploded render so no housing engraving is in frame. */
-  mechanismExploded: { src: '/brand/product/mechanism-exploded.png', width: 508, height: 1100, alt: 'Exploded view of the cylinder internals: the red ALPS cam carrier, hardened anti-drill pins and pin springs' },
+  /** 5000 px Watchdog cylinder render from Vijay's 6 Nov transfer (ALPS_Bridge-Watchdog-Key-Key.png), trimmed to 1600 px. */
+  heroCylinder: { src: '/brand/product/cylinder-hero.png', width: 1600, height: 1139, alt: 'Watchdog 3 Star ALPS euro cylinder with red anti-snap cam and BSI Kitemark markings' },
+  /** X-ray render of the Watchdog cylinder showing the pin stack and springs (black background). */
+  cylinderXray: { src: '/brand/product/cylinder-xray.jpg', width: 1400, height: 878, alt: 'X-ray view of the Watchdog cylinder showing the eleven pins, springs and red ALPS cam inside the body' },
+  /** Single Watchdog key, "Watchdog Stays Locked" bow. */
+  keySingle: { src: '/brand/product/key-single.png', width: 734, height: 1000, alt: 'A single Watchdog dimple key with the Watchdog Stays Locked bow' },
   /** Key tag: Stays Locked, £5000 guarantee, activate at wdlocks.co.uk. */
   guaranteeKeytag: { src: '/brand/product/guarantee-keytag.png', width: 754, height: 900, alt: 'Watchdog key tag: if a burglar snaps your lock and breaks in, £5,000 guarantee, activate for free at wdlocks.co.uk' },
 } as const;
@@ -163,16 +167,32 @@ export const BRAND_VIDEO = {
     title: 'How a Watchdog lock works',
     durationLabel: '0:40',
     durationIso: 'PT40S',
+    chapters: 'Dimple and snake key · 11 pins, 870,000 combinations · Always Locked Protection System · engraved markings.',
+  },
+  /** 38 s macro journey inside the cylinder (Vijay, 6 Nov): pick protection, thermal exhaust ports, pin stack. With sound. */
+  insideFilm: {
+    mp4: '/brand/video/inside-film.mp4',
+    poster: '/brand/video/inside-film-poster.jpg',
+    title: 'Inside the lock',
+    durationLabel: '0:38',
+    durationIso: 'PT38S',
+    chapters: 'A camera journey through the cylinder: the pin chambers, anti-pick springs, thermal exhaust ports and the engraved body.',
   },
   /** Silent chapter cuts from the film, faded to white at both ends so they can be multiply-blended onto cream. */
   clips: {
     dimpleKey: { mp4: '/brand/video/clip-dimple-key.mp4', poster: '/brand/video/clip-dimple-key-poster.jpg', alt: 'A dimple and snake key sliding into a cut-away Watchdog cylinder' },
     pins: { mp4: '/brand/video/clip-pins.mp4', poster: '/brand/video/clip-pins-poster.jpg', alt: 'Cut-away of the eleven colour-coded pins inside the Watchdog cylinder lifting as the key enters' },
     alps: { mp4: '/brand/video/clip-alps.mp4', poster: '/brand/video/clip-alps-poster.jpg', alt: 'Cut-away of the red cam and Always Locked Protection System engaging inside the cylinder' },
+    /** Watchdog key turning on a black turntable (10 s, from Vijay's 6 Nov transfer). Use with blend="plain" on a dark panel. */
+    keyTurntable: { mp4: '/brand/video/key-turntable.mp4', poster: '/brand/video/key-turntable-poster.jpg', alt: 'A Watchdog Stays Locked key rotating slowly to show the dimple cuts and snake groove' },
   },
 } as const;
 
 export type ClipId = keyof typeof BRAND_VIDEO.clips;
+export type FilmId = 'explainer' | 'inside';
+
+/** Client brochure (Brisant/Allegion, 2025 v2), 4 pages. */
+export const BROCHURE = { href: '/brand/watchdog-brochure.pdf', label: 'Watchdog brochure (PDF, 7 MB)', issuu: 'https://issuu.com/brisant-secure/docs/watchdog_brochure_2025-2' } as const;
 
 /** Silent chapter clip that plays when a product card or menu tile is hovered. */
 export const CARD_HOVER_CLIPS: Readonly<Partial<Record<number, ClipId>>> = {

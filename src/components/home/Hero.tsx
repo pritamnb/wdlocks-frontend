@@ -44,8 +44,8 @@ export function Hero({ imageSrc, imageAlt }: { imageSrc?: string; imageAlt?: str
         <div className="relative lg:col-span-6">
           <div className="group relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden rounded-[2rem] bg-[radial-gradient(ellipse_at_30%_20%,var(--warm-white)_0%,var(--cream-mid)_70%,var(--cream-dark)_100%)] shadow-card ring-1 ring-cream-dark">
             <Image
-              src={imageSrc ?? BRAND_RENDERS.cylinderAngled.src}
-              alt={imageAlt ?? BRAND_RENDERS.cylinderAngled.alt}
+              src={imageSrc ?? BRAND_RENDERS.heroCylinder.src}
+              alt={imageAlt ?? BRAND_RENDERS.heroCylinder.alt}
               fill
               priority
               sizes="(max-width: 1024px) 90vw, 560px"

@@ -10,16 +10,16 @@ Locations: `~/Downloads/WD/` (raw downloads) · `~/Documents/wdlocks/client-asse
 
 | Asset | Source | Where | Used on site? |
 |---|---|---|---|
-| Watchdog cylinder render, angled (5000×4000, alpha) `ALPS_Bridge-Watchdog-Key-Key.png` | Vijay WeTransfer "Web", 6 Nov | Downloads/WD/Pritam - New Web Designed | No — higher-res than the hero render in use |
+| Watchdog cylinder render, angled (5000×4000, alpha) `ALPS_Bridge-Watchdog-Key-Key.png` | Vijay WeTransfer "Web", 6 Nov | Downloads/WD/Pritam - New Web Designed | **Yes — hero image** (1600 px) |
 | Cylinder turntable, white bg (10 s 4K) `WatchDog_TurnTable_animation White- 2024.mp4` | Vijay, 6 Nov | Downloads/WD/Images/3d | No (black-bg version from Allegion 10 Nov is live) |
-| **Key turntable, black bg (10 s 4K)** `Key_turntable-black.mp4` — Watchdog Stays Locked key | Vijay, 6 Nov | Downloads/WD/Images/3d | No — ideal for the Keys menu / keys pages |
+| **Key turntable, black bg (10 s 4K)** `Key_turntable-black.mp4` — Watchdog Stays Locked key | Vijay, 6 Nov | Downloads/WD/Images/3d | **Yes — keys product pages** (black panel) |
 | Explainer film, 5:4 (40 s 4K) `Watchdog_5x4-Vent Press.mp4` | Vijay, 6 Nov | Downloads/WD/Images/3d | 16:9 version from Allegion is live |
-| **Inside-the-lock macro film (38 s 4K)** `Watchdog_inside_animation_Handle - Lock.mp4` — pick protection, thermal exhaust ports, pin stack | Vijay, 6 Nov | Downloads/WD/Images/3d | No — strong Why Watchdog / product-page material |
+| **Inside-the-lock macro film (38 s 4K)** `Watchdog_inside_animation_Handle - Lock.mp4` — pick protection, thermal exhaust ports, pin stack | Vijay, 6 Nov | Downloads/WD/Images/3d | **Yes — "Inside the lock" film** in the turntable section (1024p, 6.8 MB) |
 | Explainer film 720p `watchdog-3-720p.mp4` | Vijay, 6 Nov | Downloads/WD/videos | Superseded by the 4K source |
 | **Vimeo "Watchdog-3"** https://vimeo.com/1010901452 (Brisant-Secure, 40 s, 2024) | Paramjit email, 6 Nov | — | No — could replace the self-hosted film embed |
-| Brochure PDF (4 pp) `watchdog-Brochure_2.pdf` + Issuu https://issuu.com/brisant-secure/docs/watchdog_brochure_2025-2 | Paramjit email, 6 Nov | client-assets/email-2026-11-06-brochure | No — link from footer / product page |
+| Brochure PDF (4 pp) `watchdog-Brochure_2.pdf` + Issuu https://issuu.com/brisant-secure/docs/watchdog_brochure_2025-2 | Paramjit email, 6 Nov | client-assets/email-2026-11-06-brochure | **Yes — footer + product page download link** |
 | Presentation case PDF (1 p) | Paramjit email, 6 Nov | client-assets/email-2026-11-06-brochure | No |
-| **X-ray render** `WatchDog-Xray2.jpg` (1732×1086, black bg) | Paramjit email, 6 Nov | client-assets/email-2026-11-06-brochure | No — fits the near-black Turntable section |
+| **X-ray render** `WatchDog-Xray2.jpg` (1732×1086, black bg) | Paramjit email, 6 Nov | client-assets/email-2026-11-06-brochure | **Yes — Why Watchdog "What's inside" panel** (replaced the Ultion-derived crop) |
 | Single key, "Watchdog Stays Locked" bow `Watchdog-key3.png` (867×1181, alpha) | Paramjit email, 6 Nov | client-assets/email-2026-11-06-brochure | No |
 | Cylinder front view `front of watchdog cylinder.png` (1134×2084, alpha) | Paramjit email, 6 Nov | client-assets/email-2026-11-06-brochure | Similar render from Allegion is live in Home Truths |
 | Cylinder side-on `watchdog side on.png` (2835×1264, alpha) | Paramjit email, 6 Nov | client-assets/email-2026-11-06-brochure | No — good for the sizing diagram |
@@ -36,7 +36,7 @@ Locations: `~/Downloads/WD/` (raw downloads) · `~/Documents/wdlocks/client-asse
 | `Watchdog 1-Star_PLUS.png` (actually Ultion 1-Star PLUS) | Allegion email, 10 Nov |
 | Vimeo "Ultion 3 star plus" https://vimeo.com/692195871 | Pritam, 10 Nov |
 
-Brand-free crop of the exploded view (cam carrier + pins only) is live in Why Watchdog with Pritam's approval.
+The brand-free crop of the Ultion exploded view was used briefly on 10 Nov and has been replaced by the Watchdog X-ray render.
 
 ## Genuinely missing (worth asking for)
 

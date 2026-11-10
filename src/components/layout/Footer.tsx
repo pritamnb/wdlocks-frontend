@@ -1,11 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CATALOGUE, SITE, WC_BASE, TRUST_SIGNALS } from '@/lib/constants';
+import { CATALOGUE, SITE, WC_BASE, TRUST_SIGNALS, BROCHURE } from '@/lib/constants';
 
 const helpLinks = [
   { label: 'Sizing guide', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
   { label: 'Delivery & dispatch', href: '/#delivery' },
   { label: 'Guarantee registration', href: `${WC_BASE}/guarantee-registration/`, external: true },
+  { label: 'Brochure (PDF)', href: BROCHURE.href, external: true },
   { label: 'Trade application', href: `${WC_BASE}/trade-application/`, external: true },
   { label: 'Terms & conditions', href: `${WC_BASE}/terms-and-conditions/`, external: true },
 ];
