@@ -433,7 +433,7 @@ claim" in three steps, "Keep it valid" (genuine keys → extra keys, Lution XM e
 protection panel, six-question FAQ with FAQPage JSON-LD, accreditations and buy band. The activation card ships in
 **handoff** mode (explains the three things needed, "Where is my key number?" and "About your data" modals, Activate
 now → the WordPress form). A **proxy** mode is built (`/api/guarantee` → Elementor `elementor_pro_forms_send_form`,
-post 5203 / form 73d0ba3) but stays off until a live test submission is approved. Every "Activate £5,000 guarantee"
+post 5203 / form 73d0ba3); switched on the same evening after one approved test submission was accepted ("Your submission was successful"), so the whole registration now happens on our page. Every "Activate £5,000 guarantee"
 button (header, mobile menu, hero card, homepage panel, Keys menu, footer) now goes to `/guarantee`; sitemap entry.
 Client file `home-lock-exploded.mp4` (2 s exploded-view animation) replaces the CSS slice-explode in "The very best
 protection for British homes": all-keyframe 720p encode, background lifted to white and multiply-blended on a light

@@ -69,7 +69,7 @@ export const GUARANTEE = {
    * 'proxy': the full form on our page posts to /api/guarantee, which forwards to the Elementor endpoint.
    * Keep 'handoff' until a live test submission has been approved and verified.
    */
-  formMode: 'handoff' as 'handoff' | 'proxy',
+  formMode: 'proxy' as 'handoff' | 'proxy',
   form: { endpoint: `${WC_BASE}/wp-admin/admin-ajax.php`, postId: 5203, formId: '73d0ba3', refererTitle: 'Guarantee Registration | Watchdog Locks' },
   /** Key numbers are stamped on the key bow; the WordPress form's example is WD12345678. */
   keyNumberExample: 'WD12345678',
