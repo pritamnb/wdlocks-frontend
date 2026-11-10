@@ -393,6 +393,14 @@ and a dark closer; the keyed-alike page also gets the "Front door + Back door + 
 already shared the cylinder configurator and lock sections. FAQ accordions and the inline film stay where they were. Skipped:
 Trustpilot bars and review sliders; Apple/Google Pay (payment is on wdlocks.co.uk).
 
+### Pass 13 — 10 Nov 2026, "The very best protection for British homes" exploded-lock moment
+Pritam asked for Ultion's exploded-lock section. No Watchdog exploded render exists, so `ExplodedLock` cuts the Watchdog
+cylinder render into seven vertical slices that sit assembled and spring apart (with drift and tilt, cam slice fixed) once the
+section is half in view, playing once; reduced motion shows the exploded state. Section restyled to Ultion's layout: dark
+panel, three-line headline with red "very best", Learn more, engraved-marks row beneath. Replaces the turntable video in that
+slot (the turntable still runs behind the hero and in the action bar). Replace with the real exploded render when Allegion
+supplies it.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

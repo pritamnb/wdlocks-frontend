@@ -4,7 +4,7 @@ import { Hero } from '@/components/home/Hero';
 import { TrustStrip } from '@/components/home/TrustStrip';
 import { VideoBar } from '@/components/home/VideoBar';
 import { HomeTruths } from '@/components/home/HomeTruths';
-import { Turntable } from '@/components/home/Turntable';
+import { Protection } from '@/components/home/Protection';
 import { InsideTheLock } from '@/components/home/InsideTheLock';
 import { WhyWatchdog } from '@/components/home/WhyWatchdog';
 import { Guarantee } from '@/components/home/Guarantee';
@@ -56,7 +56,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <Turntable />
+      <Protection />
       <WhyWatchdog />
       <HomeTruths />
       <BuyBand />
