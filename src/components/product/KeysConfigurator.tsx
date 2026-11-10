@@ -7,11 +7,10 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
-import { fetchCart } from '@/lib/cart-client';
-import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
 import { decodeEntities, formatPrice } from '@/lib/wdlocks-api';
 import { BRAND_RENDERS, PRODUCT_IDS } from '@/lib/constants';
 import { cn } from '@/lib/cn';
+import { useRouter } from 'next/navigation';
 
 const QUANTITIES = [1, 2, 3, 4, 5, 6];
 /** Letters and digits, 4–12 characters, as stamped on the key bow / key tag. Confirm the exact Watchdog format with the client. */
@@ -23,7 +22,8 @@ const KEY_NUMBER_RE = /^[A-Z0-9-]{4,12}$/i;
  * cannot set, so that product continues to the wdlocks.co.uk product page carrying quantity and key number.
  */
 export function KeysConfigurator({ product }: { product: WooProduct }) {
-  const { addToCart, isAdding, openCart, clearCart } = useCart();
+  const { addToCart, isAdding } = useCart();
+  const router = useRouter();
   const [qty, setQty] = React.useState(3);
   const [keyNumber, setKeyNumber] = React.useState('');
   const [touched, setTouched] = React.useState(false);
@@ -65,14 +65,7 @@ export function KeysConfigurator({ product }: { product: WooProduct }) {
     try {
       const ok = await addNative(false);
       if (!ok) return;
-      const cart = await fetchCart();
-      if (!canCheckout(cart).ok) {
-        openCart();
-        return;
-      }
-      const url = buildCheckoutUrl(cart);
-      await clearCart();
-      window.location.assign(url);
+      router.push('/checkout');
     } finally {
       setCheckingOut(false);
     }

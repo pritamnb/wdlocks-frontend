@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { WooProduct } from '@/types';
 import { Modal, CloseButton } from '@/components/ui/Modal';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -10,30 +11,13 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
-import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
+import { canCheckout } from '@/lib/checkout';
 import { CATALOGUE_BY_ID, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
 
 export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
   const { cart, status, error, isOpen, closeCart, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, clearCart, addToCart, isAdding } = useCart();
-  const [checkingOut, setCheckingOut] = React.useState(false);
   const items = cart?.items ?? [];
   const checkout = canCheckout(cart);
-
-  React.useEffect(() => {
-    const onShow = (e: PageTransitionEvent) => {
-      if (e.persisted) setCheckingOut(false);
-    };
-    window.addEventListener('pageshow', onShow);
-    return () => window.removeEventListener('pageshow', onShow);
-  }, []);
-
-  const goToCheckout = async () => {
-    if (!cart || !checkout.ok) return;
-    setCheckingOut(true);
-    const url = buildCheckoutUrl(cart);
-    await clearCart();
-    window.location.assign(url);
-  };
 
   // "Don't forget" upsells: simple products not already in the basket.
   const inCart = new Set(items.map((i) => i.id));
@@ -139,19 +123,19 @@ export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
             <dd className="font-playfair text-2xl font-semibold tabular-nums text-near-black">{formatPrice(subtotalPence)}</dd>
           </dl>
           <p className="mt-1 text-xs text-charcoal/75">Royal Mail tracked delivery from {formatPrice(640)}, chosen at checkout.</p>
-          <Button size="lg" className="mt-4 w-full" onClick={() => void goToCheckout()} loading={checkingOut} disabled={pendingKeys.size > 0 || !checkout.ok}>
-            Checkout securely
+          <ButtonLink href="/checkout" size="lg" className={`mt-4 w-full ${pendingKeys.size > 0 || !checkout.ok ? 'pointer-events-none opacity-50' : ''}`} aria-disabled={pendingKeys.size > 0 || !checkout.ok} onClick={closeCart}>
+            Go to checkout
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
-          </Button>
+          </ButtonLink>
+          <Link href="/basket" onClick={closeCart} className="mt-2 block w-full text-center text-sm font-medium text-charcoal/75 transition-colors duration-150 hover:text-red">
+            View basket
+          </Link>
           <ul className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px] text-charcoal/80">
             <li className="rounded-lg bg-cream px-2 py-1.5">🔒 Secure checkout</li>
             <li className="rounded-lg bg-cream px-2 py-1.5">📦 Same-day dispatch</li>
             <li className="rounded-lg bg-cream px-2 py-1.5">🔑 3 keys included</li>
           </ul>
           <p className="mt-2 text-center text-[11px] text-charcoal/75">You’ll complete payment on wdlocks.co.uk, our secure WooCommerce checkout.</p>
-          <button type="button" onClick={closeCart} className="mt-2 w-full text-center text-sm font-medium text-charcoal/75 transition-colors duration-150 hover:text-red">
-            Continue shopping
-          </button>
         </div>
       )}
     </Modal>

@@ -375,6 +375,16 @@ Below: dark "The real deal. Precision-cut keys from Watchdog" and cream "Key pro
 the gallery: non-genuine keys damage the lock and invalidate the guarantee. Trustpilot slider skipped (no verified source).
 Open: confirm the Watchdog key-number format with the client; extend the handoff plugin with `wd_keycode`.
 
+### Pass 11 — 10 Nov 2026, basket & checkout rebuilt to Ultion's flow
+Per `docs/basket-checkout-replication-spec.md`. Ultion: mini-cart drawer → /cart/ → one-page /checkout/ on the same domain.
+Ours (payment stays on wdlocks.co.uk): drawer (now "Go to checkout" + "View basket") → `/basket` (line table, Don't forget
+upsells, basket totals, Proceed to checkout) → `/checkout` review page (what happens next, payment marks, delivery options
+with prices, order summary with qty/remove, total inc VAT, dispatch countdown and arrival date, "Continue to secure payment")
+→ wdlocks.co.uk/checkout. Product "Checkout now" buttons now land on `/checkout` instead of handing off blind. Both pages
+noindex. Single-line guard unchanged until the handoff plugin is installed. Still for the client: restyle the WordPress checkout
+template (hide theme nav, trust strip, cards first) — not possible from this repo. Coupons: enter on the payment page (no proxy
+endpoint yet).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

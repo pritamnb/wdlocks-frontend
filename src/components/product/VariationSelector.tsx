@@ -7,13 +7,11 @@ import { Button } from '@/components/ui/Button';
 import { QuantityControl } from '@/components/cart/QuantityControl';
 import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
-import { fetchCart } from '@/lib/cart-client';
-import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
 import { getVariationModel, type VariationOption } from '@/lib/product-helpers';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { DEFAULT_VARIATION_ID, PRODUCT_IDS, WC_BASE, CATALOGUE_BY_ID } from '@/lib/constants';
 import { cn } from '@/lib/cn';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Props {
   product: WooProduct;
@@ -65,7 +63,8 @@ function Chevron() {
 
 export function VariationSelector({ product, onAdded, headingId, className, showUpsells = false }: Props) {
   const model = React.useMemo(() => getVariationModel(product), [product]);
-  const { addToCart, isAdding, openCart, clearCart } = useCart();
+  const { addToCart, isAdding } = useCart();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [selected, setSelected] = React.useState<VariationOption | null>(() => {
     const byId = Number(searchParams.get('variation'));
@@ -139,15 +138,7 @@ export function VariationSelector({ product, onAdded, headingId, className, show
     try {
       const ok = await add(false);
       if (!ok) return;
-      const cart = await fetchCart();
-      const gate = canCheckout(cart);
-      if (!gate.ok) {
-        openCart();
-        return;
-      }
-      const url = buildCheckoutUrl(cart);
-      await clearCart();
-      window.location.assign(url);
+      router.push('/checkout');
     } finally {
       setCheckingOut(false);
     }
