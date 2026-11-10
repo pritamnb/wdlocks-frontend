@@ -171,3 +171,12 @@
     .marquee { animation: none; }
   }
 }
+
+/* Manufacturer film injected into the WooCommerce description accordion (see sanitize.ts). */
+.prose-wd .watchdog-inline-film {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 1rem;
+  background: var(--near-black);
+  margin: 0.75rem 0 1rem;
+}
