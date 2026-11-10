@@ -99,7 +99,7 @@ export const NAV_LINKS = [
   { label: 'Locks', href: '/products', menu: 'locks' as MenuGroupId },
   { label: 'Keys & Aftercare', href: '/products#keys-and-aftercare', menu: 'keys' as MenuGroupId },
   { label: 'Why Watchdog', href: '/#why-watchdog', menu: null },
-  { label: 'Reviews', href: '/#reviews', menu: null },
+  { label: 'Home truths', href: '/home-truths', menu: null },
   { label: 'Contact', href: '/#contact', menu: null },
 ] as const;
 
@@ -123,6 +123,7 @@ export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured
       { label: 'Keyed-alike service', href: '/products/watchdog-keyed-a-like' },
       { label: 'Activate £5,000 guarantee', href: `${WC_BASE}/guarantee-registration/`, external: true },
       { label: 'Why Watchdog', href: '/#why-watchdog' },
+      { label: 'Home truths', href: '/home-truths' },
       { label: 'Contact us', href: '/#contact' },
     ],
     aside: { eyebrow: 'Lost a key?', title: 'Extra keys cut to your key number.', cta: 'Order extra keys →', href: '/products/watchdog-3-star-alps-extra-keys', image: 'keysEngraved' },
@@ -638,3 +639,98 @@ export const MAX_CART_QUANTITY = 99;
  * (4266 "Extra Keys" needs an "Existing Key Number"). These link out to the WooCommerce product page.
  */
 export const EXTERNAL_ONLY_PRODUCT_IDS: ReadonlySet<number> = new Set<number>([PRODUCT_IDS.EXTRA_KEYS_3]);
+
+/**
+ * Home truths. Every figure is from the ONS Crime Survey for England and Wales, "Nature of crime: burglary" tables,
+ * year ending March 2025 (domestic burglary in a dwelling). Table references are in docs/home-truths-replication-spec.md.
+ */
+export const HOME_TRUTHS_SOURCE = {
+  label: 'ONS Crime Survey for England and Wales, Nature of crime: burglary, year ending March 2025',
+  href: 'https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/natureofcrimeburglary',
+} as const;
+
+export interface HomeTruth {
+  stat: string;
+  claim: string;
+  title: string;
+  body: string;
+  source: string;
+  render: keyof typeof BRAND_RENDERS;
+}
+
+export const HOME_TRUTHS: readonly HomeTruth[] = [
+  {
+    stat: '63%',
+    claim: 'of burglaries happen while someone is at home',
+    title: 'You are not home alone.',
+    body: 'Nearly two in three domestic burglaries happen with someone in the house. Your front door is not just protecting your belongings; it is protecting the people behind it.',
+    source: 'Table 10a, contact with offenders, all domestic burglary in a dwelling, Apr 2024 to Mar 2025.',
+    render: 'cylinderFront',
+  },
+  {
+    stat: '77%',
+    claim: 'of burglars who got in came through a door, not a window',
+    title: 'Knock knock. You are only as secure as your weakest lock.',
+    body: 'Doors are the burglar\u2019s first choice because they are quick. Windows account for one entry in five. Fitting a 3 Star cylinder to every external door closes the easy way in.',
+    source: 'Table 3b, method of entry, burglary with entry, Apr 2024 to Mar 2025.',
+    render: 'cylinderAngled',
+  },
+  {
+    stat: '59%',
+    claim: 'of break-ins with entry were at the front of the house',
+    title: 'The front door. In plain sight.',
+    body: 'Most burglars walk up to the front like anyone else. A cylinder that snaps in seconds is an invitation. One that locks its own cam the moment the key comes out is not.',
+    source: 'Table 2b, point of entry, burglary with entry, Apr 2024 to Mar 2025.',
+    render: 'cylinderDetail',
+  },
+  {
+    stat: '74%',
+    claim: 'of burglaries with entry happened in the evening or at night',
+    title: 'After dark is still the burglar\u2019s hour.',
+    body: 'Three in four successful break-ins are in the evening or overnight, when you are most likely to be in. Lock the door every time you close it, and make sure the lock is worth locking.',
+    source: 'Table 1b, timing, burglary with entry, Apr 2024 to Mar 2025.',
+    render: 'cylinderXray',
+  },
+  {
+    stat: '1 in 4',
+    claim: 'burglars simply walked through a door that was not locked',
+    title: 'The best lock in the world only works when you turn the key.',
+    body: 'A quarter of entries needed no force at all. Another 15% forced the lock. A Watchdog cylinder deals with the second group; the first is down to habit.',
+    source: 'Table 3b, method of entry, burglary with entry: door not locked 24.5%, forced lock 14.9%, Apr 2024 to Mar 2025.',
+    render: 'keysEngraved',
+  },
+];
+
+/** Postcode crime checker (data.police.uk, Open Government Licence v3). */
+export const CRIME_CHECKER = {
+  months: 6,
+  radii: [1, 3] as const,
+  attribution: 'Contains public sector information licensed under the Open Government Licence v3.0. Data: data.police.uk.',
+  categories: {
+    'anti-social-behaviour': 'Anti-social behaviour',
+    'bicycle-theft': 'Bicycle theft',
+    burglary: 'Burglary',
+    'criminal-damage-arson': 'Criminal damage and arson',
+    drugs: 'Drugs',
+    'other-theft': 'Other theft',
+    'possession-of-weapons': 'Possession of weapons',
+    'public-order': 'Public order',
+    robbery: 'Robbery',
+    shoplifting: 'Shoplifting',
+    'theft-from-the-person': 'Theft from the person',
+    'vehicle-crime': 'Vehicle crime',
+    'violent-crime': 'Violence and sexual offences',
+    'other-crime': 'Other crime',
+  } as Record<string, string>,
+} as const;
+
+/** "Who's behind Watchdog": only facts with a public source (see docs/home-truths-replication-spec.md). */
+export const BEHIND_WATCHDOG = {
+  statement: 'There\u2019s no security test that the Watchdog lock hasn\u2019t passed with flying colours. Tested by locksmiths, and trusted by homeowners.',
+  attribution: 'Watchdog Locksmiths, wdlocks.co.uk',
+  facts: [
+    { eyebrow: 'Made by', title: 'Brisant Secure, Dewsbury', body: 'Designed and supplied from West Yorkshire by Brisant Secure, part of Allegion since August 2025.' },
+    { eyebrow: 'Fitted by', title: 'Watchdog Locksmiths, London', body: 'A team of professional locksmiths with over ten years on doors, windows and vehicle locks.' },
+    { eyebrow: 'Tested to', title: 'Kitemark 3 Star, Sold Secure Diamond', body: 'BSI Kitemark TS 007 3 Star, Sold Secure Diamond and Secured by Design, the Police Preferred Specification.' },
+  ],
+} as const;

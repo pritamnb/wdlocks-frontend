@@ -414,6 +414,17 @@ broken images, no horizontal overflow, JSON-LD valid, one visible `h1` per page,
 /checkout → remove) works end to end. Fixed: the 404 page now has its own title and `noindex`. Report:
 [qa-report-2026-11-10.md](qa-report-2026-11-10.md).
 
+### Pass 16 — 10 Nov 2026, Home Truths page
+Per `docs/home-truths-replication-spec.md`: new `/home-truths` route in Ultion's order — dark banner ("The world we live in"
+/ "Home **truths**", X-ray render), snap carousel of five truths with giant red figures (every figure from the ONS Crime
+Survey *Nature of crime: burglary* tables, year ending March 2025, with the table cited under each slide), "How secure is
+your area?" postcode crime checker (postcode POSTed to `/api/crime`, latest six months from data.police.uk, 1 or 3 miles
+with automatic fall-back when an area is too dense, burglaries highlighted, month bars, top categories, OpenStreetMap
+embed, Open Government Licence attribution), "Meet the people behind Watchdog" statement + three sourced fact tiles in
+place of Ultion's founder quote and timeline, then the existing accreditations, guarantee and buy band. Nav/footer
+"Reviews" (pointing at a removed section) → "Home truths"; homepage Home Truths "Learn more" → the page; sitemap entry;
+CSP now allows OpenStreetMap frames and same-origin geolocation. Skipped: success stories (reviews source pending).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

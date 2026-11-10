@@ -30,7 +30,7 @@ export function HomeTruths() {
             <span className="sr-only">3 star: </span>the highest Kitemark rating a euro cylinder can hold. Your door is only as strong as the cylinder in it.
           </h2>
         </div>
-        <Link href="#inside" className="mt-8 inline-flex h-12 items-center rounded-full bg-red px-7 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
+        <Link href="/home-truths" className="mt-8 inline-flex h-12 items-center rounded-full bg-red px-7 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
           Learn more
         </Link>
         <dl className="mt-14 grid max-w-3xl gap-6 border-t border-white/10 pt-8 sm:grid-cols-3">
