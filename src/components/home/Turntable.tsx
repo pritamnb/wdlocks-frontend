@@ -4,6 +4,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { ButtonLink } from '@/components/ui/Button';
 import { BRAND_VIDEO } from '@/lib/constants';
+import { useInViewPlayback, usePrefersReducedMotion } from '@/hooks/useInViewPlayback';
 
 const marks = [
   { label: 'BSI Kitemark licence', value: 'KM597142' },
@@ -20,33 +21,8 @@ const marks = [
  */
 export function Turntable() {
   const ref = React.useRef<HTMLVideoElement>(null);
-  const [reduced, setReduced] = React.useState(false);
-
-  React.useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  React.useEffect(() => {
-    const video = ref.current;
-    if (!video || reduced) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          if (video.preload === 'none') video.preload = 'auto';
-          void video.play().catch(() => undefined);
-        } else {
-          video.pause();
-        }
-      },
-      { threshold: 0.25 },
-    );
-    io.observe(video);
-    return () => io.disconnect();
-  }, [reduced]);
+  const reduced = usePrefersReducedMotion();
+  useInViewPlayback(ref, !reduced, 0.5);
 
   return (
     <section className="bg-near-black py-20 text-white" aria-labelledby="turntable-title">

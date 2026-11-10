@@ -1,6 +1,6 @@
 import Image from 'next/image';
-import { WatchFilm } from '@/components/media/WatchFilm';
-import { BRAND_RENDERS } from '@/lib/constants';
+import { InlineFilm } from '@/components/media/InlineFilm';
+import { BRAND_RENDERS, BRAND_VIDEO } from '@/lib/constants';
 
 const features = [
   {
@@ -25,26 +25,27 @@ export function WhyWatchdog() {
   return (
     <section id="why-watchdog" className="scroll-mt-24 py-20" aria-labelledby="why-title">
       <div className="container-wd">
-        <div className="grid items-center gap-10 lg:grid-cols-12">
-          <div className="max-w-2xl lg:col-span-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">Why Watchdog</p>
-            <h2 id="why-title" className="heading-display mt-3 text-3xl sm:text-4xl">
-              Built to stop the burglar’s favourite trick.
-            </h2>
-            <p className="mt-4 text-charcoal/80">
-              Lock snapping accounts for a large share of UK break-ins through uPVC and composite doors.
-              A 3-star cylinder is the single most effective upgrade you can make.
-            </p>
-            <p className="mt-3 text-sm text-charcoal/70">
-              Every Watchdog is engraved with its Kitemark licence, BS EN 1303 grading and Sold Secure SS312 number, so
-              you can check what is protecting your door.
-            </p>
-          </div>
-          <div className="relative mx-auto w-full max-w-xl lg:col-span-5">
-            <WatchFilm />
-            <p className="mt-3 text-center text-xs text-charcoal/70">Manufacturer film, 40 seconds, with sound. Opens in a player.</p>
-          </div>
-        </div>
+        <InlineFilm
+          src={BRAND_VIDEO.explainerInline.mp4}
+          poster={BRAND_VIDEO.explainerInline.poster}
+          ariaLabel={BRAND_VIDEO.explainerInline.title}
+          chapters={BRAND_VIDEO.explainerInline.chapterList}
+          tone="light"
+          mediaSide="right"
+          caption={`Manufacturer film · ${BRAND_VIDEO.explainerInline.durationLabel} · plays silently until you turn the sound on.`}
+          heading={
+            <>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">Why Watchdog</p>
+              <h2 id="why-title" className="heading-display mt-3 text-3xl sm:text-4xl">
+                Built to stop the burglar’s favourite trick.
+              </h2>
+              <p className="mt-4 text-charcoal/80">
+                Lock snapping accounts for a large share of UK break-ins through uPVC and composite doors.
+                A 3-star cylinder is the single most effective upgrade you can make. Pick a chapter to see how.
+              </p>
+            </>
+          }
+        />
         <div className="mt-12 grid gap-6 lg:grid-cols-12">
           <figure className="relative hidden overflow-hidden rounded-2xl bg-near-black lg:col-span-4 lg:block">
             <Image

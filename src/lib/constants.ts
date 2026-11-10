@@ -171,6 +171,22 @@ export const BRAND_VIDEO = {
     durationIso: 'PT40S',
     chapters: 'Dimple and snake key · 11 pins, 870,000 combinations · Always Locked Protection System · engraved markings.',
   },
+  /** The explainer cut for inline play: 7–40 s (dark intro removed), white fades at both ends so it multiply-blends onto cream. */
+  explainerInline: {
+    mp4: '/brand/video/explainer-inline.mp4',
+    poster: '/brand/video/explainer-inline-poster.jpg',
+    title: 'How a Watchdog lock works',
+    durationLabel: '0:33',
+    chapterList: [
+      { t: 0, label: '0:00', title: 'High-security dimple and snake key' },
+      { t: 4, label: '0:04', title: '11 pins, 870,000 unique combinations' },
+      { t: 9, label: '0:09', title: 'The pin stack lifts to the key' },
+      { t: 13, label: '0:13', title: 'The ALPS cam engages' },
+      { t: 19, label: '0:19', title: 'Always Locked Protection System' },
+      { t: 25, label: '0:25', title: 'Engraved Kitemark and Sold Secure marks' },
+      { t: 29, label: '0:29', title: 'Patented ALPS security' },
+    ],
+  },
   /** 38 s macro journey inside the cylinder (Vijay, 6 Nov): pick protection, thermal exhaust ports, pin stack. With sound. */
   insideFilm: {
     mp4: '/brand/video/inside-film.mp4',

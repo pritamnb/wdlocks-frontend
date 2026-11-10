@@ -330,7 +330,7 @@ Watchdog.mp4 202 MB) arrived by WeTransfer; downloaded 10 Nov 2026 to
 ### Pass 6 — 10 Nov 2026, existing client assets put to work
 Audit of Pritam's Mac and mailbox found most imagery had already been supplied on 6 Nov (see `docs/asset-register.md`). Now
 live: 5000 px Watchdog render as the hero; Watchdog X-ray in Why Watchdog (the Ultion-derived crop is gone); Watchdog key
-turntable on the keys pages; the 38 s "Inside the lock" macro film inline on the dark panel (muted in-view autoplay, sound on request, clickable chapters — Pritam rejected the modal version); brochure PDF in the footer and
+turntable on the keys pages; the 38 s "Inside the lock" macro film inline on the dark panel (muted in-view autoplay, sound on request, clickable chapters — Pritam rejected the modal version); the same inline treatment now carries the explainer in Why Watchdog (7–40 s cut, white fades, multiply-blended onto the cream); in-view playback fixed to pause when the player leaves the viewport; brochure PDF in the footer and
 on product pages. Only a Watchdog exploded view and keyed-alike clip remain to ask Allegion for.
 
 ## 9. Independent review
