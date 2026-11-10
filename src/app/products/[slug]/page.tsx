@@ -13,7 +13,7 @@ import { decodeEntities, productPriceLabel, stripHtml } from '@/lib/wdlocks-api'
 import { sanitizeProductHtml } from '@/lib/sanitize';
 import { galleryImagesFor } from '@/lib/product-helpers';
 import { BRAND_VIDEO, BROCHURE, CATALOGUE_BY_ID, KEY_PRODUCT_IDS, PRODUCT_IDS, SITE, SITE_URL } from '@/lib/constants';
-import { WatchFilm } from '@/components/media/WatchFilm';
+import { InlineFilm } from '@/components/media/InlineFilm';
 import { ChapterLoop } from '@/components/media/ChapterLoop';
 
 export const revalidate = 60;
@@ -98,7 +98,6 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       <div className="mt-6 grid gap-10 lg:grid-cols-2 lg:gap-14">
         <div>
           <ProductGallery images={gallery} name={name} />
-          {product.id === PRODUCT_IDS.CYLINDER_LOCK && <WatchFilm compact className="mt-4" />}
           {KEY_PRODUCT_IDS.has(product.id) && (
             <figure className="mt-4 overflow-hidden rounded-[1.5rem] bg-near-black shadow-card">
               <ChapterLoop clip="keyTurntable" blend="plain" />
@@ -145,6 +144,32 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           </p>
         </div>
       </div>
+
+      {product.id === PRODUCT_IDS.CYLINDER_LOCK && (
+        <section className="mt-16 border-t border-cream-dark pt-14" aria-labelledby="product-film-title">
+          <InlineFilm
+            src={BRAND_VIDEO.explainerInline.mp4}
+            poster={BRAND_VIDEO.explainerInline.poster}
+            ariaLabel={BRAND_VIDEO.explainerInline.title}
+            chapters={BRAND_VIDEO.explainerInline.chapterList}
+            tone="light"
+            mediaSide="left"
+            caption={`Manufacturer film · ${BRAND_VIDEO.explainerInline.durationLabel} · plays silently until you turn the sound on.`}
+            heading={
+              <>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">See it work</p>
+                <h2 id="product-film-title" className="heading-display mt-3 text-2xl sm:text-3xl">
+                  How a Watchdog lock works.
+                </h2>
+                <p className="mt-4 text-charcoal/80">
+                  The dimple and snake key, the 11-pin stack, the ALPS cam that locks the moment the key comes out, and the
+                  marks engraved on every cylinder. Pick a chapter to jump to it.
+                </p>
+              </>
+            }
+          />
+        </section>
+      )}
 
       {product.description && (
         <section className="mt-16 max-w-3xl" aria-labelledby="description-title">
