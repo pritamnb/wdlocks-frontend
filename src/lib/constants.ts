@@ -143,6 +143,8 @@ export const BRAND_RENDERS = {
   cylinderFront: { src: '/brand/product/cylinder-front.png', width: 470, height: 900, alt: 'Front view of the Watchdog cylinder showing the 3 Star Kitemark and red cam' },
   /** Three engraved Watchdog Locksmiths keys on a ring. */
   keysEngraved: { src: '/brand/product/keys-engraved.png', width: 928, height: 1000, alt: 'Three Watchdog dimple keys engraved with Watchdog Locksmiths 0800 389 9965' },
+  /** Exploded mechanism: ALPS cam carrier, anti-drill pins, springs. Cropped from Allegion's exploded render so no housing engraving is in frame. */
+  mechanismExploded: { src: '/brand/product/mechanism-exploded.png', width: 508, height: 1100, alt: 'Exploded view of the cylinder internals: the red ALPS cam carrier, hardened anti-drill pins and pin springs' },
   /** Key tag: Stays Locked, £5000 guarantee, activate at wdlocks.co.uk. */
   guaranteeKeytag: { src: '/brand/product/guarantee-keytag.png', width: 754, height: 900, alt: 'Watchdog key tag: if a burglar snaps your lock and breaks in, £5,000 guarantee, activate for free at wdlocks.co.uk' },
 } as const;

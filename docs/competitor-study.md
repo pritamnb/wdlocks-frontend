@@ -323,6 +323,9 @@ Watchdog.mp4 202 MB) arrived by WeTransfer; downloaded 10 Nov 2026 to
   with alpha; the video is 6 s 4K with an audio track. **Every item in this batch, the video included, is Ultion-branded** (ULTION PLUS cylinder,
   ULTION .co.uk keys, exploded view engraved ULTION, £5000 tag reads "snaps Ultion… ultion.co.uk"). Not usable on a Watchdog
   site as-is; ask Allegion (Phil Else) for the Watchdog-branded versions, which clearly exist for the turntable/film renders.
+  With Pritam's approval (10 Nov) one brand-free crop of the exploded view — cam carrier, anti-drill pins, springs, no housing
+  engraving — is used in the Why Watchdog section (`public/brand/product/mechanism-exploded.png`). Replace it with the Watchdog
+  exploded render when it arrives.
 
 ## 9. Independent review
 

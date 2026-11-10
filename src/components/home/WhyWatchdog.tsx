@@ -1,4 +1,6 @@
+import Image from 'next/image';
 import { WatchFilm } from '@/components/media/WatchFilm';
+import { BRAND_RENDERS } from '@/lib/constants';
 
 const features = [
   {
@@ -43,15 +45,30 @@ export function WhyWatchdog() {
             <p className="mt-3 text-center text-xs text-charcoal/70">Manufacturer film, 40 seconds, with sound. Opens in a player.</p>
           </div>
         </div>
-        <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((f, i) => (
-            <li key={f.title} className="rounded-2xl border border-cream-dark bg-warm-white p-6 transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-card">
-              <span className="font-playfair text-3xl font-semibold text-red/80">{String(i + 1).padStart(2, '0')}</span>
-              <h3 className="mt-4 text-lg font-semibold text-near-black">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-charcoal/80">{f.body}</p>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-12 grid gap-6 lg:grid-cols-12">
+          <figure className="cream-panel relative hidden overflow-hidden rounded-2xl border border-cream-dark lg:col-span-4 lg:block">
+            <Image
+              src={BRAND_RENDERS.mechanismExploded.src}
+              alt={BRAND_RENDERS.mechanismExploded.alt}
+              fill
+              sizes="(min-width: 1024px) 30vw, 0px"
+              className="object-contain p-6 pb-20 drop-shadow-[0_18px_24px_rgb(10_8_6/0.22)]"
+            />
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-cream via-cream/90 to-transparent px-5 pb-5 pt-10 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-red">What&rsquo;s inside</p>
+              <p className="mt-1 text-charcoal/85">The red ALPS cam carrier, hardened anti-drill pins and the spring-loaded pin stack that every Watchdog is built around.</p>
+            </figcaption>
+          </figure>
+          <ul className="grid gap-6 sm:grid-cols-2 lg:col-span-8">
+            {features.map((f, i) => (
+              <li key={f.title} className="rounded-2xl border border-cream-dark bg-warm-white p-6 transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-card">
+                <span className="font-playfair text-3xl font-semibold text-red/80">{String(i + 1).padStart(2, '0')}</span>
+                <h3 className="mt-4 text-lg font-semibold text-near-black">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-charcoal/80">{f.body}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         <div className="mt-14 overflow-hidden rounded-2xl border border-cream-dark bg-warm-white">
           <table className="w-full text-left text-sm">
