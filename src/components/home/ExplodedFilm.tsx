@@ -7,10 +7,9 @@ import { usePrefersReducedMotion } from '@/hooks/useInViewPlayback';
 import { cn } from '@/lib/cn';
 
 /**
- * Ultion's scroll-driven exploded lock, now with the real Watchdog animation (2 s, all-keyframe encode).
- * The video is scrubbed by scroll position: assembled as the section enters from below, fully exploded
- * by the time it reaches the upper part of the viewport, and it reassembles when you scroll back up.
- * Reduced motion shows the exploded frame as a still. The clip's white background multiply-blends away
+ * The real Watchdog exploded-lock animation (2 s). It plays once the Protection block reaches the middle of the
+ * screen (client choice, 10 Nov), holds on the exploded frame, and resets when the block leaves so it plays again
+ * on the next pass. Reduced motion shows the exploded frame as a still. The clip's white background multiply-blends away
  * on the cream panel, like the chapter clips.
  */
 export function ExplodedFilm({ className }: { className?: string }) {
@@ -26,44 +25,42 @@ export function ExplodedFilm({ className }: { className?: string }) {
     const video = videoRef.current;
     if (!wrap || !video) return;
 
-    let frame = 0;
-    let lastTime = -1;
-    const update = () => {
-      frame = 0;
-      // Progress runs from the moment the section enters at the bottom of the viewport to the moment its centre
-      // reaches the viewport centre, so the lock is fully apart exactly when the block is centred, then holds.
-      const section = wrap.closest('section') ?? wrap;
-      const rect = section.getBoundingClientRect();
-      const vh = window.innerHeight || 1;
-      const start = vh; // section top at the bottom edge → assembled
-      const end = vh / 2 - rect.height / 2; // section centred → exploded
-      const progress = Math.min(1, Math.max(0, (start - rect.top) / Math.max(1, start - end)));
-      const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : clip.duration;
-      const t = Math.min(duration - 0.04, progress * duration);
-      if (Math.abs(t - lastTime) > 0.016) {
-        lastTime = t;
-        video.currentTime = t;
-      }
-    };
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    const onReady = () => {
-      setReady(true);
-      update();
-    };
-
+    const onReady = () => setReady(true);
     video.addEventListener('loadeddata', onReady);
     if (video.readyState >= 2) onReady();
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
-    return () => {
-      if (frame) cancelAnimationFrame(frame);
-      video.removeEventListener('loadeddata', onReady);
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
+
+    // Play the 2 s explosion once the block's centre band crosses the middle of the screen; reset when it leaves so
+    // it explodes again on the next pass. A thin root margin around the viewport centre is what "in the middle" means.
+    const section = (wrap.closest('section') ?? wrap) as HTMLElement;
+    let played = false;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!played) {
+            played = true;
+            video.currentTime = 0;
+            void video.play().catch(() => {});
+          }
+        } else if (played) {
+          played = false;
+          video.pause();
+          video.currentTime = 0;
+        }
+      },
+      // Fires when any part of the section overlaps the middle 20% of the viewport.
+      { root: null, rootMargin: '-40% 0px -40% 0px', threshold: 0 },
+    );
+    io.observe(section);
+    const onVis = () => {
+      if (document.hidden) video.pause();
     };
-  }, [reduced, clip.duration]);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      io.disconnect();
+      video.removeEventListener('loadeddata', onReady);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [reduced]);
 
   return (
     <div ref={wrapRef} className={cn('relative mx-auto w-full max-w-[760px]', className)}>

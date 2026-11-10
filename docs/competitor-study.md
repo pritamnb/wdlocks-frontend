@@ -540,6 +540,12 @@ cylinder product page laid out at 512 px because its seven gallery thumbnails se
 450 px (prose tables now scroll horizontally; long words wrap anywhere). Also: the header guarantee button no longer
 wraps onto two lines, and the nav underline sits just under the label.
 
+### Pass 27 — 10 Nov 2026, exploded lock plays at the middle of the screen
+Pritam asked for the "very best protection" film to run when the block is in the middle of the screen rather than
+follow the scroll: the 2 s explosion now plays once when any part of the block overlaps the middle 20 % of the
+viewport (IntersectionObserver with a −40 % / −40 % root margin), holds on the exploded frame, pauses on a hidden
+tab, and resets when the block leaves so it plays again next time. Re-verified the two phone-layout fixes live.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
