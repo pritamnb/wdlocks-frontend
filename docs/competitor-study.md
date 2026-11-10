@@ -320,7 +320,9 @@ Watchdog.mp4 202 MB) arrived by WeTransfer; downloaded 10 Nov 2026 to
   3Star-Explode-Image.6.png, 5K-half_card-light_background.png, Key.6-alpha.png, Key.6.png, KeyedAlike.Version3.mp4.
   Paramjit's note: "More video as in ultion website". Downloaded 10 Nov to
   `/Users/pritam/Documents/wdlocks/client-assets/wetransfer-2026-11-10b/WATCHDOG/` (outside the repo). PNGs are 4000–6000 px
-  with alpha; the video is 6 s 4K with an audio track.
+  with alpha; the video is 6 s 4K with an audio track. **Every still in this batch is Ultion-branded** (ULTION PLUS cylinder,
+  ULTION .co.uk keys, exploded view engraved ULTION, £5000 tag reads "snaps Ultion… ultion.co.uk"). Not usable on a Watchdog
+  site as-is; ask Allegion (Phil Else) for the Watchdog-branded versions, which clearly exist for the turntable/film renders.
 
 ## 9. Independent review
 
