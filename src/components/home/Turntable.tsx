@@ -25,15 +25,15 @@ export function Turntable() {
   useInViewPlayback(ref, !reduced, 0.5);
 
   return (
-    <section className="bg-near-black py-20 text-white" aria-labelledby="turntable-title">
+    <section className="bg-near-black py-20 text-white" aria-labelledby="turntable-title" id="protection">
       <div className="container-wd grid items-center gap-10 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">Every angle. Every mark.</p>
-          <h2 id="turntable-title" className="heading-display mt-3 text-3xl text-white sm:text-4xl">
-            Engraved with the proof, not just the name.
+          <h2 id="turntable-title" className="heading-display mt-3 text-4xl text-white sm:text-5xl">
+            The <span className="text-red">very best</span> protection for British homes.
           </h2>
           <p className="mt-4 text-white/75">
-            Turn a Watchdog over and the ratings are cut into the body: the Kitemark licence number, the TS 007 3-star
+            Turn a Watchdog over and the proof is cut into the body: the Kitemark licence number, the TS 007 3-star
             grade and the Sold Secure Diamond number. Anyone can check them.
           </p>
           <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-white/10 pt-6 text-sm">

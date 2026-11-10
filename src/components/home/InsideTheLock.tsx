@@ -6,7 +6,7 @@ const film = BRAND_VIDEO.insideFilm;
 /** The manufacturer's 38 s macro journey through the cylinder, inline on the dark panel. */
 export function InsideTheLock() {
   return (
-    <section className="border-t border-white/10 bg-near-black py-20 text-white" aria-labelledby="inside-title">
+    <section className="border-t border-white/10 bg-near-black py-20 text-white" aria-labelledby="inside-title" id="inside">
       <div className="container-wd">
         <InlineFilm
           src={film.mp4}

@@ -61,7 +61,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
     <header
       ref={headerRef}
       className={cn(
-        'sticky top-0 z-40 border-b border-white/10 bg-near-black text-white transition-[box-shadow,border-color] duration-150',
+        'relative z-40 border-b border-white/10 bg-near-black text-white transition-[box-shadow,border-color] duration-150',
         scrolled ? 'border-cream-dark shadow-[0_8px_24px_-16px_rgb(10_8_6/0.35)]' : 'border-transparent',
       )}
       onBlur={(e) => {

@@ -23,8 +23,10 @@ export async function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to content
         </a>
-        <AnnouncementBar />
-        <Navbar products={products} />
+        <div className="sticky top-0 z-40">
+          <Navbar products={products} />
+          <AnnouncementBar />
+        </div>
         <main id="main" className="flex-1">
           {children}
         </main>

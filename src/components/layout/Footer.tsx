@@ -31,7 +31,15 @@ export function Footer() {
   const year = new Date().getFullYear();
   return (
     <footer className="mt-24 border-t border-white/10 bg-near-black text-white" id="contact">
-      <div className="container-wd grid grid-cols-2 gap-10 py-14 md:grid-cols-4">
+      <div className="container-wd grid grid-cols-2 gap-10 py-14 md:grid-cols-5">
+        <div>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Popular</h2>
+          <div className="flex flex-col gap-2.5">
+            <Link href="/products/watchdog-3-star-alps-extra-keys" className="inline-flex h-10 items-center justify-center rounded-md bg-red px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">Get Watchdog keys</Link>
+            <a href={`${WC_BASE}/guarantee-registration/`} rel="noopener" className="inline-flex h-10 items-center justify-center rounded-md border border-white/30 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-white hover:text-near-black">Activate guarantee</a>
+          </div>
+          <p className="mt-6 font-playfair text-lg font-semibold text-white">Watchdog. Stays locked.</p>
+        </div>
         <div>
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Products</h2>
           <ul className="space-y-2.5">

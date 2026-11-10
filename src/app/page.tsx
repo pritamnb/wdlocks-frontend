@@ -8,10 +8,12 @@ import { Turntable } from '@/components/home/Turntable';
 import { InsideTheLock } from '@/components/home/InsideTheLock';
 import { WhyWatchdog } from '@/components/home/WhyWatchdog';
 import { Guarantee } from '@/components/home/Guarantee';
-import { Reviews } from '@/components/home/Reviews';
+import { BuyBand } from '@/components/home/BuyBand';
+import { KeySection } from '@/components/home/KeySection';
+import { KeyedAlikeSection } from '@/components/home/KeyedAlikeSection';
+import { Accreditations } from '@/components/home/Accreditations';
 import { Delivery } from '@/components/home/Delivery';
 import { ProductGrid } from '@/components/product/ProductGrid';
-import { ButtonLink } from '@/components/ui/Button';
 import { SITE, SITE_URL } from '@/lib/constants';
 
 export const revalidate = 60;
@@ -39,31 +41,31 @@ export default async function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       <Hero />
-      <TrustStrip />
-      <VideoBar />
+      <TrustStrip tone="dark" />
 
-      <section className="py-20" aria-labelledby="products-title">
+      <section id="products" className="scroll-mt-24 py-20" aria-labelledby="products-title">
         <div className="container-wd">
-          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <span className="inline-block rounded-full bg-red px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">Our products</span>
-              <h2 id="products-title" className="heading-display mt-4 text-3xl sm:text-4xl">Find the right protection for your door.</h2>
-              <p className="mt-3 max-w-2xl text-charcoal/80">Euro cylinders, thumb turns and rim cylinders for every UK door, plus genuine keys and aftercare. Every lock ships with three keys.</p>
-            </div>
-            <ButtonLink href="/products" variant="secondary" size="sm">
-              View all products
-            </ButtonLink>
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-block rounded-full bg-red px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">Our products</span>
+            <h2 id="products-title" className="heading-display mt-5 text-4xl sm:text-5xl">Find the right protection for you.</h2>
+            <p className="mt-4 text-charcoal/80">Euro cylinders, thumb turns and rim cylinders for every UK door, plus genuine keys and aftercare. Every lock ships with three keys.</p>
           </div>
-          <ProductGrid products={products} limit={8} />
+          <div className="mt-12">
+            <ProductGrid products={products} />
+          </div>
         </div>
       </section>
 
       <Turntable />
-      <InsideTheLock />
       <WhyWatchdog />
       <HomeTruths />
+      <BuyBand />
+      <KeySection />
+      <KeyedAlikeSection />
+      <InsideTheLock />
       <Guarantee />
-      <Reviews />
+      <VideoBar />
+      <Accreditations />
       <Delivery />
     </>
   );

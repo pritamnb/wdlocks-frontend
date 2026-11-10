@@ -1,22 +1,27 @@
 import Image from 'next/image';
 import { TRUST_SIGNALS, WC_BASE } from '@/lib/constants';
+import { cn } from '@/lib/cn';
 
-export function TrustStrip({ compact = false }: { compact?: boolean }) {
+/** Thin accreditation bar. `tone="dark"` is the Ultion-style strip under the hero; default is the cream version used on product pages. */
+export function TrustStrip({ compact = false, tone = 'light' }: { compact?: boolean; tone?: 'light' | 'dark' }) {
+  const dark = tone === 'dark';
   return (
-    <section aria-label="Accreditations" className={compact ? '' : 'border-y border-cream-dark bg-cream-mid'}>
-      <ul className={`container-wd flex flex-wrap items-center justify-center gap-x-10 gap-y-4 ${compact ? 'py-4' : 'py-6'}`}>
-        {TRUST_SIGNALS.map((t) => (
-          <li key={t.id} className="flex items-center gap-3 text-sm font-medium text-charcoal">
-            {t.image ? (
-              <Image src={t.image} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
-            ) : (
-              <span aria-hidden="true" className="text-red">◆</span>
-            )}
-            <span>{t.label}</span>
-          </li>
-        ))}
+    <section aria-label="Accreditations" className={cn(dark ? 'border-y border-white/10 bg-near-black text-white' : compact ? '' : 'border-y border-cream-dark bg-cream-mid')}>
+      <ul className={cn('container-wd flex flex-wrap items-center gap-x-8 gap-y-3', dark ? 'justify-between py-3' : compact ? 'justify-center py-4' : 'justify-center py-6')}>
+        <li className="flex flex-wrap items-center gap-x-8 gap-y-3">
+          {TRUST_SIGNALS.map((t) => (
+            <span key={t.id} className={cn('flex items-center gap-2.5 text-sm font-medium', dark ? 'text-white/85' : 'text-charcoal')}>
+              {t.image ? (
+                <Image src={t.image} alt="" width={32} height={32} className={cn('h-8 w-8 object-contain', dark && 'rounded bg-white p-0.5')} />
+              ) : (
+                <span aria-hidden="true" className="text-red">◆</span>
+              )}
+              <span>{t.label}</span>
+            </span>
+          ))}
+        </li>
         <li className="text-sm">
-          <a href={`${WC_BASE}/trade-application/`} rel="noopener" className="font-medium text-charcoal/80 underline decoration-cream-dark underline-offset-4 transition-colors duration-150 hover:text-red hover:decoration-red">
+          <a href={`${WC_BASE}/trade-application/`} rel="noopener" className={cn('font-medium underline underline-offset-4 transition-colors duration-150 hover:text-red', dark ? 'text-white/80 decoration-white/30' : 'text-charcoal/80 decoration-cream-dark hover:decoration-red')}>
             Are you an installer? Apply for trade →
           </a>
         </li>

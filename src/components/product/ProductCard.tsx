@@ -72,32 +72,32 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
         )}
       </Link>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-charcoal/75">{entry?.category ?? product.categories[0]?.name ?? 'Watchdog'}</p>
-        <h3 className="mt-1.5 text-[15px] font-semibold leading-snug text-near-black">
+      <div className="flex flex-1 flex-col items-center p-5 text-center">
+        <h3 className="text-lg font-semibold leading-snug text-near-black">
           <Link href={href} className="transition-colors duration-150 hover:text-red focus-visible:text-red">
             {entry?.shortName ?? name}
           </Link>
         </h3>
-        {entry?.blurb && <p className="mt-1 text-xs text-charcoal/75">{entry.blurb}</p>}
-        <div className="mt-auto flex items-end justify-between gap-3 pt-4">
-          <p className="font-playfair text-xl font-semibold tabular-nums text-near-black">
-            {isVariable && product.prices.price_range && <span className="mr-1 text-xs font-sans font-normal text-charcoal/75">From</span>}
-            {productPriceLabel(product)}
-          </p>
+        {entry?.blurb && <p className="mt-2 text-sm text-charcoal/75">{entry.blurb}</p>}
+        <p className="mt-3 font-playfair text-xl font-semibold tabular-nums text-near-black">
+          {isVariable && product.prices.price_range && <span className="mr-1 font-sans text-xs font-normal text-charcoal/75">From</span>}
+          {productPriceLabel(product)}
+        </p>
+        <div className="mt-auto w-full pt-4">
           {externalOnly ? (
             <a
               href={product.permalink}
               rel="noopener"
-              className="inline-flex h-9 items-center justify-center gap-1 rounded-full bg-near-black px-4 text-sm font-medium text-white transition-colors duration-150 hover:bg-charcoal"
+              className="inline-flex h-11 w-full items-center justify-center gap-1 rounded-md bg-near-black px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-charcoal"
               aria-label={`${ctaLabel(product)} on wdlocks.co.uk: ${name}`}
             >
               {ctaLabel(product)} <span aria-hidden="true">↗</span>
             </a>
           ) : (
             <Button
-              size="sm"
-              variant={isVariable ? 'dark' : 'primary'}
+              size="md"
+              variant="primary"
+              className="w-full rounded-md"
               onClick={(e) => void onCta(e)}
               loading={busy}
               disabled={!product.is_in_stock || !product.is_purchasable}

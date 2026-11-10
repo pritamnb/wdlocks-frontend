@@ -2,9 +2,8 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { Modal } from '@/components/ui/Modal';
+import { FilmPlayer } from '@/components/media/FilmPlayer';
 import { VIDEO_BAR, type VideoBarEntry } from '@/lib/constants';
-import { cn } from '@/lib/cn';
 
 /**
  * "See Watchdog in action": a row of film cards with duration and a "Watch full video" button,
@@ -52,38 +51,7 @@ export function VideoBar() {
         </ul>
       </div>
 
-      <Modal
-        open={active !== null}
-        onClose={() => setActive(null)}
-        labelledBy="in-action-player-title"
-        variant="center"
-        size="wide"
-        returnFocusTo={triggerRef}
-        className="overflow-hidden rounded-[1.5rem] !bg-near-black p-0 text-white"
-      >
-        {active && (
-          <>
-            <div className="flex items-center justify-between gap-4 px-5 py-3">
-              <h2 id="in-action-player-title" className="font-playfair text-lg font-semibold">{active.title}</h2>
-              <button type="button" onClick={() => setActive(null)} className="rounded-full px-3 py-1 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">
-                Close
-              </button>
-            </div>
-            <video
-              key={active.id}
-              className={cn('mx-auto w-full bg-black', active.aspect === '5/4' ? 'aspect-[5/4] max-h-[78dvh]' : 'aspect-video')}
-              controls
-              autoPlay
-              playsInline
-              preload="metadata"
-              poster={active.poster}
-            >
-              <source src={active.mp4} type="video/mp4" />
-            </video>
-            <p className="px-5 py-3 text-xs text-white/60">{active.blurb}</p>
-          </>
-        )}
-      </Modal>
+      <FilmPlayer film={active} onClose={() => setActive(null)} returnFocusTo={triggerRef} />
     </section>
   );
 }
