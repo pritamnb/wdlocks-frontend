@@ -7,7 +7,7 @@ export function Logo({ className, priority = false }: { className?: string; prio
   return (
     <Link href="/" className={cn('inline-flex items-center', className)} aria-label={`${SITE.name} home`}>
       <Image
-        src="/brand/wd-locks-logo.png"
+        src="/brand/watchdog-stays-locked.png"
         alt={SITE.name}
         width={822}
         height={106}

@@ -27,7 +27,7 @@ export default async function HomePage() {
     '@type': 'Organization',
     name: SITE.name,
     url: SITE_URL,
-    logo: `${SITE_URL}/brand/wd-locks-logo.png`,
+    logo: `${SITE_URL}/brand/watchdog-stays-locked.png`,
     email: SITE.email,
     telephone: SITE.phone,
     sameAs: [],
