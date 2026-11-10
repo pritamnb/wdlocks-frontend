@@ -47,7 +47,7 @@ export function WatchFilm({ className, compact = false, film: filmId = 'explaine
         </div>
       </button>
 
-      <Modal open={open} onClose={() => setOpen(false)} labelledBy={titleId} variant="center" size="wide" returnFocusTo={triggerRef} className="overflow-hidden rounded-[1.5rem] bg-near-black p-0">
+      <Modal open={open} onClose={() => setOpen(false)} labelledBy={titleId} variant="center" size="wide" returnFocusTo={triggerRef} className="overflow-hidden rounded-[1.5rem] !bg-near-black p-0 text-white">
         <div className="flex items-center justify-between gap-4 px-5 py-3 text-white">
           <h2 id={titleId} className="font-playfair text-lg font-semibold">{film.title}</h2>
           <button type="button" onClick={() => setOpen(false)} className="rounded-full px-3 py-1 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">

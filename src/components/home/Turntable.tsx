@@ -4,7 +4,6 @@ import * as React from 'react';
 import Image from 'next/image';
 import { ButtonLink } from '@/components/ui/Button';
 import { BRAND_VIDEO } from '@/lib/constants';
-import { WatchFilm } from '@/components/media/WatchFilm';
 
 const marks = [
   { label: 'BSI Kitemark licence', value: 'KM597142' },
@@ -74,7 +73,6 @@ export function Turntable() {
               Get a Watchdog lock
             </ButtonLink>
           </div>
-          <WatchFilm film="inside" compact className="mt-8 ring-white/10" />
         </div>
         <div className="relative lg:col-span-7">
           <div className="relative mx-auto aspect-video w-full max-w-[760px] overflow-hidden rounded-[2rem]">

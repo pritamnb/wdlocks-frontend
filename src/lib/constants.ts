@@ -179,6 +179,17 @@ export const BRAND_VIDEO = {
     durationLabel: '0:38',
     durationIso: 'PT38S',
     chapters: 'A camera journey through the cylinder: the pin chambers, anti-pick springs, thermal exhaust ports and the engraved body.',
+    /** Seek points matching the callouts baked into the footage. */
+    chapterList: [
+      { t: 0, label: '0:00', title: 'Inside the pin chambers' },
+      { t: 10, label: '0:10', title: 'TwistTrap technology' },
+      { t: 18, label: '0:18', title: 'SnapStop protection' },
+      { t: 20, label: '0:20', title: 'Hardened steel drill protection' },
+      { t: 22, label: '0:22', title: 'Pick-protection springs' },
+      { t: 30, label: '0:30', title: 'More hardened steel, then the keyway' },
+      { t: 32, label: '0:32', title: 'Thermal exhaust ports' },
+      { t: 34, label: '0:34', title: 'Engraved: Watchdog, powered by Brisant Secure' },
+    ],
   },
   /** Silent chapter cuts from the film, faded to white at both ends so they can be multiply-blended onto cream. */
   clips: {
