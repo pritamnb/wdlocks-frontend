@@ -240,7 +240,9 @@ intro, "Get Price" → configurator, "▶ See How It Protects Your Home (1:17s)"
     transfer.
 11. Keys page on the headless site (quantity chips, key number field) once the handoff plugin can carry add-on
     fields.
-12. Real reviews: Trustpilot or Google Reviews widget with the actual rating; never hard-coded quotes.
+12. **PENDING (client decision, 2026-11-10):** Real reviews. Pritam has parked this as a pending task. Needs the
+    client to pick the source (Trustpilot / Google / Checkatrade) and share the profile URL; then embed the widget
+    with the live rating and replace the "Read independent reviews" link in `Reviews.tsx`. Never hard-coded quotes.
 13. Segmentation prompt (new vs existing owner) as a non-blocking banner.
 
 **P2 — later**

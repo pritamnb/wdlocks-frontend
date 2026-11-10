@@ -123,11 +123,12 @@ native checkout (Store API `/checkout` + Stripe; `@stripe/stripe-js` is already 
 
 - **Delivery:** the live store charges Royal Mail rates (from £6.40) — the site no longer advertises free
   delivery. If the client adds a free-shipping rule, reinstate the messaging.
-- Confirm the Trustpilot profile URL (`TRUSTPILOT_URL` in `constants.ts`) and the "5★" claim with the client.
 - Install the mu-plugin above and set `NEXT_PUBLIC_CART_HANDOFF_PLUGIN=true` before launch.
 - Extra Keys (4266) orders go to wdlocks.co.uk until a key-number field is added to the headless flow.
 - Rate-limit `/api/cart/*` (Vercel WAF or `@upstash/ratelimit`); it is an open proxy to wdlocks.co.uk.
 - Replace the regex HTML sanitiser with `sanitize-html`/DOMPurify, or move to a nonce-based CSP.
 - `script-src 'unsafe-inline'` in the CSP is required by static generation; move to nonces if routes go dynamic.
-- Reviews section links out to Trustpilot rather than embedding quotes — wire up the Trustpilot widget.
+- **PENDING — Reviews (parked 2026-11-10):** the reviews section links out via `TRUSTPILOT_URL` and asserts no rating.
+  Once the client picks a source (Trustpilot / Google / Checkatrade) and confirms the profile URL, embed the widget
+  with the live rating. Do not hard-code quotes.
 - Product descriptions are raw WooCommerce HTML (sanitised) — images inside them are plain `<img>` tags.
