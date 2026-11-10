@@ -10,6 +10,7 @@ import { getVariationModel, type VariationOption } from '@/lib/product-helpers';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { DEFAULT_VARIATION_ID, PRODUCT_IDS, WC_BASE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
+import { useSearchParams } from 'next/navigation';
 
 interface Props {
   product: WooProduct;
@@ -54,8 +55,13 @@ function SizingDiagram({ insideLabel }: { insideLabel: string }) {
 export function VariationSelector({ product, onAdded, headingId, className, showUpsells = false }: Props) {
   const model = React.useMemo(() => getVariationModel(product), [product]);
   const { addToCart, isAdding } = useCart();
-  // Preselect the most common option (Ultion pattern) so a shopper can buy with zero decisions.
+  const searchParams = useSearchParams();
+  // Preselect: ?variation=<id> or ?size=35-35 (deep links), else the most common option so a shopper can buy with zero decisions.
   const [selected, setSelected] = React.useState<VariationOption | null>(() => {
+    const byId = Number(searchParams.get('variation'));
+    const bySize = searchParams.get('size')?.replace('-', '/');
+    const fromQuery = model?.options.find((o) => o.available && (o.variationId === byId || o.short === bySize));
+    if (fromQuery) return fromQuery;
     const def = DEFAULT_VARIATION_ID[product.id];
     return model?.options.find((o) => o.variationId === def && o.available) ?? null;
   });

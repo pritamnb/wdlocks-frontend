@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { TRUST_SIGNALS, TRUSTPILOT_URL } from '@/lib/constants';
+import { TRUST_SIGNALS, TRUSTPILOT_URL, WC_BASE } from '@/lib/constants';
 
 export function TrustStrip({ compact = false }: { compact?: boolean }) {
   return (
@@ -19,6 +19,11 @@ export function TrustStrip({ compact = false }: { compact?: boolean }) {
             )}
           </li>
         ))}
+        <li className="text-sm">
+          <a href={`${WC_BASE}/trade-application/`} rel="noopener" className="font-medium text-charcoal/80 underline decoration-cream-dark underline-offset-4 transition-colors duration-150 hover:text-red hover:decoration-red">
+            Are you an installer? Apply for trade →
+          </a>
+        </li>
       </ul>
     </section>
   );

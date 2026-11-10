@@ -38,7 +38,9 @@ export function AddToCart({ product }: { product: WooProduct }) {
   if (product.type === 'variable') {
     return (
       <section id="sizing" className="scroll-mt-28 rounded-2xl border border-cream-dark bg-warm-white p-5" aria-labelledby="pdp-options-label">
-        <VariationSelector product={product} headingId="pdp-options" showUpsells />
+        <React.Suspense fallback={<div className="h-64" aria-hidden="true" />}>
+          <VariationSelector product={product} headingId="pdp-options" showUpsells />
+        </React.Suspense>
       </section>
     );
   }

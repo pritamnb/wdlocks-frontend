@@ -7,6 +7,8 @@ import { Breadcrumb } from '@/components/product/Breadcrumb';
 import { AddToCart } from '@/components/product/AddToCart';
 import { TrustStrip } from '@/components/home/TrustStrip';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { ProductFaq } from '@/components/product/ProductFaq';
+import { faqsForProduct } from '@/lib/faqs';
 import { decodeEntities, productPriceLabel, stripHtml } from '@/lib/wdlocks-api';
 import { sanitizeProductHtml } from '@/lib/sanitize';
 import { CATALOGUE_BY_ID, SITE, SITE_URL } from '@/lib/constants';
@@ -124,6 +126,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           <div className="prose-wd mt-4" dangerouslySetInnerHTML={{ __html: sanitizeProductHtml(product.description) }} />
         </section>
       )}
+
+      <ProductFaq items={faqsForProduct(product.id)} />
 
       <div className="mt-16">
         <TrustStrip compact />

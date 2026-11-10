@@ -33,7 +33,9 @@ export function SizePicker({ product, open, onClose, returnFocusTo }: Props) {
             <CloseButton onClick={onClose} />
           </div>
           <div className="px-5 py-5">
-            <VariationSelector product={product} headingId="size-picker" onAdded={onClose} />
+            <React.Suspense fallback={<div className="h-64" aria-hidden="true" />}>
+              <VariationSelector product={product} headingId="size-picker" onAdded={onClose} />
+            </React.Suspense>
           </div>
         </>
       )}

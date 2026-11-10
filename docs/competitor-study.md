@@ -219,6 +219,14 @@ intro, "Get Price" → configurator, "▶ See How It Protects Your Home (1:17s)"
 8. Cream texture (subtle noise/grain) and the wdlocks.co.uk accent palette (`#DA1519`, `#C00802`, `#292734`,
    `#27374D`, `#DDE6ED`) applied as tokens.
 
+**P0b — added from the crawler's top-15 (implemented tonight where marked ✓)**
+- ✓ FAQ accordion per product with FAQPage schema.
+- ✓ Variation preselection from query string for menu/ad deep links.
+- ✓ Installer/trade link on every page.
+- Keycode as the universal identifier: one validated "key number" field shared by extra keys, keyed-alike and guarantee registration (needs the handoff plugin to carry add-on fields).
+- Trust strip on the empty basket state and cart page ("3 million+ homes · £5,000 guarantee · reviews" pattern) — use only verified WD figures.
+- Callback request path (time-slot picker) as a conversion route for undecided buyers.
+
 **P1 — this week**
 9. Restyle the WooCommerce checkout page on wdlocks.co.uk: hide header nav, add Trustpilot/accreditation strip,
    postcode lookup, cards before PayPal, remove the inline T&Cs document. (WordPress change.)
@@ -256,10 +264,389 @@ intro, "Get Price" → configurator, "▶ See How It Protects Your Home (1:17s)"
 ---
 
 ## 8. Implementation log (tonight)
-_Filled in as the work lands; see git history for the exact diff._
+
+Commit `ac4beda` (deployed to https://wdlocks-frontend.vercel.app, verified in the browser at 1366 px and 375 px):
+- Card mega-menus for **Locks** and **Keys & Aftercare** with live Store API images and prices, "Popular" badges, muted→colour hover brighten (`.brighten-img`, 300 ms), "More" links, sizing-guide tile and an accreditation strip under the panel.
+- Header **Activate £5,000 guarantee** CTA; contextual announcement strip (product pages: "Order today, dispatched today · order within Xh Ym" live countdown to the 3 pm cut-off; elsewhere: extra-keys nudge).
+- Mobile menu: accordion product cards per group, **Most viewed** quick links, sticky guarantee button.
+- Homepage: new hero (numeric accent, guarantee card, accreditation chip), Home Truths fact strip (11 pins · 3★ · ALPS · 5-minute fit), guarantee + accreditation section (Kitemark, Sold Secure, SBD, Checkatrade, "as seen on Sky Sports" from the old site), delivery options with computed arrival dates.
+- Product page: most common size **preselected** (35/35, Brass), keyed-alike upsell checkbox (adds the £5 service line), extra-keys link, delivery promise with arrival dates per shipping option.
+- Basket drawer: "Don't forget" quick-add tiles (Lubricant, Keyed-alike), **Undo** after remove, trust row, delivery promise.
+- Cream paper-grain texture over the whole canvas; navy / blue-grey / deep-red tokens from wdlocks.co.uk/shop.
+
+Second pass (after the crawler report, same night):
+- FAQ accordion on product pages with **FAQPage JSON-LD** (the crawler notes Ultion has rich FAQs but emits no FAQ schema — an easy SEO win).
+- Deep-link preselection of a size via `?size=35-35` or `?variation=5168` (Ultion pre-selects attributes from the mega-menu query string).
+- "Are you an installer? Apply for trade →" link in the trust strip (Ultion separates B2C and trade on every page).
 
 ## 9. Independent review
 _To be appended by the reviewer agent after it re-visits ultion-lock.co.uk and cross-checks every claim above._
 
 ## 10. Appendix — crawler findings (site map, catalogue, tech, SEO)
-_Appended from the crawler agent's report._
+_Verbatim report of the crawler agent (curl + Store API, read-only, 2026-11-10)._
+
+
+Crawled 2026-11-10 with curl (desktop Chrome UA) + python3 parsing only. Read-only: no forms submitted, nothing added to cart, no accounts. Raw HTML saved under `scratchpad/ultion/raw/`; homepage at `scratchpad/ultion/home.html` (273,446 B); Store API dump at `scratchpad/ultion/products.json` (908,882 B, 90 products).
+
+Anything marked **(unverified)** could not be confirmed from static HTML/API.
+
+---
+
+### 1. SITE MAP
+
+**robots.txt** (402 B): disallows `/wp-content/uploads/wc-logs/`, `woocommerce_transient_files/`, `woocommerce_uploads/`, `/wp/wp-admin/` (allows `admin-ajax.php`); Yoast block points to `Sitemap: https://www.ultion-lock.co.uk/sitemap_index.xml`.
+
+`/sitemap.xml` and `/wp-sitemap.xml` both 301 → `/sitemap_index.xml` (Yoast, 1,196 B) with 7 child sitemaps:
+
+| Sitemap | URLs | lastmod | Notes |
+|---|---|---|---|
+| post-sitemap.xml | 36 | 2026-10-09 | 35 blog posts + `/news-blog/` |
+| page-sitemap.xml | 114 | 2026-09-21 | includes many funnel/thank-you/landing pages |
+| product-sitemap.xml | 51 | 2026-11-09 | 50 products + `/shop/` |
+| category-sitemap.xml | 4 | 2026-10-09 | blog categories |
+| product_cat-sitemap.xml | 33 | 2026-11-09 | product categories (many are internal/staging) |
+| product_tag-sitemap.xml | 1 | 2023-03-23 | `/product-tag/ultion-smart/` |
+| product_shipping_class-sitemap.xml | 2 | 2026-11-09 | `?taxonomy=product_shipping_class&term=paid` / `standard` (leaky) |
+| **Total** | **241** | | |
+
+**Product count:** 50 products in sitemap; **90 products** returned by the Store API (`X-WP-Total: 90`, 1 page). 48 of the 90 are in the sitemap, **42 are hidden** (catalog-hidden backing SKUs for the configurators: `Ultion locks`, `Ultion locks to code`, `Ultion thumbturn`, `Keys`, `Ultion Nuki Bundles`, `White label` keys etc.).
+
+**Redirect quirks:** `/shop/`, `/product-category/locks/` and `/secure-locks-guarantee/` all 200 → **redirect to the homepage** (no shop grid / no category archive pages are exposed). `/checkout/` redirects to `/cart/` when the cart is empty. `/get-locks/` → `/get-locks/product/`, `/get-keys/` → `/get-keys/product/`.
+
+#### 1.1 Pages (114) grouped
+- **Core:** `/`, `/ultion-locks/`, `/security-handle/` (+`/security-handle-2/`, `/security-handle/ar/`, `/ar/view/`, `/ar-plus/`), `/ultion-accessories/`, `/ultion-sweet/`, `/ultion-bolt/`, `/ultion-padlock/`, `/ultion-keytag/` (+`-3`, `/fit-video/`), `/ultion-nuki/`, `/ultion-nuki-2025/`, `/ultion-alps/`, `/keyed-alike/`, `/home-truths/` (+`/hometruths/`), `/news-blog/`, `/contact/` (+`/thank-you/`), `/find-my-ultion/`, `/gate-sign/`, `/door-stop/` (+4 sub-states), `/customer-banners/`, `/brisant/`
+- **Commerce funnels:** `/get-locks/product/`, `/get-locks/key-centres/thank-you/`, `/get-keys/product/`, `/get-keys/order-keys-3/`, `/get-keys/order-keys-4/`, `/get-keys/ultion-keys-2/`…`-4/`, `/get-keys/order-lock/`, `/get-keys/order-lubricant/`, `/get-keys/get-keys-delivered/` (+`/thank-you/`), `/get-keys/key-centres/thank-you/`, `/cart/`, `/checkout/`, `/woo_barclaycardcw/`, `/approved/`, `/rejected/`
+- **Guarantee / Key Control:** `/guarantee-registration/`, `/guarantee-registration-2/`, `/landing/registration/` (+`/installer-code/`, `/confirm-keycodes/`, `/re-enter-keycodes/`, `-keys` variants, `/callback/thank-you/`), `/customer-page/guarantee-registration/...`, `/customersupport/guarantee-registration/...` (+`/call-back/`), `/key-control-received/`, `/kcverified/`, `/keycard-activate-5k/`, `/keycard-activate-2k/`, `/ultion-sweet-guarantee-registration/` (+`/thank-you/`)
+- **Nuki support:** `/ultion-nuki/fitting/` (`top-fix`, `low-fix`, `escutcheon`, each `-with-bolt`), `/ultion-nuki-2025/fitting/{escutcheon,top-fix,low-fix}/`, `/ultion-nuki/{alexa,google,homekit}/`, `/ultion-nuki/ptsi-compliance-statements/`, `/ultion-nuki-questions/`, `/ultion-nuki-pro-questions/`, `/ultion-nuki-plus-questions/`, `/ultion-nuki-combined-questions/`, `/ultion-nuki-go-questions/`, `/ultion-nuki-2025-questions/`, `/ultion-nuki-classification/`, `/ultion-nuki-with-transmitter/`, `/ultion-nuki-2025-with-ultion-bolt-transmitter/`, `/ultion-handle-questions/`
+- **Legal:** `/terms/`, `/webuse/`, `/privacy/`, `/cookies/`
+
+#### 1.2 Products in sitemap (50)
+keyring, lock-lube, ultion-gate-sign, nuki-key-fob, ultion-nuki-fob-bundle, nuki-bridge, ultion-nuki-transmitter, ultion-nuki-bundle-{1,2,3}-transmitter, ultion-nuki-bundle-{1,2,3}, ultion-nuki-plus, ultion-nuki-plus-bundle-{1,2,3}-transmitter, ultion-nuki-plus-bundle-{1,2,3}, ultion-nuki-plus-transmitter, 2-star-plus-handle, 2-star-handle, ultion-sweet-blanking-plate, nuki-external-handle, ultion-sweet-handle, ultion-keycap-st, ultion-keytag, nuki-key-pad, ultion-nuki-door-sensor, ultion-keylight-st, ultion-lock-lubricant, ultion-sweet-escutcheon, ultion-sweet-letterplate, ultion-sweet-numerals, ultion-sweet-knocker, nuki-rechargeable-battery-2-2, ultion-nuki-2025-bolt, ultion-nuki-go-with-ultion-bolt-transmitter, ultion-nuki-go-bolt, keycap, ultion-keylight, padlocks, ultion-sweet-patio-handle, door-handle-dda-compliant, ultion-security-handle, nuki-key-pad-fingerprint, ultion-nuki-go, ultion-nuki-2025, ultion-nuki-go-postpay (all under `/product/{slug}/`).
+
+#### 1.3 Product categories (33, all top-level, from Store API `products/categories`)
+1 Star Lock (2), 3 Star Lock (2), All (31), Bundles (3), Gate Sign (1), Handles (1), KeyCap (2), KeyCap ST (1), KeyLight (1), KeyLightST (1), KeyRing (1), KeyTag (1), Keys (3), Lock Lubricant (2), Locks (6), Nuki Bolt staging (6), Nuki Bolt-Postpay (2), Nuki-Postpay (2), Padlock (1), Security Handle (3), UNU (17), UNU accessories (6), Ultion Nuki (10), Ultion Nuki – Bolt (2), Ultion Nuki 2025 (2), Ultion Nuki Door Sensor (1), Ultion Nuki Go (4), Ultion Nuki Plus (4), Ultion Nuki Plus – Bolt (4), Ultion SMART (2), Ultion Smart Complete (1), Ultion Sweet (7), White label (1).
+→ Categories are an **internal/operational taxonomy** ("staging", "Postpay", "White label", "UNU"), not a customer-facing IA. Category archive URLs redirect home.
+
+#### 1.4 Blog (35 posts under `/blog/{slug}/`, categories: blog, burglary, crime, ultion)
+Recent: anti-snap-locks-explained (2026-10-09), ultions-guide-to-improving-home-security (Peter Bleksley), is-your-padlock-actually-secure, how-to-replace-a-cylinder-door-lock, 6-ways-a-smart-lock-can-make-your-life-easier, ultion-vs-standard-euro-cylinder-locks-side-by-side-comparison, burglars-dont-pick-locks, blowtorch-burglaries-on-the-rise, the-all-new-ultion-nuki-2025, ultion-nuki-awarded-bsi-kitemark-for-internet-of-things, why-8000-people-rave-about-ultion-locks, how-does-ultion-bolt-work, 2023-burglary-statistics…, etc.
+
+---
+
+### 2. NAVIGATION STRUCTURE (from home.html `<header class="main-header" id="site-header">`, 24,192 B)
+
+**Header layout (left→right):** logo (`logo.svg`, 293×40) · primary menu `<ul id="site_primary_menu" class="menu">` · `Activate guarantee` button (`.header-button` → `/guarantee-registration/`) · WooCommerce Blocks **mini-cart drawer** (`wc-block-mini-cart`, bag icon, label "Basket") · mobile hamburger `.mobile-nav-toggle`.
+
+**Sticky utility bar above header** (`section.sticky-bar-container > .bar-extra-keys.sticky`): "Looking to buy extra keys? Click here" (page-specific: on `/ultion-locks/` it reads "Looking to buy extra locks? Click here").
+
+#### 2.1 Primary menu (5 items; 3 are mega-menus `div.sub-menu.products-menu-updated`)
+1. **Get Keys** → `/get-keys/product/` (plain link, first position)
+2. **Locks** → `/ultion-locks/` — mega panel:
+   - Product cards (`.product.medium`, tag `Popular`): **Ultion 3 Star PLUS Lock** "Our flagship high-security lock for homeowners." [Buy Online → `/get-locks/product/`] [Explore → `/ultion-locks/`] · **Ultion Nuki** "Simply our best smart-lock ever." [Buy Online → `/product/ultion-nuki-2025/`] [Explore → `/ultion-nuki-2025/`] · **Ultion Nuki Go** "Your flexible entry into the world of smart locks." [Buy Online → `/product/ultion-nuki-go/`] [Explore → `/ultion-nuki/`]
+   - "More Products" column: Ultion Padlock (`/ultion-padlock/`), Ultion Bolt (`/ultion-bolt/`)
+   - Trustpilot block: logo + 4.5-star SVG + "12500+ reviews"
+3. **Handles** → `/security-handle/` — mega panel: **Ultion 2 Star** "Our high security handle." [Buy Online → `/product/ultion-security-handle/?attribute_model=Ultion+2+Star+Security+Handle&attribute_fixing-position=Above+Handle&attribute_handle-type=Lever&attribute_colour=White`] · **Ultion 2 Star PLUS** (Popular) "Our most secure handle ever." [Buy Online → same product, pre-selected PLUS] · **Ultion Long Lever** "With full DDA-compliance." [→ `/product/door-handle-dda-compliant/`] · **Patio Handle** "The suited sliding patio door handle." [→ `/product/ultion-sweet-patio-handle/`]; More Products: Security Handles, Blanking Plates, Ultion Nuki 2025, Ultion Nuki Go
+4. **Accessories** → `/ultion-accessories/` — mega panel: **KeyTag™** (Popular) "Never lose your keys again." [Buy → `/product/ultion-keytag/`] [Explore → `/ultion-keytag/`] · **KeyCap™** (Popular) "Your Ultion key's best friend." [→ `/product/keycap/`] · **KeyLight™** "A built in torch for your KeyCap." [→ `/product/ultion-keylight/`] · **Lock Lubricant** (Popular) "Keeping your locks locked." [→ `/product/ultion-lock-lubricant/`] · **Door Accessories** "Our most stylish range yet." [Explore → `/ultion-sweet/`]
+5. **Talk to us** → `/contact/`
+
+Mega-menu card pattern: image (`.background` with brightness variants `brighten`/`brightest`), `.popular-tag` ("Popular" / "New for 2025"), `h3` title, one-line `p`, two buttons (`.primary-menu-button` "Buy Online" + `.secondary-menu-button` "Explore"). Deep links **pre-select variation attributes via query string**.
+
+#### 2.2 Mobile menu (`nav.mobile-navigation > ul#site_mobile_menu`)
+Keys · Locks (Our Locks + 5 cards) · Handles (6 cards) · Accessories (5 cards) · Home Truths · Contact · **"Most Viewed"**: Get More Keys, Activate My Guarantee, Ultion Nuki Go, Ultion 3 PLUS Lock, Buy Lock Lubricant · Activate Guarantee button.
+
+#### 2.3 Mini-cart drawer content (server-rendered)
+Title "Basket" + item counter · products table · **"Don't Forget" upsell**: "Stop key jamming with Ultion Lock Lubricant — Apply every 6 months to maintain guarantees — £12.95 — [Quick Add]" (`/?add-to-cart=278177&quantity=1`) · "View Basket" + Checkout buttons · empty state "Your cart is currently empty!".
+
+#### 2.4 Footer (6 `ul.column-menu` columns + bottom bar)
+| Popular | Locks | Handles | Accessories | Furniture | Support |
+|---|---|---|---|---|---|
+| Get Ultion Keys · Activate Guarantee | Ultion 3* PLUS Lock (→ `/get-locks/product/`) · Ultion Nuki Go · Ultion Padlock · Ultion Bolt | Ultion 2 Star Handle · Ultion 2 Star PLUS Handle · Ultion Long Lever · Ultion Patio Handle · Blanking Plates | Ultion KeyTag · Ultion KeyLight · Ultion KeyCap · Ultion Gate Sign · Lock Lubricant | Ultion Letterplate · Ultion Knocker · Ultion Handle · Ultion Numerals · Ultion Escutcheons | Contact Us · The Blog · PTSI Compliance Statements |
+
+Bottom: tagline **"The home of home security."** · "Call us on 0115 784 3162" (`tel:`) · Activate guarantee button · Trustpilot 12500+ reviews · address "2-3 Staincliffe Mill Yard, Halifax Road, Dewsbury, WF13 4AP" · socials (facebook.com/ultionlock, instagram.com/ultionandsweet, twitter.com/UltionLock, linkedin.com/company/4793476) · privacy menu `#menu-privacy-menu` (Terms, Terms of web use, Privacy, Cookies) · "© 2026, Brisant Secure Ltd (trading as Ultion). Company Number: 07880349" · "Media enquiries - ultion@littleredpr.co.uk" · **Allegion** logo linking to allegion.com (parent company).
+
+**Customer-facing product grouping used in nav:** Locks (3* PLUS cylinder, Nuki smart locks, Padlock, Bolt multipoint) · Handles (2*, 2* PLUS, DDA lever, Patio, Blanking plates) · Accessories (KeyTag, KeyCap, KeyLight, Lubricant, Gate Sign) · Door furniture "Ultion Sweet" · Keys (own top-level entry point).
+
+---
+
+### 3. PRODUCT CATALOGUE
+
+#### 3.1 Store API
+`GET /wp-json/wc/store/v1/products?per_page=100` → **200, 90 products, 908,882 B** (`X-WP-Total: 90`, `X-WP-TotalPages: 1`; page 2 returns `[]`). `/products/categories?per_page=100` → 33 categories (6,650 B). `/products/attributes` → `[]` (all attributes are **custom per-product**, no global attribute taxonomies). `/wp-json/wc/store/v1/cart` → 200 empty cart (1,073 B). `/wp-json/` root exposes 1,081 routes; site name "Ultion Lock", tagline "New 3 Star Plus Protection".
+
+**Type mix:** 63 variable · 16 simple · 11 bundle (WooCommerce Product Bundles). All 90 `is_purchasable: true`; all in stock except `Ultion SMART and Wireless Keypad` (bundle, £0, out of stock). **Every product has `average_rating: 0`, `review_count: 0`** → native Woo reviews are not used (Trustpilot quotes are hard-coded in templates). `brands: []` everywhere.
+
+**Biggest variable products (the cylinder SKUs behind the configurator):** `Ultion locks` (id 123069, **221 variations**, Size[103 terms like `35int/35ext`], Colour[Dual/Chrome/Brass]), `Ultion locks to code` (123425, 209 var.), `Ultion thumbturn` (123780, 155 var.), `Ultion thumbturn to code` (124286, 157 var.), `3 Star Lock` (251274, 131 var., Size[87 terms like `35/35`]), `3 Star Lock to Code` (251276, 131), `1 Star Plus Lock` (250816, 107), `1 Star Plus Lock to Code` (250818, 107), `Ultion SMART` (75169, 163 var.).
+
+#### 3.2 Full product table (sorted by id; price = Store API incl. VAT; `vars` = variation count; `imgs` = image count; `SM` = in product sitemap)
+
+| id | name | slug | type | price | vars | attributes (name[n terms]: sample) | categories | imgs | stock | SM |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1550 | Ultion Nuki Bundles | `/ultion-nuki-bundles-2/` | variable | £299.00–£425.00 | 30 | Cylinder Size[10]: No Cylinder, 30, 35, 40…; Bundle[3]: Bundle 1, Bundle 2, Bundle 3 | nuki-postpay, un | 0 | in | N |
+| 8284 | Ultion Padlocks | `/padlocks/` | variable | £54.90–£75.90 | 5 | Body and shackle[6]: 61mm 1inch shackle, 61mm 2inch shackle, 61mm 3inch shackle, 54mm 1inch shackle… | padlock | 9 | in | Y |
+| 8304 | Lution XM Lock Lubricant | `/lock-lube/` | variable | £12.95–£27.95 | 3 | Pack Size[3]: 1, 2, 3 | lock-lubricant | 1 | in | Y |
+| 8331 | Ultion Keycap | `/keycap/` | variable | £9.95 | 13 | First digit of the key code[2]: A, U, X, Y or Z, C; Colour[7]: Black, Green, Orange, Red… | keycap | 1 | in | Y |
+| 8369 | Keys | `/ultion-key/` | variable | £5.99–£29.00 | 37 | Colour[37]: Night Bright yellow with black insert, Night Bright pink with black insert, Black body with strawberry insert, Black body with black insert… | keys | 0 | in | N |
+| 37381 | Ultion KeyLight | `/ultion-keylight/` | variable | £32.00 | 11 | First Digit of the Keycode[2]: A, U, X, Y or Z, C; Colour[7]: Black, Green, Orange, Pink… | keylight | 1 | in | Y |
+| 43056 | Wireless Keypad | `/wireless-keypad/` | simple | £119.00 | 0 |  | — | 1 | in | N |
+| 75169 | Ultion SMART | `/ultion-smart-options/` | variable | £229.00–£259.00 | 163 | Operate only from HomeKit smart home system?[4]: No, I'll use free bluetooth app, Yes, No, Z-Wave hub (inc. Samsung SmartThings); Handle type[3]: Top screw above handle, Top screw beneath handle, Escutcheon; Handle colour (choose Chrome for escutcheon)[5]: Gold, White, Black, Chrome…; Cylinder Size[6]: 30, 35, 40, 45… | ultion-smart-complete | 0 | in | N |
+| 79161 | Ultion SMART and Wireless Keypad | `/ultion-smart-and-wireless-keypad/` | bundle | £0.00 SALE | 0 |  | bundles | 1 | **OUT** | N |
+| 107247 | Wireless Keypad | `/wireless-keypad-bundle/` | simple | £59.00 | 0 |  | ultion-smart | 1 | in | N |
+| 123069 | Ultion locks | `/ultion-locks/` | variable | £56.00–£72.00 | 221 | Size[103]: 75int/10ext, 75int/30ext, 75int/35ext, 75int/40ext…; Cylinder Colour[3]: Standard Colour, Chrome, Brass; Cylinder Type[1]: 3 Star Plus | locks | 1 | in | N |
+| 123425 | Ultion locks to code | `/ultion-locks-to-code/` | variable | £58.00–£77.00 | 209 | Size[103]: 75int/55ext, 75int/50ext, 75int/45ext, 75int/40ext…; Cylinder Colour[3]: Standard Colour, Chrome, Brass; Cylinder Type[1]: 3 Star Plus | locks | 1 | in | N |
+| 123780 | Ultion thumbturn | `/ultion-thumbturn/` | variable | £69.00–£78.00 | 155 | Size[84]: 75int/55ext, 75int/50ext, 75int/45ext, 75int/40ext…; Cylinder Colour[3]: Standard Colour, Chrome, Brass; Cylinder Type[1]: 3 Star Plus | locks | 1 | in | N |
+| 124286 | Ultion thumbturn to code | `/ultion-thumbturn-to-code/` | variable | £74.00–£83.00 | 157 | Size[83]: 75int/55ext, 75int/50ext, 75int/45ext, 75int/40ext…; Cylinder Colour[3]: Standard Colour, Chrome, Brass; Cylinder Type[1]: 3 Star Plus | locks | 2 | in | N |
+| 129223 | Ultion SMART Cylinder | `/ultion-smart-cylinder/` | variable | £69.00 | 9 | Size[9]: ext30, ext35, ext40, ext45… | locks | 1 | in | N |
+| 129311 | Ultion SMART Cylinder to code | `/ultion-smart-cylinder-to-code/` | variable | £69.00 (was £74.00) | 9 | Size[9]: ext30, ext35, ext40, ext45… | locks | 1 | in | N |
+| 142433 | Smart Motor | `/smart-motor/` | variable | £150.00 | 4 | Connectivity[4]: Homekit, Zigbee, Bluetooth, Zwave | — | 0 | in | N |
+| 242184 | Security Handle – 2 Star | `/2-star-handle/` | variable | £27.00–£56.00 | 21 | Size[2]: Long, Short; Handle[2]: Lever, Pad; Colour[7]: Anthracite Grey, Black, Chrome, Gold… | security-handle | 8 | in | Y |
+| 242186 | Security Handle – 2 Star PLUS | `/2-star-plus-handle/` | variable | £56.00–£84.00 | 14 | Size[2]: Long, Short; Handle[1]: Lever; Colour[7]: Anthracite Grey, Black, Chrome, Gold… | security-handle | 10 | in | Y |
+| 242188 | Ultion KeyTag | `/ultion-keytag/` | variable | £39.00 | 5 | Colour[5]: Black, Red, Orange, Yellow… | keytag | 7 | in | Y |
+| 242190 | Bridge | `/nuki-bridge/` | simple | £89.00 | 0 |  | ultion-nuki, unu-accessories | 1 | in | Y |
+| 242192 | External Handle | `/nuki-external-handle/` | variable | £14.90–£20.90 | 12 | Colour[6]: Chrome, Black, Gold, Rose Gold…; Size[2]: 211mm, 122mm | ultion-nuki, unu-accessories | 1 | in | Y |
+| 242194 | Ultion Nuki with Bridge | `/ultion-nuki/` | simple | £239.00 | 0 |  | ultion-nuki, un | 12 | in | N |
+| 242198 | Ultion Nuki Key Fob | `/nuki-key-fob/` | simple | £49.00 | 0 |  | ultion-nuki, unu-accessories | 1 | in | Y |
+| 242200 | Rechargeable Battery | `/nuki-rechargeable-battery-2-2/` | variable | £49.00 | 1 | Colour[2]: Black, White | ultion-nuki, unu-accessories | 1 | in | Y |
+| 242202 | Ultion Nuki with Bridge and Fingerprint Keypad | `/ultion-nuki-bundle-1/` | bundle | £370.00 | 0 |  | ultion-nuki, un | 11 | in | Y |
+| 242204 | Ultion Nuki with Bridge and Keyfob | `/ultion-nuki-bundle-2/` | bundle | £279.00 | 0 |  | ultion-nuki, un | 11 | in | Y |
+| 242206 | Ultion Nuki with Bridge, Fingerprint Keypad and Keyfob | `/ultion-nuki-bundle-3/` | bundle | £405.00 | 0 |  | ultion-nuki, un | 10 | in | Y |
+| 242208 | Ultion Nuki – Bundle 4 | `/ultion-nuki-bundle-4/` | bundle | £425.00 | 0 |  | ultion-nuki, un | 10 | in | N |
+| 242210 | Ultion Nuki – Fob Bundle | `/ultion-nuki-fob-bundle/` | bundle | £129.00 | 0 |  | ultion-nuki, unu-accessories | 1 | in | Y |
+| 242212 | Ultion Nuki | `/ultion-nuki-options/` | variable | £259.00 | 10 | Cylinder Size[10]: No cylinder, 30, 35, 40… | ultion-nuki, un | 1 | in | N |
+| 249445 | Ultion Nuki Bundles | `/ultion-nuki-bundles/` | variable | £239.00–£424.00 | 36 | Cylinder Size[9]: No Cylinder, 30, 35, 40…; Bundle[4]: Bundle 1, Bundle 2, Bundle 3, Bundle 4 | bundles, un | 0 | in | N |
+| 250816 | 1 Star Plus Lock | `/1-star-lock/` | variable | £43.00–£49.00 | 107 | Type[2]: Thumbturn, Key; Colour[1]: Dual; Size[77]: 10/30, 10/35, 10/40, 10/45… | 1-star-lock | 1 | in | N |
+| 250818 | 1 Star Plus Lock to Code | `/1-star-lock-code/` | variable | £48.00–£54.00 | 107 | Type[2]: Thumbturn, Key; Colour[1]: Dual; Size[77]: 10/30, 10/35, 10/40, 10/45… | 1-star-lock | 1 | in | N |
+| 251274 | 3 Star Lock | `/3-star-lock/` | variable | £53.00–£59.00 | 131 | Type[2]: Thumbturn, Key; Colour[1]: Dual; Size[87]: 10/30, 10/35, 10/40, 10/45… | 3-star-lock | 1 | in | N |
+| 251276 | 3 Star Lock to Code | `/3-star-lock-code/` | variable | £58.00–£64.00 | 131 | Type[2]: Thumbturn, Key; Colour[1]: Dual; Size[87]: 10/30, 10/35, 10/40, 10/45… | 3-star-lock | 1 | in | N |
+| 277840 | Ultion Nuki Pro | `/ultion-nuki-pro/` | simple | £349.00 | 0 |  | ultion-nuki, un | 0 | in | N |
+| 277844 | Ultion Nuki Pro | `/ultion-nuki-pro-2/` | variable | £280.00–£320.00 | 10 | Cylinder Size[10]: No cylinder, 30, 35, 40… | ultion-nuki, un | 0 | in | N |
+| 306175 | Ultion Nuki PLUS | `/ultion-nuki-plus-options/` | variable | £379.00 | 20 | colour[2]: Black / Steel, White / Steel; cylinder size[10]: No cylinder, 30, 35, 40… | nuki-postpay, un | 0 | in | N |
+| 306196 | Ultion Nuki PLUS Bundles | `/ultion-nuki-plus-bundles/` | variable | £419.00–£545.00 | 60 | colour[2]: Black / Steel, White / Steel; cylinder size[10]: No cylinder, 30, 35, 40…; bundle[3]: Bundle 1, Bundle 2, Bundle 3 | nuki-postpay, un | 0 | in | N |
+| 306203 | Ultion Nuki Plus | `/ultion-nuki-plus/` | variable | £320.00 | 2 | Colour[2]: Black / Steel, White / Steel | ultion-nuki-plus, un | 9 | in | Y |
+| 306272 | Wireless fingerprint keypad | `/nuki-key-pad-fingerprint/` | simple | £145.00 | 0 |  | ultion-nuki, unu-accessories | 1 | in | Y |
+| 319148 | Ultion Lock Lubricant | `/ultion-lock-lubricant/` | variable | £12.95–£27.95 | 3 | Pack Size[3]: 1, 2, 3 | lock-lubricant | 1 | in | Y |
+| 319504 | Ultion Gate Sign | `/ultion-gate-sign/` | simple | £9.50 | 0 |  | gate-sign | 1 | in | Y |
+| 333141 | Ultion Long Lever DDA Handle | `/door-handle-dda-compliant/` | variable | £24.90–£30.90 | 5 | Colour[5]: Black, Chrome, Gold, Satin Nickel… | handles | 6 | in | Y |
+| 342811 | Ultion Nuki with Keyfob – To work with doors with Ultion Bolt | `/ultion-nuki-bundle-2-transmitter/` | bundle | £318.00 | 0 |  | nuki-bolt-staging, ultion-nuki-bolt, un | 10 | in | Y |
+| 342815 | Ultion Nuki with fingerprint keypad and key fob – To work with doors with Ultion Bolt | `/ultion-nuki-bundle-3-transmitter/` | bundle | £444.00 | 0 |  | nuki-bolt-staging, ultion-nuki, un | 10 | in | Y |
+| 342816 | Ultion Nuki with Fingerprint Keypad – To work with doors with Ultion Bolt | `/ultion-nuki-bundle-1-transmitter/` | bundle | £409.00 | 0 |  | nuki-bolt-staging, ultion-nuki-bolt, un | 11 | in | Y |
+| 342817 | Ultion Nuki – To work with doors with Ultion Bolt | `/ultion-nuki-transmitter/` | simple | £278.00 | 0 |  | nuki-bolt-staging, ultion-nuki-bolt, un | 12 | in | Y |
+| 342818 | Ultion Nuki – To work with doors with Ultion Bolt | `/ultion-nuki-transmitter-options/` | variable | £298.00 | 10 | Cylinder Size[10]: No cylinder, 30, 35, 40… | nuki-bolt-staging, ultion-nuki-bolt, un | 1 | in | N |
+| 342829 | Ultion Nuki Bundles – To work with doors with Ultion Bolt | `/ultion-nuki-bundles-transmitter-2/` | variable | £338.00–£464.00 | 30 | Cylinder Size[10]: No Cylinder, 30, 35, 40…; Bundle[3]: Bundle 1, Bundle 2, Bundle 3 | nuki-bolt-staging, nuki-bolt-postpay, un | 0 | in | N |
+| 342897 | Ultion Nuki Pro – To work with doors with Ultion Bolt | `/ultion-nuki-pro-transmitter/` | simple | £388.00 | 0 |  | nuki-bolt-staging, ultion-nuki-bolt, un | 0 | in | N |
+| 342899 | Ultion Nuki Pro – To work with doors with Ultion Bolt | `/ultion-nuki-pro-transmitter-options/` | variable | £309.00–£359.00 | 10 | Cylinder Size[10]: No cylinder, 30, 35, 40… | nuki-bolt-staging, ultion-nuki-bolt, un | 0 | in | N |
+| 342912 | Ultion Nuki Plus – To work with doors with Ultion Bolt | `/ultion-nuki-plus-transmitter/` | variable | £359.00 | 2 | Colour[2]: Black / Steel, White / Steel | nuki-bolt-staging, ultion-nuki-plus-bolt, un | 9 | in | Y |
+| 342920 | Ultion Nuki PLUS – To work with doors with Ultion Bolt | `/ultion-nuki-plus-transmitter-2/` | variable | £378.00–£418.00 | 20 | colour[2]: Black / Steel, White / Steel; cylinder size[10]: No cylinder, 30, 35, 40… | nuki-bolt-staging, nuki-bolt-postpay, un | 0 | in | N |
+| 342941 | Ultion Nuki PLUS Bundles – To work with doors with Ultion Bolt | `/ultion-nuki-plus-bundles-transmitter/` | variable | £359.00–£584.00 | 60 | colour[2]: Black / Steel, White / Steel; cylinder size[10]: No cylinder, 30, 35, 40…; bundle[3]: Bundle 1, Bundle 2, Bundle 3 | nuki-bolt-staging, nuki-bolt-postpay, un | 0 | in | N |
+| 365298 | Ultion Nuki Plus with fingerprint keypad | `/ultion-nuki-plus-bundle-1/` | variable | £450.00 | 2 | Colour[2]: Black / Steel, White / Steel | ultion-nuki-plus, un | 10 | in | Y |
+| 365334 | Ultion Nuki Plus with keyfob | `/ultion-nuki-plus-bundle-2/` | variable | £360.00 | 2 | Colour[2]: Black / Steel, White / Steel | ultion-nuki-plus, un | 9 | in | Y |
+| 365346 | Ultion Nuki Plus with fingerprint keypad and keyfob | `/ultion-nuki-plus-bundle-3/` | variable | £486.00 | 2 | Colour[2]: Black / Steel, White / Steel | ultion-nuki-plus, un | 10 | in | Y |
+| 365379 | Ultion Nuki Plus with fingerprint keypad – To work with doors with Ultion Bolt | `/ultion-nuki-plus-bundle-1-transmitter/` | variable | £489.00 | 2 | Colour[2]: Black / Steel, White / Steel | ultion-nuki-plus-bolt, un | 10 | in | Y |
+| 365466 | Ultion Nuki Plus with keyfob – To work with doors with Ultion Bolt | `/ultion-nuki-plus-bundle-2-transmitter/` | variable | £399.00 | 2 | Colour[2]: Black / Steel, White / Steel | ultion-nuki-plus-bolt, un | 9 | in | Y |
+| 365479 | Ultion Nuki Plus with fingerprint keypad and keyfob – To work with doors with Ultion Bolt | `/ultion-nuki-plus-bundle-3-transmitter/` | variable | £525.00 | 2 | Colour[2]: Black / Steel, White / Steel | ultion-nuki-plus-bolt, un | 10 | in | Y |
+| 367351 | Lock Lubricant | `/lock-lubricant/` | simple | £0.00 | 0 |  | — | 0 | in | N |
+| 385274 | Ultion Security Handle | `/ultion-security-handle/` | variable | £35.00–£55.00 | 31 | Model[2]: Ultion 2 Star Security Handle, Ultion 2 Star PLUS Security Handle; Fixing Position[2]: Above Handle, Below Handle; Handle Type[2]: Lever, Pad; Colour[7]: Anthracite Grey, Black, Chrome, Gold… | security-handle | 9 | in | Y |
+| 394215 | Ultion Nuki – Escutcheon Pull Plate | `/ultion-nuki-pull/` | variable | £0.00 | 3 | Colour[3]: White, Black, Chrome | ultion-nuki, un | 0 | in | N |
+| 422334 | Ultion Sweet Escutcheon | `/ultion-sweet-escutcheon/` | variable | £12.90–£15.90 | 25 | Escutcheon or Pull[2]: Escutcheon, Pull; Size[2]: Regular, Slim; Colour[7]: Anthracite Grey, Black, Chrome, Gold… | ultion-sweet | 7 | in | Y |
+| 422375 | Ultion Sweet Handle | `/ultion-sweet-handle/` | variable | £19.90–£32.90 | 20 | Handle Type[2]: Lever handle, Pad handle; Size[2]: 211mm, 122mm; Colour[7]: Anthracite Grey, Black, Chrome, Gold… | ultion-sweet | 7 | in | Y |
+| 422930 | Ultion Sweet Knocker | `/ultion-sweet-knocker/` | variable | £15.90–£22.90 | 26 | Style[2]: Contemporary, Traditional Urn; Include Spyhole[2]: Yes, No; Colour[7]: Anthracite Grey, Black, Chrome, Gold… | ultion-sweet | 11 | in | Y |
+| 423074 | Ultion Sweet Letterplate | `/ultion-sweet-letterplate/` | variable | £29.90–£34.90 | 12 | Shape[2]: Squared, Rounded; Colour[7]: Anthracite Grey, Black, Chrome, Gold… | ultion-sweet | 5 | in | Y |
+| 423105 | Ultion Sweet Numerals | `/ultion-sweet-numerals/` | variable | £12.90–£13.90 | 65 | Numeral[13]: Numeral 0, Numeral 1, Numeral 2, Numeral 3…; Colour[6]: Black, Chrome, Gold, Rose gold… | ultion-sweet | 9 | in | Y |
+| 424317 | Ultion Sweet Patio Handle | `/ultion-sweet-patio-handle/` | variable | £29.00–£49.00 | 7 | Colour[7]: Anthracite Grey, Black, Chrome, Gold… | ultion-sweet | 2 | in | Y |
+| 424339 | Ultion Sweet Blanking Plate | `/ultion-sweet-blanking-plate/` | variable | £14.90–£19.90 | 7 | Colour[7]: Anthracite Grey, Black, Chrome, Gold… | ultion-sweet | 4 | in | Y |
+| 431167 | Keys | `/white-label/` | variable | £19.50–£22.50 | 8 | Company[9]: Armis, Cerberus, EROS (MB), Guardian…; Type[2]: 1 Star, 3 Star | white-label | 0 | in | N |
+| 434474 | Key | `/key/` | simple | £22.50 | 0 |  | keys | 1 | in | N |
+| 476243 | Key | `/key-2/` | simple | £22.50 | 0 |  | keys | 1 | in | N |
+| 498718 | Ultion KeyLight | `/ultion-keylight-st/` | variable | £32.00 | 10 | First Digit of the Keycode[1]: U, X or A; Colour[10]: Black body with black insert, Black body with tango insert, Night Bright pink with black insert, Black body with strawberry insert… | keylightst | 1 | in | Y |
+| 498732 | Ultion Keycap | `/ultion-keycap-st/` | variable | £9.95 | 22 | First digit of the key code[2]: U, X, A or Z, C; Colour[22]: Night Bright yellow with black insert, Night Bright pink with black insert, Black body with strawberry insert, Black body with black insert… | keycap, keycap-st | 1 | in | Y |
+| 507352 | Ultion Nuki Go | `/ultion-nuki-go/` | bundle | £239.00 | 0 |  | ultion-nuki-go | 7 | in | Y |
+| 507361 | Nuki Rechargeable Battery | `/nuki-rechargeable-battery/` | simple | £49.00 | 0 |  | ultion-nuki | 1 | in | N |
+| 507365 | Ultion Nuki Go – To work with doors with Ultion Bolt | `/ultion-nuki-go-bolt/` | bundle | £278.00 | 0 |  | ultion-nuki-go | 7 | in | Y |
+| 507370 | Ultion Nuki Go | `/ultion-nuki-go-postpay/` | variable | £239.00 | 10 | Cylinder Size[10]: 30, 35, 40, 45… | ultion-nuki-go | 1 | in | Y |
+| 507385 | Ultion Nuki Go with Ultion Bolt Transmitter | `/ultion-nuki-go-with-ultion-bolt-transmitter/` | variable | £278.00 | 9 | Cylinder Size[9]: 30, 35, 40, 45… | ultion-nuki-go | 1 | in | Y |
+| 509772 | Ultion Lock Lubricant | `/ultion-lock-lubricant-2/` | simple | £9.95 (was £12.95) SALE | 0 |  | lock-lubricant | 1 | in | N |
+| 517655 | Ultion Lock Lubricant | `/ultion-lock-lubricant-st/` | variable | £12.95–£27.95 | 3 | Pack Size[3]: 1, 2, 3 | lock-lubricant | 1 | in | N |
+| 519633 | Ultion Nuki Door Sensor | `/ultion-nuki-door-sensor/` | simple | £55.00 | 0 |  | ultion-nuki-door-sensor | 1 | in | Y |
+| 538363 | Ultion Nuki | `/ultion-nuki-2025/` | variable | £339.00 | 3 | Colour[3]: White/Steel, Black/Steel, Chrome/Steel | ultion-nuki-2025 | 7 | in | Y |
+| 538366 | Ultion Nuki | `/ultion-nuki-2025-options/` | variable | £339.00 | 30 | Colour[3]: White/Steel, Black/Steel, Chrome/Steel; Cylinder Size[10]: 00, 30, 35, 40… | ultion-nuki-2025 | 1 | in | N |
+| 538394 | Ultion Nuki – To work with doors with Ultion Bolt | `/ultion-nuki-2025-bolt/` | variable | £378.00 | 3 | Colour[3]: White/Steel, Black/Steel, Chrome/Steel | ultion-nuki-2025 | 1 | in | Y |
+| 538398 | Ultion Nuki with Ultion Bolt Transmitter | `/ultion-nuki-2025-bolt-options/` | variable | £378.00 | 27 | Colour[3]: White/Steel, Black/Steel, Chrome/Steel; Cylinder Size[9]: 30, 35, 40, 45… | ultion-nuki-2025 | 1 | in | N |
+| 618077 | Ultion Nuki | `/ultion-nuki-st/` | variable | £339.00 | 3 | Colour[3]: White/Steel, Black/Steel, Chrome/Steel | ultion-nuki-2025 | 7 | in | N |
+
+#### 3.3 Price architecture observed
+- 3 Star PLUS cylinder via configurator: **£56–£73** (JSON-LD on `/get-locks/product/`: price 63, minPrice 56, maxPrice 73). Backing SKUs: key £56–£72, key-to-code £58–£77, thumbturn £69–£78, thumbturn-to-code £74–£83. "To code" (keyed-alike to an existing keycode) carries a ~£2–£5 premium.
+- 3 Star Lock (older, vertical key) £53–£59 / to code £58–£64. 1 Star Plus £43–£49 / to code £48–£54.
+- Keys: **£22.50 each** (struck-through "£32.45 each" on the order step), KeyTag trackable key £39 (£99 for 3), KeyCap £9.95, KeyLight £32, Lubricant £12.95 (1) – £27.95 (3) (one SKU on sale £9.95 was £12.95).
+- Nuki 2025 £339 (+£39 for Bolt-transmitter variant = £378); Nuki Go £239 (£278 with transmitter); Nuki Plus £320–£379; bundles up to £584.
+- Handles: 2 Star £27–£56, 2 Star PLUS £56–£84, Ultion Security Handle (combined listing) £35–£55, DDA lever £24.90–£30.90, Sweet furniture £12.90–£49.
+- Padlock £54.90–£75.90 (6 body/shackle combos).
+
+#### 3.4 Configurator: `/get-locks/product/` (278,662 B) — "Ultion 3 Star PLUS Lock"
+Not a standard Woo single-product template. It is a **custom Alpine.js 3 app** (`alpinejs@3.x.x` from jsdelivr + theme `js/alpine/locks-product.js`, 13,209 B) talking to **admin-ajax** (`ajaxObject.ajax_url`, nonce). Structure top→bottom:
+
+1. Sticky "delivered" marquee (`section.section-locks-scroller`, slick autoplay) populated by AJAX `action=delivery_date_notice` → `{"status":"okay","statement":"Order today, delivers tomorrow"}` (live, date-aware).
+2. `div[x-data="locksProduct"] > section.section-get-locks-product`: **Swiper gallery** (main + thumbs) of 6 renders with captions: Key Operated / Thumbturn Operated × Dual Colour / Chrome / Brass.
+3. Details column: tags `TS 007 Certified`, `Anti-Snap`; `h1` "Ultion 3 Star PLUS Lock"; **live price** `£<span x-text="total">` with loading overlay (recomputed server-side via `action=get_locks_totals`, body = JSON of locks array); USP bullets: "£5,000 security guarantee." / "Sold Secure Diamond. Tested & approved by locksmiths" / "Police preferred specification. Secure By Design." / "Extra strong molybdenum core with double lockdown mode." / "A 60% thicker, more durable key." / "Free Ultion Key Control for extra security - nobody can cut keys without your permission."
+4. **Keycode field**: "Enter keycode to use existing Ultion key with this lock (Learn More)" placeholder `e.g XUIHF2335`, `x-model.debounce.750ms`. Validation regex (theme `regex.js`): keys `/^(((U|X|Z|Y)\d{8}K?)|((A|C)\d{7}K?))$/i`, locks `/^((X|Z|Y)\d{8}K?)$/i`. Branching messages: invalid → "Please enter the keycode engraved on the head of your current key. It is one letter (U, X, Y, Z) followed by 8 numbers."; prefix **U** → "Unfortunately, we have limited stock of U series cylinders and are unable to accept your order online. Please contact our sales team on 0115 784 3162"; prefix **A/C** → "Keyed-alike locks for this keycode are not available for purchase online. Please call 0115 671 2567 to complete your order." Valid keycode → switches products to `*_code` SKUs and shows "This lock is compatible with your current keys, and no new keys are included. You can request additional keys below."
+5. **Per-lock rows** (`x-for lock in locks`), each with: info "This lock includes 3 Ultion Keys as standard"; extra-keys stepper (−/+ "N Extra Keys"); **Internal Control** radio (Key Operated / Thumbturn); **Colour** swatches (Standard/Dual, Chrome, Brass); **Internal Size** and **External Size** `<select>`s whose options come from AJAX `action=get_lock_product_sizes` (matrix keyed `product → colour → internalSize → [externalSizes]`, default 35). Matrix: key/Dual internal 10,30–75 mm → 100 combos; key/Brass or Chrome 10,30–60 → ~60; thumbturn/Dual 30–75 → 83; thumbturn/Brass|Chrome 30–55 → 36. Helper line: "Composite doors are usually 35mm and 35mm. **View lock measuring guide.**" (opens `how-fit` modal). Remove-lock button when >1.
+6. When >1 lock and no keycode: **keyed-alike radio** "Use different keys for each lock" / "Use the same key for all locks" (+Learn More modal `same-key`); total shows "Total Includes N Keys" (3 keys shared across locks).
+7. Buttons: `Add another lock` · `Checkout Now` (disabled while keycode errors) → AJAX `action=locks_add_products_to_basket` → response `data.checkout` URL → `window.location.replace` (skips cart, straight to checkout).
+8. `section.section-get-locks-product-popup`: **sticky summary bar** ("Total: £X · Qty: N Lock(s) · Checkout Now") toggled by GSAP ScrollTrigger once the user scrolls past the product block.
+9. Trustpilot review slider (slick, 6 quotes with 5-star SVG, e.g. "Advised Best Lock Replacement… The £5000 guarantee if access gained through this lock was an added incentive — Boot Buyer").
+10. Content sections (h2): "Molybdenum: 25% denser than iron. Extreme durability." · "Entering Lockdown Mode." · "As safe as houses." · "Ultion protects over 3 million British homes" · "Save £80" (Nuki cross-sell) · "Keyed Alike." · "New Ultion Lock. Same Ultion Key."; h3s: "Tested for over 1,000,000 cycles", "Anti-everything.", "Ultion £5000 Guarantee.", "Protected by KeyControl.", "The UK's Thickest Key.", "Quick, Easy Installation."; autoplay lockdown video on scroll (`.js-lockdown-video`), parallax (`.js-lock-protects-parallax`).
+
+Scripts specific to this page: `alpine/locks-product.js`, `pages/get-locks-product.js` (3,439 B: delivery marquee, review slider, GSAP), `regex.js`, `lock-regex-no-u.js`, Swiper, plus the generic Woo Product Add-ons/PEWC/WCPA/Swatches bundles (loaded but unused here).
+
+#### 3.5 Key ordering: `/get-keys/product/` (254,492 B) — "The Ultion Key©"
+Title tag: **"Genuine Ultion Keys - Delivered Next Day - Official Store"** (only page with a proper marketing title). Structure:
+1. Delivery marquee (same AJAX) · warning banner **"Non-genuine Keys Damage Your Lock & Invalidate Your Guarantee"**.
+2. Product block: h1 "The Ultion Key ©", **£22.50**, bullets: Genuine Ultion Key From Manufacturer · Maintains Ultion guarantees · Works with Ultion Key Control · Police Preferred Specification · Thick, Ultra-Durable No-Snap Design · Each Key is Precision Machine Cut · Engraved Keycode for Your Security.
+3. `<form method="post" action="/get-keys/order-keys/" class="js-keys-form">` (Alpine inline validation): hidden `keys_order=Get Keys - Product`; **"How many keys do you need?"** radio `key_options` 1–6 ("Note: We recommend ordering enough keys to leave a spare."); **"What's your keycode? (engraved on your current key)"** `keycode_number` placeholder `e.g XUIHF2335`, error "It is one letter followed by 7 or 8 numbers."; submit **"Get price and buy"**.
+4. Step 2 (`/get-keys/order-keys-3/`, GET-able, 276,828 B): "Order Keys to (keycode)"; options **Ultion Key © With Free KeyCaps** "£32.45 each" struck → **£22.50 each**, "Include KeyCaps for free (What's this?)" toggle; **Ultion Trackable Key £39 each** (KeyTag); **Ultion Lubricant – Protect Your Guarantees** upsell; each with "Delivers [date]" and Add to Basket; "Prefer to order by phone?"; modal "Ultion Keycode — Your KeyCode is the unique 9 digits…".
+5. Alternative path `/get-keys/get-keys-delivered/`: **callback booking** ("We need to confirm your keycode with you. We double check all keycodes at order to ensure your keys go to the right people… This call typically takes less than two minutes.") fields: name, phone, preferred time (`time_selected`, `call_back_time`, `callback_day`), reCAPTCHA; phone 0115 697 4265.
+6. Trustpilot slider (10 quotes focused on next-day keys), "The Real Deal. Secure, precision cut keys from Ultion." ("cheap Ultion 'compatible' keys… will invalidate your Ultion guarantees (including the £5,000 home guarantee)"), "Key Protection with Key Control" ("unique 10-digit code to stop people copying your key without your authorisation"), "Save £80" Nuki banner.
+Backing SKUs: `Keys` (8369, 37 colour variations £5.99–£29), `Key` (434474 / 476243 £22.50), `Ultion Keycap`, `White label` keys (Armis, Cerberus, EROS, Guardian, Ingenious, Safeware, Solid as a Lock, Total Hardware, Watchdog — OEM brands using Ultion cylinders).
+
+---
+
+### 4. PRODUCT PAGE ANATOMY
+
+Common chrome on all three: sticky delivery marquee (`.bar-delivery-scroller.sticky` → AJAX text "Order today, delivers tomorrow"), WooThumbs Premium gallery (Iconic; `iconic-woothumbs-*`, stacked horizontal thumbnails, zoom/lightbox icons), `.bar-trustpilot-installer` ("Trustpilot ★★★★½ 12500+ reviews" static SVGs + **"Are you an installer? Click Here"** → brisant-secure.com trade site), quantity stepper with custom ± SVG buttons, "Add to Basket" (`cartRedirectAfterAdd: true` → goes to cart), `gtm4wp_product_data` hidden input for GA4 ecommerce. No Woo tabs, no native reviews, no related/upsell blocks — all cross-sell is hand-built in the theme.
+
+#### 4.1 Cylinder: `/product/3-star-lock/` (1,199,058 B — 1.2 MB because 131 variations are inlined in `data-product_variations`)
+`<meta robots noindex,nofollow>`, no canonical — a **hidden backing product**, not the consumer path. Order: delivery bar → gallery (`KEYED_3Star_Perspective.png`) → "Not sure what you need? **Chat with a Specialist**" (`.woo-product-chat-btn`, links to `/contact/`) → `h1` "3 Star Lock" → price "£53 – £59" → Woo Variation Swatches Pro: **Type** (Thumbturn / Key buttons), **Colour** (Dual), **Size** dropdown of 87 `int/ext` values (`10/30 … 75/75`) → Quantity → Add to Basket → Trustpilot/installer bar. Nothing else (no description, FAQs, video). JSON-LD: Product/AggregateOffer low 53 high 59 offerCount 131.
+
+#### 4.2 Smart lock: `/product/ultion-nuki-2025/` (435,206 B, indexable, canonical set) — "Ultion Nuki" £339
+1. Delivery bar → gallery (7 images; `nuki-2025-banner-image@2x-1.jpg` 1000×1000 OG).
+2. Summary: `h1` "Ultion Nuki" · price £339 · short description "New and improved, the Ultion Nuki is our latest evolution of our award-winning smart lock, now with an ultra-sleek streamlined design, built-in Wi-Fi bridge, and Ultion's reputation for supreme home security." · **"Compatible with"** logo row (smart platforms) · **Colour swatches** "Select colour (Selected)" White/Steel · Black/Steel · Chrome/Steel.
+3. **Add-ons (Product Extras for WooCommerce, `pewc-*`)**: required group "Select added options **(Learn More)** *" rendered as 3-column image checkboxes of child products: **Fob +£49** (242198) · **Fingerprint Keypad +£145** (306272) · **Auto-Lock Sensor +£55** (door sensor); grand total `#pewc-grand-total`. Then **WooCommerce Product Add-Ons** text field **"Keycode"** (placeholder `XUIHF2335`, letters/numbers only) so the included 3* PLUS cylinder can be keyed to existing keys. Quantity → Add to Basket.
+4. Trustpilot/installer bar → `section-nuki-expert-reviews` (single image `nuki-as-seen-in.jpg` alt "As Seen In" — **media names not in HTML text, unverified**) → `section-nuki-fits-2` ("One size fits all — designed to fit existing doors with handle fixings of 215mm, 211mm, 122mm and even doors with an escutcheon lock") → `section-nuki-hands-free` ("Hands free auto-unlock for freedom of movement") → `section-nuki-features` ("The key is the key"; **"Still keeping the bad guys out — The heart of the Ultion Nuki is a 3-star PLUS Ultion lock, and the Nuki unit has the highest AV security rating, with three stars."**; "Press, twist and relax") → `section-nuki-accessories-alt` ("Open up a better way of living with our exclusive accessories": External Handle £19 "20-year anti-corrosion guarantee", Key fob £49, Wireless fingerprint keypad £145 "200 different passwords", Door Sensor — each with Add to basket) → **FAQ accordion** (`cn-accordion`, 15 questions: "How secure is the Smart Lock?", "How easy is it to fit and setup…", "I need to lift the door handle to lock my door…", "What happens if there is a power cut, or my Wi-Fi goes down?", "How long do the batteries last…", "Are there any ongoing charges?", "Will it fit my door?", auto lock/unlock, manual operation, keypad, "Is the Ultion Nuki compatible with my Smart Home?" (HomeKit, Google Home, Alexa), "What's to stop someone shouting 'Alexa, unlock my door' through the letterbox?", "Can I use my existing lock and key?", "Is the Ultion Nuki suitable for AirBnb?") → lightbox "Add-ons Explained" → "New Ultion Nuki. Same Ultion Key.".
+Security copy quoted: "Ultion Nuki features the 3 star plus Ultion cylinder, and carries a **£5000 security guarantee**. There is no security standard that this locking mechanism has not passed." / "the highest AV-TEST available (level 3). The Ultion Nuki cylinder also carries the **BSI Kitemark**." No video on the product page (the `/ultion-nuki-2025/` landing has "Installation Guide (34s)" and "From box to door in 4 minutes").
+
+#### 4.3 Accessory: `/product/ultion-keytag/` (490,406 B, indexable) — "Ultion KeyTag" £39 / £99 for 3
+1. Delivery bar → gallery (7 imgs) → `.product-bar`: "✓ Want to speak to an expert? Call us on **0115 6714033**" + `.delivery-message` (AJAX).
+2. Summary: `h1` · price "**£39 / £99 for 3**" · short description ("…attaches to your Ultion Key to allow you to use your phone to locate them… we end-to-end encrypt all information… Each keyTag comes with a new Ultion key. **Does not work with Android.**") · **Select Colour** dropdown (Black, Red, Orange, Yellow, Pink) · required Add-On **"Keycode *"** · "**How many KeyTags do you need?**" stepper · Add to Basket.
+3. `.ultion-product-reviews` slider (6 customer quotes, e.g. "I literally received it the next day via DPD") → Trustpilot/installer bar → `.product-info-video` (Vimeo **779194598**, click-to-play) → title banner "The Features / KeyTag Overview" → features grid (No more lost keys "We've partnered with Apple… Siri and 'Find My'"; The KeyTag is the key; Replaceable battery; End-to-end encrypted; Tap on the app; Works with KeyControl "free KeyControl to stop unauthorised key copying") → "How it Works" repeatable content (One tap to find your keys; Auto-detects left behind keys; Ultion-powered data security; A simple app to manage keys) → **FAQs** (8: Android?, multiple devices, battery type/life, tracking range, subscription?, KeyTag+KeyLight) → `section-locks-alps-protects` "Securing the UK — Ultion protects over 3 million British homes — Upgrade Your Locks" → "Ultion KeyCode." lightbox → delivered marquee.
+
+#### 4.4 Also checked
+`/product/ultion-security-handle/` (1,571,623 B — largest page; 31 variations + heavy content): "£5,000 security guarantee when paired with an Ultion Lock. Fully-reinforced curved body… Sold Secure Accredited & Secure by Design – tested by locksmiths, approved by Police. Molybdenum lock shroud… 20 year anti-corrosion guarantee"; "Which handle is right for you?" comparison lightbox (2 Star £19–£56 vs 2 Star PLUS). `/product/padlocks/` 561,162 B.
+
+---
+
+### 5. TECH STACK & THIRD PARTIES
+
+**Platform:** WordPress **6.8.2** (Bedrock-style layout: core under `/wp/`, plugins `/app/plugins/`, theme `/app/themes/`, uploads `/app/uploads/`), WooCommerce **10.1.2**, PHP/Apache **2.4.52 (Ubuntu)**, no CDN/WAF headers (no Cloudflare), HTTP/1.1 with `Upgrade: h2`. Compression on (homepage 273 KB → **63 KB** transferred; TTFB ≈0.33 s). Cookies set on first hit: `_fbp`, `wp_woocommerce_session_*`, `ultion_user_id` (custom 30-day UUID).
+
+**Theme:** `consultancy` (custom build; agency domain theconsultancy.co.uk referenced in HTML). Theme assets: `css/style.min.css` (**2,242,375 B uncompressed / 212,764 B compressed**), `js/navigation.js`, `lightbox.js`, `regex.js`, `pages/home.js`, `pages/get-locks-product.js`, `pages/get-keys-product.js`, `alpine/locks-product.js`, `shared-sections/security-promise.js`, `videos-action.js`, self-hosted MP4s under `assets/videos/`.
+
+**Plugins visible in HTML (14):** woocommerce · woocommerce-gateway-stripe · klarna-payments-for-woocommerce 4.2.0 · woocommerce-product-bundles 8.4.2 · woocommerce-product-addons 7.9.2 (official) · product-extras-for-woocommerce 3.26.15 (PEWC) · woo-custom-product-addons 3.1.8 (WCPA — a third add-on plugin) · woo-variation-swatches 2.5.0 + woo-variation-swatches-pro 2.5.1 · woocommerce-additional-variation-images 2.3.2 · woothumbs-premium (Iconic WooThumbs) · duracelltomi-google-tag-manager 1.22.1 (GTM4WP) · facebook-for-woocommerce 3.7.1 · **ultion-callhandler** (custom; callback booking). **Via REST namespaces:** Yoast SEO (`yoast/v1`), Jetpack (`jetpack/v4`, Boost, Stats, Blaze), Redirection, **WebP Converter for Media** (`webp-converter/v1`), WooCommerce Analytics, Product Add-Ons v2. WP Rocket: a code comment "Fix: wp-rocket" and `nowprocket` attributes exist but no WP Rocket output markers → **(unverified)**. Elementor: not used (only a string inside a Woo init-trigger list).
+
+**Payments (from `wcSettings.paymentMethodData`):** sort order `stripe, paypal, klarna_payments`. **Stripe** title "Credit / Debit Card": UPE on, **Express Checkout Element on** (`isECEEnabled`, `isPaymentRequestEnabled`, `shouldShowExpressCheckoutButton: true` → Apple Pay / Google Pay buttons where supported), Link off, Amazon Pay off, Optimized Checkout accordion layout, card icons Visa/Amex/Mastercard, prepaid allowed, account country GB, `allowed_shipping_countries: ["FR","GG","IE","JE","GB"]`, button style dark/48px/"buy". **PayPal** (WooCommerce core PayPal Standard block `wc-payment-method-paypal.js`). **Klarna Payments** (production, "Pay with Klarna", `x.klarnacdn.net/kp/lib/v1/api.js` 520 KB loaded on every page). Legacy `/woo_barclaycardcw/` page exists (Barclaycard — **unverified** whether still active). Live Stripe publishable key is exposed in page config (normal).
+
+**Analytics / marketing tags:** Google Tag Manager **GTM-PZ2NQF2** via GTM4WP (dataLayer with ecommerce, Vimeo tracking, form-move tracker, content tracking) · Meta Pixel via Facebook for WooCommerce (pixel id configured server-side, `_fbp` cookie set by server; CAPI param builder from `unpkg.com/meta-capi-param-builder-clientjs`; `facebook-domain-verification` meta) · **VWO** (Visual Website Optimizer) account **767674**, async SmartCode that hides `body` until loaded (A/B testing) · Jetpack Stats (`stats.wp.com/s-202646.js`, `e-202646.js`) + WooCommerce Analytics · `groupcreative365.com/js/806652.js` + noscript pixel (B2B visitor-identification tracker, **vendor unverified**) · WooCommerce Order Attribution (sourcebuster). No Hotjar, Klaviyo, TikTok, Pinterest, Clarity, Bing found.
+
+**Cookie consent:** OneTrust (`cdn.cookielaw.org/scripttemplates/otSDKStub.js`, `data-domain-script="019aa317-b583-770d-9d68-4ae5612b0c62"`; a second copy is commented out at the top of `<head>`). `/cookies/` page is just "Cookie Policy — Cookie Settings" (OneTrust-driven); `/privacy/` has "Submit DSR" link.
+
+**Chat:** Tawk.to live-chat widget (`embed.tawk.to/5c77c75ea726ff2eea59e74d/default`) — noted and ignored per brief. "Chat with a Specialist" on product pages just links to `/contact/`.
+
+**Reviews:** Trustpilot — but **static** (theme SVGs `trustpilot-logo.svg`, `trustpilot-stars-four-half.svg`, hard-coded "12500+ reviews" and hand-picked quotes). No TrustBox widget, no `trustpilot.com` script, no Review schema.
+
+**Video:** Vimeo Player API (`player.vimeo.com/api/player.js` loaded twice) — 10 Vimeo iframes on homepage (ids 694070923, 373373262, 349028666, 324262061, 232045012, 659054538, 659061716, 794092532, 200998682 + GTM) opened in lightboxes; 6 self-hosted autoplay-muted `<video>` MP4s (hero desktop 2.87 MB + mobile 1.57 MB, keyedalike 2.22 MB, keytag banners 0.79/1.11 MB, lock-exploded 0.35 MB).
+
+**Fonts:** Adobe Fonts/Typekit `use.typekit.net/vtc6oqu.css` → **sofia-pro** (body, 83 CSS refs) + **alternate-gothic-no-2-d** (display); Font Awesome 5 Pro referenced in CSS (icons mostly inline SVG `<symbol>` sprite). Dashicons and WP block-library CSS also loaded (116 KB).
+
+**Images:** 64 `<img>` on homepage (30 jpg, 18 png, 15 svg, 1 FB pixel), 45 with `srcset`, **30 `loading="lazy"`**, 0 `<picture>`, 0 `fetchpriority`, 0 preload hints (only `preconnect` to VWO + 5 `dns-prefetch`). Served from same origin (`/app/uploads/`), **WebP via content negotiation** (`Vary: Accept`; e.g. `home-thickest-key.png` 366,100 B → 47,378 B as `image/webp`). Homepage images+videos referenced: 56 files, **11.7 MB** (videos ≈8.9 MB).
+
+**Front-end libraries:** jQuery 3.7.1 + jquery-migrate 3.4.1, jQuery UI core/datepicker, GSAP 3.10.4 + ScrollTrigger (cdnjs), slick-carousel 1.8.1 (jsdelivr), Alpine.js 3 (configurator), Swiper (configurator gallery), React 18.3.1 + @wordpress/data etc. (for the Blocks mini-cart), MediaElement, blockUI, accounting.js.
+
+**Homepage weight (static):** **89 external `<script src>` + 43 inline scripts; 19 stylesheets + 12 inline `<style>`.** 108 unique external JS/CSS URLs fetched: **JS 2,285,895 B (2.2 MB) + CSS 2,655,231 B (2.6 MB) = 4.83 MB uncompressed** (theme CSS alone 2.24 MB; Klarna SDK 520 KB; Woo cart/checkout base 204 KB + vendors 158 KB; PEWC 141 KB; react-dom 129 KB; block-library CSS 116 KB; jQuery 88 KB). Woo Blocks cart/checkout React bundles load on the homepage because the mini-cart block is in the header.
+
+---
+
+### 6. SEO / STRUCTURED DATA
+
+| Page | `<title>` | meta description | canonical | robots | JSON-LD |
+|---|---|---|---|---|---|
+| `/` | **"Home - Ultion Lock"** | **none** | ✓ | index,follow | Yoast graph: WebPage, BreadcrumbList, WebSite+SearchAction, Organization+ImageObject (1,728 B) |
+| `/product/ultion-nuki-2025/` | "Ultion Nuki - Ultion Lock" | none | ✓ | index | Yoast graph + **Product** (sku UN-2025, Offer/UnitPriceSpecification 339 GBP VAT incl., validThrough 2027-12-31, brand Thing "Ultion", no aggregateRating) |
+| `/product/ultion-keytag/` | "Ultion KeyTag - Ultion Lock" | none | ✓ | index | Yoast graph + Product (39 GBP) |
+| `/product/3-star-lock/` | "3 Star Lock - Ultion Lock" | none | **none** | **noindex,nofollow** | Product + AggregateOffer 53–59, offerCount 131 |
+| `/get-locks/product/` | "Ultion Lock - Ultion Lock" | none | ✓ | index | Yoast graph + custom Product "Ultion 3 Star PLUS Lock" Offer/PriceSpecification price 63 min 56 max 73 |
+| `/get-keys/product/` | "Genuine Ultion Keys - Delivered Next Day - Official Store" | — | — | — | — |
+| `/home-truths/` | "Home Truths - Ultion Lock" | none | ✓ | index | Yoast graph |
+| blog post (anti-snap) | "Anti-Snap Locks Explained: … - Ultion Lock" | ✓ ("What are anti-snap locks…A clear UK guide to standards, ratings and costs.") | — | — | Article + Person + graph |
+
+- **Open Graph** on all pages (`og:locale en_GB`, `og:type website|article`, title, url, site_name; products add `og:description`, `og:image` 1000×1000 or 1500×1500); Twitter `summary_large_image`, `@UltionLock`.
+- **hreflang:** none anywhere. Single locale `en-GB`.
+- **Homepage headings:** **no `<h1>`**. 18 `<h2>`: "Don't Forget" (mini-cart), "In 9 seconds you'll want to replace your lock", "Find the right protection for you", "The very best protection for British homes", "Fitting the highest security protection is the key", "64%", "of burglaries happen when someone is at home", "Buy more Ultion locks and keys here", "Multipoint locks just got smarter", "Smarter locking for UK homes", "The UK's thickest key", "One key for all locks", "Stop losing keys. Start Find My keys.", "Key security promise by Ultion", "Register your £5,000 guarantee.", "See Ultion in action", "Ultion Sweet. Your door never looked so good.", "Save £80". 47 `<h3>` (mostly mega-menu product names repeated 3× for desktop/mobile/footer). Product pages carry two `<h1>`s on KeyTag (summary + banner).
+- Generic page titles ("Home - Ultion Lock", "Ultion Lock - Ultion Lock") and absent meta descriptions on all commercial pages = weak on-page SEO despite Yoast; blog posts are properly optimised.
+- Sitemap exposes shipping-class taxonomy and dozens of thank-you/landing pages.
+
+---
+
+### 7. TRUST & CONTENT
+
+#### 7.1 Trust signals / accreditations claimed (verbatim where possible)
+- **£5,000 security guarantee** — everywhere (header CTA "Activate guarantee", hero "Get your £5000 guarantee", configurator bullets). Guarantee page: "Your Ultion lock is protected by our £5000 security guarantee for **5 years**." Handles: "£5,000 security guarantee when paired with an Ultion Lock." Nuki: "carries a £5000 security guarantee". Also `/keycard-activate-5k/` and `/keycard-activate-2k/` (a £2k tier exists — product unverified).
+- **Sold Secure Diamond** — "Approved by locksmiths. Sold Secure Diamond. Few locks survive the test designed with the Master Locksmith Association and carried out by locksmiths." (img `home-ssd.jpg`)
+- **Secured by Design / Police Preferred Specification** — "The official UK Police flagship initiative combining the principles of 'designing out crime' with physical security." (img `home-sbd.jpg`, `keys-sbd.png`)
+- **BSI Kitemark TS007 3-star Grade 6** — "Approved by British Standards. Kitemark is the standard of excellence recognised around the world. Ultion is accredited with the highest Grade 6 3-star rating." (img `home-bsi.jpg`); configurator tags "TS 007 Certified", "Anti-Snap"; Nuki "BSI Kitemark for Internet of Things" (blog), "highest AV-TEST available (level 3)".
+- **Scale:** "Ultion protects over **3 million British homes**" (section on most pages); cart bar "3 million+ homes use Ultion"; "the UK's industry-leading security brand".
+- **Reviews:** "12500+ reviews" Trustpilot 4.5★ (static); "Why 8000 people rave about Ultion locks" (blog).
+- **Durability claims:** "Tested for over 1,000,000 cycles" vs "100,000 needed to pass the TS007 durability cycle test"; "Molybdenum: 25% denser than iron"; "Double Lockdown Mode" ("A series of attack pins are engaged in Ultion's core when it detects an attack"); "The UK's thickest key" / "60% thicker key"; handles "six coats of corrosion protection… over 8000 hours in a weather test", "8x more durable than the rest", Sweet "30x more time than required for the flagship EN 1906:2012 corrosion standard", "20 years of protection" / "20-year anti-corrosion guarantee".
+- **Key Control** — "a security protocol exclusive to Ultion customers that uses a unique 10-digit code to stop people copying your key without your authorisation" (free; verified via `/kcverified/`: "Every cutting request will now be sent to you for approval").
+- **Fear/urgency stats:** "In 9 seconds you'll want to replace your lock"; "64% of burglaries happen when someone is at home"; "30%/34% of burglaries see homeowners coming face to face with the intruder"; "A burglary is committed every 40 seconds in the UK".
+- **Insurance:** "The insurance approved padlock"; FAQ "Many insurance companies recognise TS007 3-star cylinders and may offer reduced premiums. Check with your insurer."; "Ultion 3 Star PLUS exceeds all UK insurance requirements."
+- **Delivery:** live "Order today, delivers tomorrow" marquee; "Same day DPD dispatch" (`/ultion-locks/`, `/security-handle/`); "Delivered Next Day" (keys title); customer quotes citing DPD next-day.
+- **Corporate:** Brisant Secure Ltd (Company 07880349, VAT 126249518), Allegion parent logo, Dewsbury address, phone numbers (0115 784 3162 sales; 0115 671 4033 / 0115 671 2567 / 0115 697 4265 for specific flows), opening hours "Mon-Fri (8am-6.30pm), Saturday (9am-4.30pm), and Sunday (10am-3.30pm)", email ultion.help@allegion.com; PTSI compliance statements page (UK Product Security regime for the Nuki).
+- **Partnerships:** "We've partnered with Apple… Siri and 'Find My'" (KeyTag "Works with Apple Find My" badge), Nuki ("Europe's leading supplier of smart locks"), smart-home logos (HomeKit, Google Home, Alexa).
+- **"As seen on" media:** only an image `nuki-as-seen-in.jpg` (alt "As Seen In") on the Nuki product page; no media names in text — **unverified**. No Which?/BBC/press mentions found in HTML text. Blog: "Former Scotland Yard detective Peter Bleksley" guide.
+- **Accessibility/inclusion:** "Ultion Long Lever — With full DDA-compliance"; blog "making-home-accessible".
+
+#### 7.2 Content pages (one line each)
+- `/home-truths/` — Burglary-statistics storytelling (64%/30%/9-seconds), "How secure is your area?" postcode+radius search form (`#secure_search`, fields `location`, `radius`), "Meet the people behind Ultion" (founder Steve Stewart, garage 2011), development milestones timeline, "Success Stories" (customer break-in videos).
+- `/ultion-locks/` — 3 Star PLUS landing: hero "The Ultion 3… comes complete with a £5,000 guarantee" + "Get Price", Trustpilot slider, Molybdenum/Lockdown Mode/As safe as houses, 9-second quote, "Meet the family", long **FAQ** (certification, police, insurance, comparison), "Same day DPD dispatch" CTA.
+- `/ultion-nuki-2025/` — Nuki landing: "Our best smart lock ever.", "From box to door in 4 minutes." (Installation Guide 34s video), auto-unlock, USB-C rechargeable, "The reviews are in.", handle options, "Which Ultion Nuki?" comparison (Nuki vs Nuki Go), FAQs.
+- `/security-handle/` — Handles landing with **"View in AR"** (`/security-handle/ar/`), "Watch a Master Locksmith attempt to break through an Ultion 2 Star Handle", range cards "from £27"/"from £56", molybdenum/weather/durability claims, feature overview table.
+- `/ultion-sweet/` — Door-furniture range (letterplate from £24.90, knocker £9.90, handles £10.90, numerals £8.90, escutcheons, patio £40, blanking plates £25), 7 finishes, 8000-hour salt test, numerals preview inputs.
+- `/ultion-bolt/` — Multipoint lock explainer ("Lock without the lift", four 20mm bolts, Nuki transmitter pocket; sold via installers — CTA "Buy the Ultion Nuki transmitter here").
+- `/ultion-accessories/` — Accessory overview (KeyTag, KeyLight, KeyCap, glow-in-dark KeyCap, Lubricant "Wet oils or conventional WD40 will jam your lock", Padlock) + range cross-links.
+- `/keyed-alike/` — "The only key you'll ever need": fit in 60 seconds video, comparison table Non-Ultion 3★ vs Ultion 3 PLUS (100,000 vs 1,000,000+ cycles, zinc vs molybdenum, thin vs 60% thicker key, Double LockDown, free Key Control), accreditation trio, guarantee CTA.
+- `/guarantee-registration/` — "Activate your protection." form POST → `/landing/registration/installer-code/`: name, email, up to 5 keycodes ("Where can I find this?"), radio "I had a new door & lock installed / I had a new lock installed", reCAPTCHA; "Why register?" (Key Control, £5000 for 5 years, free); privacy note "we don't share your data… DotDigital" (email platform).
+- `/landing/registration/` (post-registration) — "Registration Complete… registered your lock for Key Control" + upsell grid (Lubricant £12.95, Security Handle from £27, KeyTag £39, KeyCap £9.95).
+- `/contact/` — "Talk to an expert." phone 0115 6714033 with hours, **request-a-callback form** (`#callback_form`: name, phone, time slot, reCAPTCHA, hidden `contact_token`/`form_token` — custom `ultion-callhandler` plugin), email, Trustpilot quotes.
+- `/news-blog/` — paginated blog (7 pages), "Recent articles" + "Articles on Ultion" / "Articles on Crime" rails.
+- `/terms/` — Full consumer T&Cs (Brisant Secure Ltd, VAT, contract formation…). `/webuse/` — website terms. `/privacy/` — privacy policy + "Submit DSR". `/cookies/` — OneTrust settings only.
+- `/find-my-ultion/` — device-gated page ("Sorry your device is not supported" on desktop; Apple Find My deep-link flow — **unverified**).
+- `/get-keys/order-lock/`, `/order-lubricant/`, `/customer-page/` — mostly empty/"Page Not Found" shells (funnel remnants).
+
+---
+
+### 8. CHECKOUT CLUES (static, anonymous)
+
+- `GET /checkout/` → **302 to `/cart/`** when the cart is empty (Woo default). `/cart/` (226,268 B, title "Cart - Ultion Lock") renders a **custom theme template**: trust strip "**3 million+ homes use Ultion · £5,000 security guarantee · 12500+ reviews**" (repeated top and bottom), "Your cart is currently empty." + "Return to homepage", and a 10-quote review slider "Based on 12500+ reviews". No coupon form or cross-sells shown in the empty state; `data-block-name="woocommerce/mini-cart"` is the only block on the page (cart/checkout themselves are **WooCommerce Blocks**: `wc-cart-checkout-base-frontend.js`, `blocks-checkout.js`, `wc-stripe upe-blocks.css`, `woocommerce-product-bundles checkout-blocks`).
+- Checkout fields (from `wcSettings.defaultFields`): email (req) · country (req) · first/last name (req) · company (opt) · address 1 (req) · address 2 (opt) · town/city (req) · state/county (req) · postcode (req) · phone (**optional**). `addressFieldsLocations.contact = [email]`. No custom checkout fields (`custom_checkout_fields: []`). Store "My account" page id 0 → **no customer accounts / guest checkout only (unverified)**.
+- Payment gateways (HTML config): **Credit / Debit Card (Stripe UPE, Optimized Checkout accordion)**, **PayPal**, **Klarna** ("Pay with Klarna"); Stripe **Express Checkout Element enabled** → Apple Pay / Google Pay express buttons on cart/checkout and product pages (`shouldShowExpressCheckoutButton: true`). Link, Amazon Pay disabled.
+- Prices displayed **inclusive of tax** (`displayCartPricesIncludingTax: true`); `shippingCostRequiresAddress: false`; shipping countries GB, IE, FR, GG, JE; shipping classes `standard` / `paid`.
+- Behaviour flags: `cartRedirectAfterAdd: true` (Add to Basket → cart page); configurator bypasses cart and lands on checkout; Store API cart endpoint open (`/wp-json/wc/store/v1/cart`).
+- Custom order statuses visible in config: "Awaiting Customer Response", "Customer Response", "**Smart / Nuki Order Processed**" (keycode verification workflow).
+- Nothing was submitted; checkout form HTML with items in cart was not fetched.
+
+---
+
+### Top 15 things Ultion does that a competitor should learn from
+
+1. **Sell the cylinder through a guided configurator, not a 131-option dropdown.** `/get-locks/product/` uses Alpine.js: Key/Thumbturn → colour → internal/external size (dependent selects, default 35/35 with "Composite doors are usually 35mm and 35mm" + measuring-guide modal) → live price via AJAX → multi-lock basket → straight to checkout. The ugly backing product (`/product/3-star-lock/`, 1.2 MB, 87-value size dropdown) is noindexed and hidden.
+2. **Keycode as the universal product key.** One input (`e.g XUIHF2335`, regex-validated, prefix-aware routing to phone sales for U/A/C series) powers keyed-alike locks ("to code" SKUs), key re-orders, KeyTag, Nuki add-ons and guarantee registration. Build keyed-alike into the data model from day one.
+3. **Keys are a first-class product and the #1 nav item.** "Get Keys" is first in the header, "Get Ultion Keys" first in the footer, a sticky "Looking to buy extra keys?" bar on every page, and a dedicated 2-step flow (qty 1–6 + keycode → priced options with free KeyCaps, trackable key and lubricant upsells). Repeat-purchase keys/accessories are the retention engine.
+4. **Guarantee activation as a top-level CTA.** "Activate guarantee" button in header, hero box, dedicated section, post-registration upsell page — turning warranty registration into lead capture (email, keycodes, installer code) and a Key Control opt-in.
+5. **Live delivery promise everywhere.** AJAX `delivery_date_notice` → "Order today, delivers tomorrow" in a sticky scrolling marquee on product/configurator pages plus per-line "Delivers [date]" on the keys order step; reinforced by "Same day DPD dispatch".
+6. **Trust strip pattern repeated on every template** ("Trustpilot ★★★★½ 12500+ reviews · Are you an installer? Click Here"), and a dedicated trust strip on the (even empty) cart: "3 million+ homes · £5,000 guarantee · 12500+ reviews". Cheap, consistent, high-frequency.
+7. **Quantified security storytelling**: 9 seconds, 64% at home, 1,000,000 vs 100,000 cycles, 60% thicker key, molybdenum 25% denser than iron, Double Lockdown Mode, 8000-hour salt spray — every claim has a number and a comparison table (keyed-alike page: "Non-Ultion 3 lock vs Ultion 3 PLUS").
+8. **Accreditation trio with plain-English explanations** (Sold Secure Diamond / Secured by Design / BSI Kitemark) + insurance FAQ ("may offer reduced premiums… Check with your insurer") — speaks to homeowners, not just locksmiths.
+9. **Mega-menu as a merchandised shelf**: image cards with "Popular"/"New for 2025" tags, one-line benefit, and dual CTAs (Buy Online vs Explore), with deep links that **pre-select variation attributes via query string** (e.g. 2 Star PLUS, Above Handle, Lever, White).
+10. **Add-on bundling on the smart lock PDP**: required image-checkbox group (Fob +£49, Fingerprint Keypad +£145, Auto-Lock Sensor +£55) with running grand total and "Add-ons Explained" lightbox — attach-rate engineering built into the page rather than a separate accessories page.
+11. **Mini-cart "Don't Forget" upsell**: Lock Lubricant £12.95 with "Apply every 6 months to maintain guarantees" and a one-click Quick Add — a consumable tied to the guarantee.
+12. **Phone/callback as a conversion path, not a fallback**: "Chat with a Specialist", "Want to speak to an expert? Call us on…", request-a-callback forms with time-slot picker (custom `ultion-callhandler` plugin), and a mandatory keycode-confirmation call for key orders framed as a security feature ("This call typically takes less than two minutes").
+13. **Separate B2C and trade**: "Are you an installer? Click Here" → brisant-secure.com on every page; white-label keys catalogue for OEM brands; consumer site stays uncluttered.
+14. **Rich FAQ accordions on PDPs and landing pages** (15 Nuki questions incl. "What's to stop someone shouting 'Alexa, unlock my door' through the letterbox?"; 8 KeyTag; long 3* PLUS FAQ) — answers objection by objection and is FAQ-schema-ready (they don't emit FAQ schema — an easy win to beat them).
+15. **Avoid their weaknesses**: generic titles ("Home - Ultion Lock"), no meta descriptions, no `<h1>` on home, 4.8 MB of JS/CSS (2.2 MB theme CSS, 520 KB Klarna SDK and React cart bundles on every page), 8.9 MB of autoplay MP4 on the homepage, static (non-live) Trustpilot assets with no Review schema, four overlapping add-on plugins, 42 hidden/duplicate SKUs and an operational category taxonomy leaking into the sitemap. A lean rebuild with real review schema, FAQ schema, proper titles/descriptions and a sub-1 MB page can out-rank and out-perform them while borrowing the UX patterns above.
+
