@@ -154,7 +154,26 @@ export const BRAND_VIDEO = {
     poster: '/brand/video/turntable-poster.jpg',
     alt: 'Watchdog 3 Star cylinder rotating slowly to show the engraved Kitemark, TS 007 and Sold Secure markings',
   },
+  /** Full 40 s manufacturer explainer, 720p with sound — click to play only. */
+  film: {
+    mp4: '/brand/video/watchdog-film.mp4',
+    poster: '/brand/video/watchdog-film-poster.jpg',
+    title: 'How a Watchdog lock works',
+    durationLabel: '0:40',
+    durationIso: 'PT40S',
+  },
+  /** Silent chapter cuts from the film, faded to white at both ends so they can be multiply-blended onto cream. */
+  clips: {
+    dimpleKey: { mp4: '/brand/video/clip-dimple-key.mp4', poster: '/brand/video/clip-dimple-key-poster.jpg', alt: 'A dimple and snake key sliding into a cut-away Watchdog cylinder' },
+    pins: { mp4: '/brand/video/clip-pins.mp4', poster: '/brand/video/clip-pins-poster.jpg', alt: 'Cut-away of the eleven colour-coded pins inside the Watchdog cylinder lifting as the key enters' },
+    alps: { mp4: '/brand/video/clip-alps.mp4', poster: '/brand/video/clip-alps-poster.jpg', alt: 'Cut-away of the red cam and Always Locked Protection System engaging inside the cylinder' },
+  },
 } as const;
+
+export type ClipId = keyof typeof BRAND_VIDEO.clips;
+
+/** Products whose page shows the dimple-key chapter under the gallery. */
+export const KEY_PRODUCT_IDS: ReadonlySet<number> = new Set([PRODUCT_IDS.EXTRA_KEYS_3, PRODUCT_IDS.EXTRA_KEYS_1, PRODUCT_IDS.KEYED_ALIKE]);
 
 /** Extra gallery images appended after the WooCommerce photos on specific product pages. */
 export const EXTRA_GALLERY_RENDERS: Readonly<Partial<Record<number, ReadonlyArray<keyof typeof BRAND_RENDERS>>>> = {

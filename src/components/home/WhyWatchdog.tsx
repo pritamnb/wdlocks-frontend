@@ -1,5 +1,4 @@
-import Image from 'next/image';
-import { BRAND_RENDERS } from '@/lib/constants';
+import { WatchFilm } from '@/components/media/WatchFilm';
 
 const features = [
   {
@@ -39,21 +38,10 @@ export function WhyWatchdog() {
               you can check what is protecting your door.
             </p>
           </div>
-          <figure className="relative mx-auto w-full max-w-md lg:col-span-5">
-            <div className="cream-panel overflow-hidden rounded-[2rem] border border-cream-dark p-6">
-              <Image
-                src={BRAND_RENDERS.cylinderDetail.src}
-                alt={BRAND_RENDERS.cylinderDetail.alt}
-                width={BRAND_RENDERS.cylinderDetail.width}
-                height={BRAND_RENDERS.cylinderDetail.height}
-                sizes="(max-width: 1024px) 90vw, 440px"
-                className="h-auto w-full drop-shadow-[0_18px_24px_rgb(10_8_6/0.25)]"
-              />
-            </div>
-            <figcaption className="mt-3 text-center text-xs text-charcoal/70">
-              Engraved: Watchdog 3★ · Sold Secure SS312 · powered by Brisant Secure
-            </figcaption>
-          </figure>
+          <div className="relative mx-auto w-full max-w-xl lg:col-span-5">
+            <WatchFilm />
+            <p className="mt-3 text-center text-xs text-charcoal/70">Manufacturer film, 40 seconds, with sound. Opens in a player.</p>
+          </div>
         </div>
         <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f, i) => (

@@ -13,6 +13,8 @@ export interface ModalProps {
   describedBy?: string;
   /** 'center' = dialog in the middle; 'right' = side sheet (cart drawer); 'left' = nav drawer. */
   variant?: 'center' | 'right' | 'left';
+  /** Centre dialogs only: 'md' (default, max-w-lg) or 'wide' (media, up to 1100px). */
+  size?: 'md' | 'wide';
   children: React.ReactNode;
   className?: string;
   /** Element to restore focus to on close (defaults to the previously focused element). */
@@ -38,6 +40,7 @@ export function Modal({
   labelledBy,
   describedBy,
   variant = 'center',
+  size = 'md',
   children,
   className,
   returnFocusTo,
@@ -116,7 +119,7 @@ export function Modal({
 
   const panelPosition =
     variant === 'center'
-      ? 'relative mx-4 my-6 w-full max-w-lg max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-2xl'
+      ? cn('relative mx-4 my-6 w-full max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-2xl', size === 'wide' ? 'max-w-[1100px]' : 'max-w-lg')
       : variant === 'right'
         ? 'fixed inset-y-0 right-0 h-dvh w-full max-w-md'
         : 'fixed inset-y-0 left-0 h-dvh w-[86vw] max-w-sm';
