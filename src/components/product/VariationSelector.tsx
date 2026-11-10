@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import type { WooProduct } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { QuantityControl } from '@/components/cart/QuantityControl';
@@ -8,7 +9,7 @@ import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
 import { getVariationModel, type VariationOption } from '@/lib/product-helpers';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
-import { CHECKOUT_URL, DEFAULT_VARIATION_ID, PRODUCT_IDS, WC_BASE, CATALOGUE_BY_ID } from '@/lib/constants';
+import { CHECKOUT_URL, DEFAULT_VARIATION_ID, PRODUCT_IDS, CATALOGUE_BY_ID } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -79,6 +80,31 @@ export function VariationSelector({ product, onAdded, headingId, className, show
   const [checkingOut, setCheckingOut] = React.useState(false);
   const [barVisible, setBarVisible] = React.useState(false);
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const switchRef = React.useRef<HTMLFieldSetElement>(null);
+
+  // After a Key operated ↔ Thumb turn switch the other product renders with different heights above the configurator;
+  // restore the switch to the exact screen position it had before the click so it stays under the cursor.
+  React.useLayoutEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('wd:switch-anchor');
+      if (!raw) return;
+      sessionStorage.removeItem('wd:switch-anchor');
+      const { top, at } = JSON.parse(raw) as { top: number; at: number };
+      if (Date.now() - at > 5000 || !switchRef.current) return;
+      const settle = () => {
+        const el = switchRef.current;
+        if (!el) return;
+        const now = el.getBoundingClientRect().top;
+        if (Math.abs(now - top) > 2) window.scrollBy({ top: now - top, behavior: 'instant' as ScrollBehavior });
+      };
+      settle();
+      // Images and fonts above the configurator can still change height for a moment after the route change.
+      // Mobile browsers clamp scrollY while the new page is still short, so keep correcting for a few seconds.
+      [60, 200, 500, 1000, 1600, 2400, 3200].forEach((ms) => setTimeout(settle, ms));
+    } catch {
+      /* ignore */
+    }
+  }, [product.id]);
 
   // Sticky total bar appears once the configurator has scrolled out of view (Ultion pattern).
   React.useEffect(() => {
@@ -172,13 +198,13 @@ export function VariationSelector({ product, onAdded, headingId, className, show
           </div>
           <p className="mt-2 text-xs text-charcoal/80">
             Need spares later? Extra keys are cut to the key number on your key.{' '}
-            <a href={`${WC_BASE}/product/watchdog-3-star-alps-extra-keys/`} rel="noopener" className="font-medium text-red underline-offset-2 hover:underline">Order extra keys ↗</a>
+            <Link href="/products/watchdog-3-star-alps-extra-keys" className="font-medium text-red underline-offset-2 hover:underline">Order extra keys</Link>
           </p>
         </div>
       )}
 
       {showUpsells && isLock && otherLock && (
-        <fieldset>
+        <fieldset ref={switchRef}>
           <legend className="mb-2 text-sm font-semibold text-near-black">Internal control</legend>
           <div className="grid grid-cols-2 gap-2">
             <span className="flex h-12 items-center gap-3 rounded-xl border border-red bg-warm-white px-4 text-sm font-semibold text-near-black" aria-current="true">
@@ -187,7 +213,14 @@ export function VariationSelector({ product, onAdded, headingId, className, show
             </span>
             <button
               type="button"
-              onClick={() => router.push(`/products/${otherLock.slug}${sizeQuery}`, { scroll: false })}
+              onClick={() => {
+                try {
+                  sessionStorage.setItem('wd:switch-anchor', JSON.stringify({ top: switchRef.current?.getBoundingClientRect().top ?? 0, at: Date.now() }));
+                } catch {
+                  /* ignore */
+                }
+                router.push(`/products/${otherLock.slug}${sizeQuery}`, { scroll: false });
+              }}
               className="flex h-12 items-center gap-3 rounded-xl border border-cream-dark bg-warm-white px-4 text-sm font-semibold text-near-black transition-colors duration-150 hover:border-charcoal/50"
             >
               <span className="h-5 w-5 rounded-full border-2 border-cream-dark" aria-hidden="true" />

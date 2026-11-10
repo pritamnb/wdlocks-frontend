@@ -55,7 +55,7 @@ export function AnnouncementBar() {
 
   return (
     <div className={onProduct ? 'relative bg-near-black text-white' : 'relative bg-red text-white'} role="region" aria-label="Store announcements">
-      <div className="container-wd flex min-h-9 items-center justify-center py-1.5 pr-10 text-center text-[13px] font-medium leading-snug sm:text-sm">
+      <div className="container-wd flex min-h-8 items-center justify-center py-1 pr-10 text-center text-[13px] font-semibold leading-snug sm:text-[15px]">
         {onProduct ? (
           <p className="m-0">
             <span className="font-semibold uppercase tracking-[0.12em] text-cream-dark">Order today, dispatched {est?.shipsToday ? 'today' : 'next working day'}</span>
@@ -65,11 +65,10 @@ export function AnnouncementBar() {
           </p>
         ) : (
           <p className="m-0">
-            Already own a Watchdog lock?{' '}
-            <Link href="/products/watchdog-3-star-alps-extra-keys" className="underline decoration-white/60 underline-offset-2 hover:decoration-white">Order extra keys</Link>
-            <span className="hidden sm:inline">
-              {' '}<span aria-hidden="true" className="mx-2 opacity-70">·</span>Same-day dispatch before {SITE.dispatchCutoff}
-              <span aria-hidden="true" className="mx-2 opacity-70">·</span>BSI Kitemarked 3 Star
+            Looking to buy extra keys?{' '}
+            <Link href="/products/watchdog-3-star-alps-extra-keys" className="underline decoration-white/70 underline-offset-2 hover:decoration-white">Click here</Link>
+            <span className="hidden font-medium sm:inline">
+              <span aria-hidden="true" className="mx-2 opacity-70">·</span>Order before {SITE.dispatchCutoff} for same-day dispatch
             </span>
           </p>
         )}

@@ -14,9 +14,9 @@ const marks = [
  */
 export function Protection() {
   return (
-    <section className="relative overflow-hidden bg-cream py-20 lg:py-28" aria-labelledby="protection-title" id="protection">
+    <section className="relative overflow-hidden bg-[#f0f0f0] py-20 lg:flex lg:min-h-[680px] lg:items-center lg:py-20" aria-labelledby="protection-title" id="protection">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_50%,rgb(218_21_25/0.07),transparent_60%)]" aria-hidden="true" />
-      <div className="container-wd relative grid items-center gap-12 lg:grid-cols-12">
+      <div className="container-wd relative grid w-full items-center gap-12 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <h2 id="protection-title" className="heading-display text-[2.75rem] leading-[1.02] sm:text-6xl lg:text-[4.25rem]">
             The <span className="text-red">very best</span>

@@ -36,7 +36,7 @@ export function Covered() {
           </ol>
         </div>
         <p className="mt-8 text-sm">
-          <a href={GUARANTEE.termsUrl} rel="noopener" target="_blank" className="font-semibold text-red underline-offset-4 hover:underline">Read the full terms and conditions →</a>
+          <a href={GUARANTEE.termsUrl} className="font-semibold text-red underline-offset-4 hover:underline">Read the full terms and conditions →</a>
         </p>
       </div>
     </section>

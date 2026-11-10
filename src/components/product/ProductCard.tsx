@@ -85,14 +85,13 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
         </p>
         <div className="mt-auto w-full pt-4">
           {externalOnly ? (
-            <a
-              href={product.permalink}
-              rel="noopener"
+            <Link
+              href={`/products/${CATALOGUE_BY_ID[product.id]?.slug ?? product.slug}`}
               className="inline-flex h-11 w-full items-center justify-center gap-1 rounded-md bg-near-black px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-charcoal"
-              aria-label={`${ctaLabel(product)} on wdlocks.co.uk: ${name}`}
+              aria-label={`${ctaLabel(product)}: ${name}`}
             >
-              {ctaLabel(product)} <span aria-hidden="true">↗</span>
-            </a>
+              {ctaLabel(product)}
+            </Link>
           ) : (
             <Button
               size="md"

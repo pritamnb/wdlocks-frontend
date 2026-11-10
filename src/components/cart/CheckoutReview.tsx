@@ -106,8 +106,8 @@ export function CheckoutReview() {
 
             <p className="text-xs text-charcoal/70">
               Got a coupon? Enter it on the payment page. By continuing you agree to the{' '}
-              <a href={`${WC_BASE}/terms-and-conditions/`} rel="noopener" className="font-medium text-near-black underline-offset-2 hover:text-red hover:underline">terms</a> and{' '}
-              <a href={`${WC_BASE}/privacy-policy/`} rel="noopener" className="font-medium text-near-black underline-offset-2 hover:text-red hover:underline">privacy policy</a>.
+              <a href="/terms" className="font-medium text-near-black underline-offset-2 hover:text-red hover:underline">terms</a> and{' '}
+              <a href="/privacy" className="font-medium text-near-black underline-offset-2 hover:text-red hover:underline">privacy policy</a>.
             </p>
           </div>
 

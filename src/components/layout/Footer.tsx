@@ -8,13 +8,14 @@ const helpLinks = [
   { label: 'Guarantee registration', href: '/guarantee' },
   { label: 'Brochure (PDF)', href: BROCHURE.href, external: true },
   { label: 'Trade application', href: '/trade' },
-  { label: 'Terms & conditions', href: `${WC_BASE}/terms-and-conditions/`, external: true },
+  { label: 'Terms & conditions', href: '/terms' },
+  { label: 'Privacy policy', href: '/privacy' },
 ];
 
 const companyLinks = [
   { label: 'Why Watchdog', href: '/#why-watchdog' },
   { label: 'Home truths', href: '/home-truths' },
-  { label: 'Blog', href: `${WC_BASE}/my-blog/`, external: true },
+  { label: 'Blog', href: '/blog' },
   { label: 'Contact', href: '/contact' },
 ];
 

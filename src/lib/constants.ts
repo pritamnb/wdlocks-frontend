@@ -63,7 +63,7 @@ export const GUARANTEE = {
   href: '/guarantee',
   /** The WordPress (Elementor) registration form, where activations are actually recorded. */
   registerUrl: `${WC_BASE}/guarantee-registration/`,
-  termsUrl: `${WC_BASE}/terms/`,
+  termsUrl: '/terms',
   /**
    * 'handoff': the panel explains what is needed and sends people to the WordPress form.
    * 'proxy': the full form on our page posts to /api/guarantee, which forwards to the Elementor endpoint.
@@ -103,7 +103,7 @@ export const MOST_VIEWED = [
   { label: 'Buy a 3 Star cylinder', href: '/products/3-star-alps-cylinder-door-lock' },
   { label: 'Thumb turn locks', href: '/products/3-star-alps-euro-cylinder-thumb-turn-lock' },
   { label: 'Order extra keys', href: '/products/watchdog-3-star-alps-extra-keys' },
-  { label: 'Activate my guarantee', href: `${WC_BASE}/guarantee-registration/`, external: true },
+  { label: 'Activate my guarantee', href: '/guarantee' },
   { label: 'Lock lubricant', href: '/products/watchdog-3-star-alps-lock-lubricant' },
 ] as const;
 
@@ -824,7 +824,7 @@ export const TRADE = {
   href: '/trade',
   applyUrl: `${WC_BASE}/trade-application/`,
   /** 'handoff' until one live test submission has been approved and verified, then 'proxy' (same as the guarantee form). */
-  formMode: 'handoff' as 'handoff' | 'proxy',
+  formMode: 'proxy' as 'handoff' | 'proxy',
   form: {
     endpoint: `${WC_BASE}/wp-admin/admin-ajax.php`,
     postId: 4783,

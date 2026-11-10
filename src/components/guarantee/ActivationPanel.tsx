@@ -42,7 +42,7 @@ export function ActivationPanel() {
           </ul>
           <p className="mt-6 text-xs text-white/50">
             Full guarantee terms are in clause 14 of our{' '}
-            <a href={GUARANTEE.termsUrl} rel="noopener" target="_blank" className="underline decoration-white/30 underline-offset-2 hover:text-white">terms and conditions</a>, and summarised below.
+            <a href={GUARANTEE.termsUrl} className="underline decoration-white/30 underline-offset-2 hover:text-white">terms and conditions</a>, and summarised below.
           </p>
           <div className="relative mt-10 hidden max-w-xs lg:block">
             <Image src={BRAND_RENDERS.guaranteeKeytag.src} alt={BRAND_RENDERS.guaranteeKeytag.alt} width={BRAND_RENDERS.guaranteeKeytag.width} height={BRAND_RENDERS.guaranteeKeytag.height} sizes="300px" className="w-[260px] -rotate-6 drop-shadow-[0_40px_60px_rgb(0_0_0/0.6)]" />

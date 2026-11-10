@@ -478,6 +478,24 @@ business type + volume + website folded into the Type of Business field) is buil
 submission, as with the guarantee form. Trust strip, Locks menu and footer "Trade application" now go to `/trade`;
 sitemap entry. No pricing, credit or carriage terms are stated until the client confirms them.
 
+### Pass 21 — 10 Nov 2026, own pages for every old-site click, hero carousel, Playwright suite
+Clicks that left for wdlocks.co.uk, and what replaced them: footer "Terms & conditions" → `/terms` (WordPress page
+`terms`, rendered through the sanitiser; clause 14 is the guarantee); checkout "privacy policy" → `/privacy` (WordPress
+page `privacy-policy`); footer "Blog" → `/blog` + `/blog/[slug]` (the ten WordPress posts, featured images, Article
+JSON-LD, sitemap); "Trade application" → `/trade` with the **on-page form switched on** (`/api/trade` → Elementor form
+4783/bc00e91, not yet test-submitted); keys cards "Order with key number on wdlocks.co.uk" → our keys page; the
+configurator's "Order extra keys" → our keys page; mobile-menu "Activate my guarantee" → `/guarantee`. What still goes
+to wdlocks.co.uk by design: "Buy now" / "Continue to secure payment" (payment) and the 3 Star keys "Continue to secure
+checkout" (the key-number product field the Store API cannot set; needs the mu-plugin). An e2e test now asserts no
+other link on the main pages leaves the site. Hero: background is now a **carousel of four brand films** (inside-the-lock
+cut, cylinder turntable, full inside film, key turntable), 12 s each with a crossfade, dots to pick one, paused off
+screen. Announcement bar slimmed to Ultion's size with "Looking to buy extra keys? Click here · Order before 3pm for
+same-day dispatch". Protection panel is Ultion's #f0f0f0 at 680 px. Lock switch keeps its screen position across the
+route change (anchor restore). **Playwright**: `npm run test:e2e` runs 52 checks on desktop and Pixel 7 against
+production (every route renders cleanly, header/menus, homepage structure, product switch and Buy now, guarantee and
+trade forms, crime checker, contact, blog/terms/privacy, no stray links, 404, and the live basket flow in its own serial
+project). Result: 51 passed, 1 flaky (basket drawer on desktop, passes on retry).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

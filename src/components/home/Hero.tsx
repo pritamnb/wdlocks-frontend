@@ -4,37 +4,22 @@ import * as React from 'react';
 import Link from 'next/link';
 import { ButtonLink } from '@/components/ui/Button';
 import { FilmPlayer } from '@/components/media/FilmPlayer';
-import { BRAND_VIDEO, GUARANTEE, SITE, VIDEO_BAR } from '@/lib/constants';
-import { useInViewPlayback, usePrefersReducedMotion } from '@/hooks/useInViewPlayback';
+import { HeroBackdrop } from '@/components/home/HeroBackdrop';
+import { GUARANTEE, SITE, VIDEO_BAR } from '@/lib/constants';
 
 /**
  * Full-bleed cinematic hero (Ultion pattern): a muted looping film behind the headline, two
- * calls to action, and a floating £5,000 guarantee card. The background is a silent cut of the
- * inside-the-lock film (drill, pick and snap protection close-ups), per the client's choice.
+ * calls to action, and a floating £5,000 guarantee card. The background is a carousel of the brand
+ * films (inside-the-lock cut, cylinder turntable, the full inside film, the key), crossfading every few seconds.
  */
 export function Hero() {
-  const videoRef = React.useRef<HTMLVideoElement>(null);
-  const reduced = usePrefersReducedMotion();
-  useInViewPlayback(videoRef, !reduced, 0.2);
   const [film, setFilm] = React.useState<(typeof VIDEO_BAR)[number] | null>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const explainer = VIDEO_BAR[0];
 
   return (
     <section className="relative isolate overflow-hidden bg-near-black text-white" aria-labelledby="hero-title">
-      <video
-        ref={videoRef}
-        className="absolute inset-0 h-full w-full object-cover opacity-90"
-        muted
-        loop
-        playsInline
-        preload="none"
-        poster={BRAND_VIDEO.heroLoop.poster}
-        aria-hidden="true"
-        tabIndex={-1}
-      >
-        <source src={BRAND_VIDEO.heroLoop.mp4} type="video/mp4" />
-      </video>
+      <HeroBackdrop />
       <div className="absolute inset-0 bg-gradient-to-r from-near-black/95 via-near-black/70 to-near-black/10" aria-hidden="true" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-near-black to-transparent" aria-hidden="true" />
 

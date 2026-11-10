@@ -51,3 +51,9 @@ yarn-error.log*
 .eslintcache
 
 .env*
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
