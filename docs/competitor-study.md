@@ -300,6 +300,14 @@ Third pass (after the independent review):
 - "Standard cylinder vs Watchdog 3 Star ALPS" comparison table on the homepage (content-only, mirrors Ultion's keyed-alike comparison pattern using only claims already on wdlocks.co.uk).
 - Delivery section states UK-only shipping; extra-keys card shows the £12 price advantage.
 
+### Pass 4 — 10 Nov 2026, client imagery
+Phil Else (Allegion) sent 13 Watchdog renders via Paramjit (Watchdog Fire & Security), thread "watchdog lock images required".
+Used (trimmed, resized, transparent PNG in `public/brand/product/`): angled cylinder (hero + gallery), engraving close-up
+(Why Watchdog + gallery), end-on view (Home Truths + gallery), engraved keys (Keys menu tile + keys/keyed-alike galleries),
+£5,000 key tag (Guarantee section). Not used: the "1-Star PLUS" render (Ultion-branded), the white-background KeysOnRing
+thumbnails and the small rim-cylinder JPEGs (the live store already has rim photos). Two videos (turntable animation 58 MB,
+Watchdog.mp4 202 MB) arrived by WeTransfer and expire 10 Nov 2026 — download them for the P2 video carousel.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
