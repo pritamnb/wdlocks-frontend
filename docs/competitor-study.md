@@ -338,8 +338,8 @@ Client (via Paramjit, WhatsApp): "stick to the black and red concept — instead
 video bar as in [Ultion's 'See Ultion in action']". Done: header and footer are now near-black with white type, red accents and a
 white-text logo variant; the announcement bar was already Watchdog red. New "See Watchdog in action" bar after the trust strip:
 four cards (explainer 0:40, Inside the lock 0:38, cylinder turntable 0:10, key turntable 0:10) with duration and a red
-"Watch full video" button opening a dark player with controls and sound. The cream canvas is kept (Pritam's brief); if the
-client means the whole canvas should be black, that is a separate decision. Customer-story / CCTV films like Ultion's do not
+"Watch full video" button opening a dark player with controls and sound. Decision (Pritam, 10 Nov): keep the cream canvas; black is for the header, footer and the
+two film panels only. Customer-story / CCTV films like Ultion's do not
 exist yet — the bar is built to take them when they do (add entries to `VIDEO_BAR`).
 
 ## 9. Independent review
