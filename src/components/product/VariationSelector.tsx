@@ -206,26 +206,43 @@ export function VariationSelector({ product, onAdded, headingId, className, show
       {showUpsells && isLock && otherLock && (
         <fieldset ref={switchRef}>
           <legend className="mb-2 text-sm font-semibold text-near-black">Internal control</legend>
-          <div className="grid grid-cols-2 gap-2">
-            <span className="flex h-12 items-center gap-3 rounded-xl border border-red bg-warm-white px-4 text-sm font-semibold text-near-black" aria-current="true">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-red" aria-hidden="true"><span className="h-2.5 w-2.5 rounded-full bg-red" /></span>
-              {product.id === PRODUCT_IDS.CYLINDER_LOCK ? 'Key operated' : 'Thumb turn'}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  sessionStorage.setItem('wd:switch-anchor', JSON.stringify({ top: switchRef.current?.getBoundingClientRect().top ?? 0, at: Date.now() }));
-                } catch {
-                  /* ignore */
-                }
-                router.push(`/products/${otherLock.slug}${sizeQuery}`, { scroll: false });
-              }}
-              className="flex h-12 items-center gap-3 rounded-xl border border-cream-dark bg-warm-white px-4 text-sm font-semibold text-near-black transition-colors duration-150 hover:border-charcoal/50"
-            >
-              <span className="h-5 w-5 rounded-full border-2 border-cream-dark" aria-hidden="true" />
-              {product.id === PRODUCT_IDS.CYLINDER_LOCK ? 'Thumb turn' : 'Key operated'}
-            </button>
+          {/* Fixed positions: Key operated always left, Thumb turn always right; only the radio state changes. */}
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Internal control">
+            {([
+              { id: PRODUCT_IDS.CYLINDER_LOCK, label: 'Key operated' },
+              { id: PRODUCT_IDS.THUMB_TURN, label: 'Thumb turn' },
+            ] as const).map((opt) => {
+              const isCurrent = opt.id === product.id;
+              const target = CATALOGUE_BY_ID[opt.id];
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={isCurrent}
+                  aria-current={isCurrent ? 'true' : undefined}
+                  disabled={isCurrent}
+                  onClick={() => {
+                    if (isCurrent || !target) return;
+                    try {
+                      sessionStorage.setItem('wd:switch-anchor', JSON.stringify({ top: switchRef.current?.getBoundingClientRect().top ?? 0, at: Date.now() }));
+                    } catch {
+                      /* ignore */
+                    }
+                    router.push(`/products/${target.slug}${sizeQuery}`, { scroll: false });
+                  }}
+                  className={cn(
+                    'flex h-12 items-center gap-3 rounded-xl border bg-warm-white px-4 text-left text-sm font-semibold text-near-black transition-colors duration-300',
+                    isCurrent ? 'cursor-default border-red' : 'border-cream-dark hover:border-charcoal/50',
+                  )}
+                >
+                  <span className={cn('flex h-5 w-5 items-center justify-center rounded-full border-2', isCurrent ? 'border-red' : 'border-cream-dark')} aria-hidden="true">
+                    {isCurrent && <span className="h-2.5 w-2.5 rounded-full bg-red" />}
+                  </span>
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
         </fieldset>
       )}

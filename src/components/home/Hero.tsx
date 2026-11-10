@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ButtonLink } from '@/components/ui/Button';
 import { FilmPlayer } from '@/components/media/FilmPlayer';
 import { HeroBackdrop } from '@/components/home/HeroBackdrop';
-import { GUARANTEE, SITE, VIDEO_BAR } from '@/lib/constants';
+import { EXPLAINER_FILM, GUARANTEE, SITE, type VideoBarEntry } from '@/lib/constants';
 
 /**
  * Full-bleed cinematic hero (Ultion pattern): a muted looping film behind the headline, two
@@ -13,9 +13,9 @@ import { GUARANTEE, SITE, VIDEO_BAR } from '@/lib/constants';
  * films (inside-the-lock cut, cylinder turntable, the full inside film, the key), crossfading every few seconds.
  */
 export function Hero() {
-  const [film, setFilm] = React.useState<(typeof VIDEO_BAR)[number] | null>(null);
+  const [film, setFilm] = React.useState<VideoBarEntry | null>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
-  const explainer = VIDEO_BAR[0];
+  const explainer = EXPLAINER_FILM;
 
   return (
     <section className="relative isolate overflow-hidden bg-near-black text-white" aria-labelledby="hero-title">

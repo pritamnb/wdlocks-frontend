@@ -260,9 +260,12 @@ export interface VideoBarEntry {
   blurb: string;
 }
 
-/** "See Watchdog in action" cards, in display order. Client-supplied films only. */
+/** The 40 s manufacturer explainer, opened by the hero's "Watch full video" button. */
+export const EXPLAINER_FILM: VideoBarEntry = { id: 'explainer', title: 'How a Watchdog lock works', durationLabel: '00:40', poster: BRAND_VIDEO.film.poster, mp4: BRAND_VIDEO.film.mp4, aspect: '16/9', blurb: 'Manufacturer film. ' + BRAND_VIDEO.film.chapters };
+
+/** "See Watchdog in action" cards, in display order: the same four films as the hero carousel (client choice, 10 Nov). */
 export const VIDEO_BAR: ReadonlyArray<VideoBarEntry> = [
-  { id: 'explainer', title: 'How a Watchdog lock works', durationLabel: '00:40', poster: BRAND_VIDEO.film.poster, mp4: BRAND_VIDEO.film.mp4, aspect: '16/9', blurb: 'Manufacturer film. ' + BRAND_VIDEO.film.chapters },
+  { id: 'drill', title: 'Hardened steel drill protection', durationLabel: '00:15', poster: BRAND_VIDEO.heroLoop.poster, mp4: BRAND_VIDEO.heroLoop.mp4, aspect: '5/4', blurb: 'Silent cut from the inside-the-lock film: SnapStop, hardened steel drill protection, pick protection and the springs.' },
   { id: 'inside', title: 'Inside the lock', durationLabel: '00:38', poster: BRAND_VIDEO.insideFilm.poster, mp4: BRAND_VIDEO.insideFilm.mp4, aspect: '5/4', blurb: 'Manufacturer film. ' + BRAND_VIDEO.insideFilm.chapters },
   { id: 'turntable', title: 'Every angle, every mark', durationLabel: '00:10', poster: BRAND_VIDEO.turntable.poster, mp4: BRAND_VIDEO.turntable.mp4, aspect: '16/9', blurb: 'Silent 3D turntable of the 3 Star ALPS cylinder showing the engraved Kitemark, TS 007 and Sold Secure marks.' },
   { id: 'key', title: 'The Watchdog key', durationLabel: '00:10', poster: BRAND_VIDEO.clips.keyTurntable.poster, mp4: BRAND_VIDEO.clips.keyTurntable.mp4, aspect: '16/9', blurb: 'Silent 3D turntable of the Watchdog Stays Locked key: dimple cuts and snake groove.' },

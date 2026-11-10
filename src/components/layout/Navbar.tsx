@@ -71,7 +71,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
       <div className="container-wd flex h-16 items-center justify-between gap-3 sm:h-[72px]">
         <button
           type="button"
-          className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full text-near-black transition-colors duration-300 hover:bg-cream lg:hidden"
+          className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-md text-near-black transition-colors duration-300 hover:text-red lg:hidden"
           aria-label="Open menu"
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen(true)}
@@ -84,7 +84,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
         <Logo priority className="lg:mr-4" />
 
         <nav className="hidden flex-1 lg:block" aria-label="Primary">
-          <ul className="flex items-center gap-0.5">
+          <ul className="flex h-16 items-center gap-1 sm:h-[72px]">
             {NAV_LINKS.map((link) =>
               link.menu ? (
                 <li
@@ -95,8 +95,8 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                   <button
                     type="button"
                     className={cn(
-                      'inline-flex h-10 items-center gap-1 rounded-full px-3.5 text-sm font-medium transition-colors duration-300 ease-out hover:bg-cream hover:text-red',
-                      openGroup === link.menu ? 'bg-cream text-red' : 'text-near-black',
+                      'nav-item inline-flex h-full items-center gap-1 whitespace-nowrap px-3 text-sm font-medium transition-colors duration-300 ease-out hover:text-red',
+                      openGroup === link.menu ? 'nav-item-active text-red' : 'text-near-black',
                     )}
                     aria-expanded={openGroup === link.menu}
                     aria-controls={MEGA_ID}
@@ -118,7 +118,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                 </li>
               ) : (
                 <li key={link.label}>
-                  <Link href={link.href} className="inline-flex h-10 items-center rounded-full px-3.5 text-sm font-medium text-near-black transition-colors duration-300 ease-out hover:bg-cream hover:text-red">
+                  <Link href={link.href} className="nav-item inline-flex h-full items-center whitespace-nowrap px-3 text-sm font-medium text-near-black transition-colors duration-300 ease-out hover:text-red">
                     {link.label}
                   </Link>
                 </li>
@@ -137,7 +137,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
           <button
             type="button"
             onClick={openCart}
-            className="relative -mr-2 inline-flex h-10 items-center gap-2 rounded-full px-3 text-near-black transition-colors duration-300 hover:bg-cream"
+            className="relative -mr-2 inline-flex h-10 items-center gap-2 rounded-md px-3 text-near-black transition-colors duration-300 hover:text-red"
             aria-label={`Open basket, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
             aria-haspopup="dialog"
           >

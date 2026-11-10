@@ -81,14 +81,17 @@ test('homepage: hero film, section order, white Why Watchdog, 63% truth, large a
 
 test('product page: lock switch stays in place, Buy now replaces Checkout now', async ({ page }) => {
   await page.goto('/products/3-star-alps-cylinder-door-lock');
-  const switchBtn = page.getByRole('button', { name: 'Thumb turn' });
+  const switchBtn = page.getByRole('radio', { name: 'Thumb turn' });
   await switchBtn.hover(); // scrolls it into view the same way click() does, so the measurement matches the click position
   const before = await switchBtn.boundingBox();
   await switchBtn.click();
   await expect(page).toHaveURL(/3-star-alps-euro-cylinder-thumb-turn-lock\?size=/);
   await expect(page.locator('h1')).toContainText('Thumb Turn');
   await page.waitForTimeout(2500); // the anchor restore keeps correcting while images above settle
-  const after = await page.getByRole('button', { name: 'Key operated' }).boundingBox();
+  // Positions are fixed: Thumb turn stays on the right, now checked; Key operated stays on the left.
+  await expect(page.getByRole('radio', { name: 'Thumb turn' })).toHaveAttribute('aria-checked', 'true');
+  const after = await page.getByRole('radio', { name: 'Thumb turn' }).boundingBox();
+  expect(Math.abs((after?.x ?? 0) - (before?.x ?? 0))).toBeLessThan(4);
   expect(Math.abs((after?.y ?? 0) - (before?.y ?? 0))).toBeLessThan(80);
   await expect(page.getByRole('button', { name: /Buy now/ }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: /Checkout now/ })).toHaveCount(0);

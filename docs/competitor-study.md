@@ -521,6 +521,17 @@ red, claim 56 px white beside it, "Learn more" → /home-truths; figure sourced 
 64.1 %) and sits **above** the red buy band as on Ultion. **Product pages** and the products index on white with the
 grey gallery card, grey thumbnails and grey feature tiles. e2e updated (white header, truths block, order).
 
+### Pass 25 — 10 Nov 2026, all-white canvas, video bar, switch, nav underline, centre-scrub
+Client round: the **canvas is now white** (cream tokens retargeted: sections white, panels/cards Ultion grey #F0F0F0 /
+#F5F5F5, neutral borders — one change in globals.css, every page follows); the **"See it in action" bar** shows the same
+four films as the hero carousel (drill-protection cut, inside film, cylinder turntable, key turntable) while the hero's
+"Watch full video" still opens the 40 s explainer; the **Internal control** switch keeps Key operated on the left and
+Thumb turn on the right — only the radio state changes (it used to re-order so the selected option came first); the
+**header hover** is a 2 px red underline growing from the left (the pill highlight was misaligned on the wrapped
+two-line labels and became invisible on white), items no longer wrap; the **exploded lock** now finishes exploding
+exactly when the Protection block is centred in the viewport, then holds (progress = section entering at the bottom
+→ section centre at viewport centre).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

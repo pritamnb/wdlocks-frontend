@@ -30,12 +30,14 @@ export function ExplodedFilm({ className }: { className?: string }) {
     let lastTime = -1;
     const update = () => {
       frame = 0;
-      const rect = wrap.getBoundingClientRect();
+      // Progress runs from the moment the section enters at the bottom of the viewport to the moment its centre
+      // reaches the viewport centre, so the lock is fully apart exactly when the block is centred, then holds.
+      const section = wrap.closest('section') ?? wrap;
+      const rect = section.getBoundingClientRect();
       const vh = window.innerHeight || 1;
-      // 0 when the element's top is at 90% of the viewport, 1 when it reaches 30%.
-      const start = vh * 0.9;
-      const end = vh * 0.3;
-      const progress = Math.min(1, Math.max(0, (start - rect.top) / (start - end)));
+      const start = vh; // section top at the bottom edge → assembled
+      const end = vh / 2 - rect.height / 2; // section centred → exploded
+      const progress = Math.min(1, Math.max(0, (start - rect.top) / Math.max(1, start - end)));
       const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : clip.duration;
       const t = Math.min(duration - 0.04, progress * duration);
       if (Math.abs(t - lastTime) > 0.016) {
