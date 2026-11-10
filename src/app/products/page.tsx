@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function ProductsPage() {
   const products = await getProductsSSR();
   return (
-    <div className="container-wd py-10 sm:py-14">
+    <div className="bg-white"><div className="container-wd py-10 sm:py-14">
       <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Products' }]} />
       <div className="mt-6 mb-10 max-w-2xl">
         <h1 className="heading-display text-4xl sm:text-5xl">All products</h1>
@@ -29,6 +29,6 @@ export default async function ProductsPage() {
       <div className="mt-16">
         <TrustStrip compact />
       </div>
-    </div>
+    </div></div>
   );
 }

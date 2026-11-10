@@ -509,6 +509,18 @@ cards stay light (warm-white, photos in colour) and turn black with white text o
 and the red Buy online / outline Explore buttons; the aside card does the same; the mobile menu is dark again. e2e
 header test updated for the oklab colour string browsers now report.
 
+### Pass 24 — 10 Nov 2026, Ultion-exact homepage blocks, white header with black dropdown, product pages
+Measured Ultion again (10 Nov) and matched: **header** pure white, links black, and the dropdown **black** again
+(#1b1a1c at 95 % with blur, dark cards whose photos brighten from 30 % to 90 % on hover, cream text, 0.28 s eased
+open, 0.3–0.5 s hover transitions); **hero carousel** shows the two 5:4 films whole (object-contain) over a blurred
+poster fill instead of cropping them; **products section** on white with Ultion's grey cards (#f0f0f0, 10 px radius,
+large photo, 22 px title, blurb, red "Buy now" 48 px / 8 px radius), one card per row on phones; **protection** block
+is Ultion's: 680 px #f0f0f0, exploded-lock film full-bleed behind, only the title (50 px / 600, red "very best") and a
+52 px "Learn more" button; **Home Truths** is Ultion's block (#2a2a2a, 640 px, "Home truths" 23 px red, 64 % at 360 px
+red, claim 56 px white beside it, "Learn more" → /home-truths; figure sourced to ONS CSEW year ending March 2020,
+64.1 %) and sits **above** the red buy band as on Ultion. **Product pages** and the products index on white with the
+grey gallery card, grey thumbnails and grey feature tiles. e2e updated (white header, truths block, order).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

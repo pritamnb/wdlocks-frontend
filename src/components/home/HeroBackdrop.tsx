@@ -7,10 +7,11 @@ import { cn } from '@/lib/cn';
 
 /** Dark-background films that work behind white text. Each plays for up to SLOT seconds, then crossfades to the next. */
 const FILMS = [
-  { src: BRAND_VIDEO.heroLoop.mp4, poster: BRAND_VIDEO.heroLoop.poster, label: 'Inside the lock' },
-  { src: BRAND_VIDEO.turntable.mp4, poster: BRAND_VIDEO.turntable.poster, label: 'The cylinder' },
-  { src: BRAND_VIDEO.insideFilm.mp4, poster: BRAND_VIDEO.insideFilm.poster, label: 'How it defends' },
-  { src: BRAND_VIDEO.clips.keyTurntable.mp4, poster: BRAND_VIDEO.clips.keyTurntable.poster, label: 'The key' },
+  // 5:4 films are shown whole (contain) over a blurred fill, so nothing important is cropped away on a wide hero.
+  { src: BRAND_VIDEO.heroLoop.mp4, poster: BRAND_VIDEO.heroLoop.poster, label: 'Inside the lock', fit: 'contain' },
+  { src: BRAND_VIDEO.turntable.mp4, poster: BRAND_VIDEO.turntable.poster, label: 'The cylinder', fit: 'cover' },
+  { src: BRAND_VIDEO.insideFilm.mp4, poster: BRAND_VIDEO.insideFilm.poster, label: 'How it defends', fit: 'contain' },
+  { src: BRAND_VIDEO.clips.keyTurntable.mp4, poster: BRAND_VIDEO.clips.keyTurntable.poster, label: 'The key', fit: 'cover' },
 ] as const;
 
 const SLOT_SECONDS = 12;
@@ -64,12 +65,16 @@ export function HeroBackdrop() {
   return (
     <div ref={wrapRef} className="absolute inset-0" aria-hidden="true">
       {FILMS.map((f, i) => (
+        <React.Fragment key={f.src}>
+          {f.fit === 'contain' && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={f.poster} alt="" className={cn('absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl transition-opacity ease-in-out', i === active ? 'opacity-60' : 'opacity-0')} style={{ transitionDuration: `${FADE_MS}ms` }} />
+          )}
         <video
-          key={f.src}
           ref={(el) => {
             refs.current[i] = el;
           }}
-          className={cn('absolute inset-0 h-full w-full object-cover transition-opacity ease-in-out', i === active ? 'opacity-90' : 'opacity-0')}
+          className={cn('absolute inset-0 h-full w-full transition-opacity ease-in-out', f.fit === 'contain' ? 'object-contain' : 'object-cover', i === active ? 'opacity-90' : 'opacity-0')}
           style={{ transitionDuration: `${FADE_MS}ms` }}
           muted
           playsInline
@@ -80,6 +85,7 @@ export function HeroBackdrop() {
         >
           {!reduced && <source src={f.src} type="video/mp4" />}
         </video>
+        </React.Fragment>
       ))}
       {!reduced && (
         <div className="pointer-events-auto absolute bottom-5 right-5 z-10 flex gap-1.5 sm:right-8" role="tablist" aria-label="Background film">

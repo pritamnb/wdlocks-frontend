@@ -10,12 +10,12 @@ export function ProductGallery({ images, name, badge }: { images: WooImage[]; na
   const current = images[index] ?? images[0];
 
   if (!current) {
-    return <div className="aspect-square w-full rounded-[2rem] bg-warm-white" aria-hidden="true" />;
+    return <div className="aspect-square w-full rounded-[10px] bg-[#f0f0f0]" aria-hidden="true" />;
   }
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-square w-full overflow-hidden rounded-[2rem] bg-warm-white shadow-card">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[10px] bg-[#f0f0f0]">
         {badge && (
           <span className="absolute left-4 top-4 z-10 flex h-14 w-14 flex-col items-center justify-center rounded-full bg-red text-center text-white shadow-lg">
             <span className="font-playfair text-xl font-semibold leading-none">3</span>
@@ -42,7 +42,7 @@ export function ProductGallery({ images, name, badge }: { images: WooImage[]; na
                 aria-label={`Show image ${i + 1} of ${images.length}`}
                 aria-current={i === index ? 'true' : undefined}
                 className={cn(
-                  'relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border bg-warm-white transition-[border-color,transform] duration-150 hover:-translate-y-0.5',
+                  'relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border bg-[#f0f0f0] transition-[border-color,transform] duration-300 hover:-translate-y-0.5',
                   i === index ? 'border-red' : 'border-cream-dark',
                 )}
               >

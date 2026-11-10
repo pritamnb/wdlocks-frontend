@@ -95,7 +95,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   };
 
   return (
-    <div className="container-wd py-8 sm:py-12">
+    <div className="bg-white"><div className="container-wd py-8 sm:py-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
       <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Products', href: '/products' }, { label: entry?.shortName ?? name }]} />
 
@@ -190,7 +190,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       )}
 
       {product.id === PRODUCT_IDS.CYLINDER_LOCK && (
-        <section className="mt-16 border-t border-cream-dark pt-14" aria-labelledby="product-film-title">
+        <section className="mt-16 border-t border-black/10 pt-14" aria-labelledby="product-film-title">
           <InlineFilm
             src={BRAND_VIDEO.explainerInline.mp4}
             poster={BRAND_VIDEO.explainerInline.poster}
@@ -236,6 +236,6 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       <p className="mt-8 text-sm">
         <Link href="/products" className="font-medium text-charcoal hover:text-red">← Back to all products</Link>
       </p>
-    </div>
+    </div></div>
   );
 }

@@ -36,8 +36,8 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="absolute inset-x-0 top-full z-40 border-b border-white/10 bg-near-black/92 text-white shadow-[0_28px_48px_-28px_rgb(0_0_0/0.8)] backdrop-blur-md"
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-x-0 top-full z-40 border-b border-white/10 bg-[#1b1a1c]/95 text-cream shadow-[0_28px_48px_-28px_rgb(0_0_0/0.8)] backdrop-blur-md"
         >
           <div className="container-wd grid grid-cols-12 gap-6 py-6">
             <ul className="col-span-9 grid grid-cols-4 gap-4" role="list">
@@ -47,19 +47,19 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
                 const image = live?.images[0];
                 const href = `/products/${entry.slug}`;
                 return (
-                  <li key={entry.id} className="group relative overflow-hidden rounded-[10px] border border-white/10 bg-warm-white text-near-black transition-[border-color,transform,box-shadow,background-color,color] duration-300 hover:-translate-y-0.5 hover:border-red/60 hover:bg-near-black hover:text-white hover:shadow-[0_18px_36px_-18px_rgb(0_0_0/0.9)]">
+                  <li key={entry.id} className="group relative overflow-hidden rounded-[10px] border border-white/10 bg-[#111013] text-cream transition-[border-color,transform,box-shadow,background-color] duration-300 ease-out hover:-translate-y-0.5 hover:border-cream/30 hover:bg-[#161418] hover:shadow-[0_18px_36px_-18px_rgb(0_0_0/0.9)]">
                     <Link href={href} onClick={onNavigate} className="absolute inset-0 z-10" aria-label={entry.shortName} />
-                    <div className="relative h-36 overflow-hidden bg-cream transition-colors duration-300 group-hover:bg-[#111013]">
+                    <div className="relative h-36 overflow-hidden bg-[#111013]">
                       {image ? (
                         CARD_HOVER_CLIPS[entry.id] ? (
                           <HoverPreview src={BRAND_VIDEO.clips[CARD_HOVER_CLIPS[entry.id]!].mp4} className="absolute inset-0">
-                            <Image src={image.src} alt="" fill sizes="220px" className="object-contain p-5 opacity-80 grayscale-[20%] transition-[opacity,filter,transform] duration-300 group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-105" />
+                            <Image src={image.src} alt="" fill sizes="220px" className="object-contain p-5 opacity-30 grayscale-[30%] transition-[opacity,filter,transform] duration-500 ease-out group-hover:opacity-90 group-hover:grayscale-0 group-hover:scale-105" />
                           </HoverPreview>
                         ) : (
-                          <Image src={image.src} alt="" fill sizes="220px" className="object-contain p-5 opacity-80 grayscale-[20%] transition-[opacity,filter,transform] duration-300 group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-105" />
+                          <Image src={image.src} alt="" fill sizes="220px" className="object-contain p-5 opacity-30 grayscale-[30%] transition-[opacity,filter,transform] duration-500 ease-out group-hover:opacity-90 group-hover:grayscale-0 group-hover:scale-105" />
                         )
                       ) : (
-                        <div className="h-full w-full bg-cream transition-colors duration-300 group-hover:bg-[#111013]" />
+                        <div className="h-full w-full bg-[#111013]" />
                       )}
                       {entry.popular && (
                         <span className="absolute right-2 top-2 rounded-full bg-red px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">Popular</span>
@@ -67,7 +67,7 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
                     </div>
                     <div className="p-3.5">
                       <p className="text-[17px] font-semibold leading-snug">{entry.shortName}</p>
-                      <p className="mt-0.5 line-clamp-2 text-xs text-charcoal/70 transition-colors duration-300 group-hover:text-white/65">{entry.blurb}</p>
+                      <p className="mt-0.5 line-clamp-2 text-xs text-cream/60 transition-colors duration-300 group-hover:text-cream/85">{entry.blurb}</p>
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                         <span className="text-sm font-semibold tabular-nums">{live ? productPriceLabel(live) : ''}</span>
                         <span className="relative z-20 inline-flex gap-1.5">
@@ -90,14 +90,14 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
                 {data.more.map((l) => (
                   <li key={l.label}>
                     {l.external ? (
-                      <a href={l.href} rel="noopener" className="link-underline text-[15px] font-medium text-white hover:text-red">{l.label} ↗</a>
+                      <a href={l.href} rel="noopener" className="link-underline text-[15px] font-medium text-cream transition-colors duration-300 hover:text-red">{l.label} ↗</a>
                     ) : (
-                      <Link href={l.href} onClick={onNavigate} className="link-underline text-[15px] font-medium text-white hover:text-red">{l.label}</Link>
+                      <Link href={l.href} onClick={onNavigate} className="link-underline text-[15px] font-medium text-cream transition-colors duration-300 hover:text-red">{l.label}</Link>
                     )}
                   </li>
                 ))}
               </ul>
-              <Link href={data.aside.href} onClick={onNavigate} className="group/aside relative mt-6 block overflow-hidden rounded-[10px] border border-white/10 bg-warm-white p-4 text-near-black transition-colors duration-300 hover:border-red/60 hover:bg-near-black hover:text-white">
+              <Link href={data.aside.href} onClick={onNavigate} className="group/aside relative mt-6 block overflow-hidden rounded-[10px] border border-white/10 bg-[#111013] p-4 text-cream transition-[border-color,background-color] duration-300 ease-out hover:border-cream/30 hover:bg-[#161418]">
                 {data.aside.image && (
                   <Image
                     src={BRAND_RENDERS[data.aside.image].src}
@@ -116,7 +116,7 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
               </Link>
             </div>
           </div>
-          <div className="border-t border-white/10 bg-black/30">
+          <div className="border-t border-white/10 bg-near-black">
             <div className={cn('container-wd flex flex-wrap items-center justify-center gap-x-8 gap-y-1 py-2 text-xs font-medium text-white/70')}>
               <span>BSI Kitemarked TS 007 3★</span>
               <span aria-hidden="true">·</span>

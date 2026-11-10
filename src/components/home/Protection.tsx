@@ -1,47 +1,31 @@
 import Link from 'next/link';
 import { ExplodedFilm } from '@/components/home/ExplodedFilm';
 
-const marks = [
-  { label: 'BSI Kitemark licence', value: 'KM597142' },
-  { label: 'Standard', value: 'TS 007-1:2024 · 3 Star' },
-  { label: 'BS EN 1303 grading', value: '1 6 0 B 0 C 6 0' },
-  { label: 'Sold Secure', value: 'SS312:2024 Diamond' },
-];
-
 /**
- * Ultion's "The very best protection for British homes": light panel (Ultion uses #f0f0f0), giant headline,
- * Learn more, and the lock exploding on the right as you scroll — now the real Watchdog animation.
+ * Ultion's `section-home-protection`, measured 10 Nov 2026: 680 px tall, #f0f0f0, the exploded-lock film full-bleed
+ * behind everything (wider than the viewport, anchored right), and on the left only the title
+ * ("The <span>very best</span> protection for British homes", 50 px / 600) and a "Learn more" button (52 px, radius 8).
  */
 export function Protection() {
   return (
-    <section className="relative overflow-hidden bg-[#f0f0f0] py-20 lg:flex lg:min-h-[680px] lg:items-center lg:py-20" aria-labelledby="protection-title" id="protection">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_50%,rgb(218_21_25/0.07),transparent_60%)]" aria-hidden="true" />
-      <div className="container-wd relative grid w-full items-center gap-12 lg:grid-cols-12">
-        <div className="lg:col-span-5">
-          <h2 id="protection-title" className="heading-display text-[2.75rem] leading-[1.02] sm:text-6xl lg:text-[4.25rem]">
+    <section className="relative overflow-hidden bg-[#f0f0f0]" aria-labelledby="protection-title" id="protection">
+      {/* Film layer: full-bleed on desktop, a normal block on phones so the title never sits on top of it. */}
+      <div className="relative lg:absolute lg:inset-y-0 lg:right-0 lg:w-[88%] lg:max-w-none">
+        <ExplodedFilm className="lg:h-full lg:max-w-none [&>video]:lg:h-full [&>video]:lg:w-full [&>video]:lg:object-cover [&>video]:lg:object-left [&_img]:lg:h-full [&_img]:lg:w-full [&_img]:lg:object-cover" />
+      </div>
+      <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-[#f0f0f0] via-[#f0f0f0]/70 to-transparent lg:block lg:w-[55%]" aria-hidden="true" />
+      <div className="container-wd relative flex min-h-0 flex-col justify-end pb-16 pt-6 lg:min-h-[680px] lg:py-20">
+        <div className="max-w-md">
+          <h2 id="protection-title" className="font-sans text-[2.6rem] font-semibold leading-[1.02] tracking-tight text-[#353535] sm:text-[3.125rem]">
             The <span className="text-red">very best</span>
             <br />
             protection for
             <br />
-            British homes.
+            British homes
           </h2>
-          <p className="mt-6 max-w-md text-charcoal/80">
-            Eleven pins, hardened steel inserts, a sacrificial anti-snap section and a cam that locks the moment the key comes out. Every part tested to the highest 3 Star grade. Scroll to see every one of them.
-          </p>
-          <Link href="#inside" className="mt-8 inline-flex h-12 items-center rounded-full bg-red px-7 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
+          <Link href="#inside" className="mt-8 inline-flex h-[52px] items-center rounded-lg bg-red px-7 text-lg font-semibold text-white transition-colors duration-300 hover:bg-red-deep">
             Learn more
           </Link>
-        </div>
-        <div className="lg:col-span-7">
-          <ExplodedFilm />
-          <dl className="mx-auto mt-8 grid max-w-[760px] grid-cols-2 gap-x-6 gap-y-3 border-t border-charcoal/10 pt-5 text-sm sm:grid-cols-4">
-            {marks.map((m) => (
-              <div key={m.label}>
-                <dt className="text-xs text-charcoal/60">{m.label}</dt>
-                <dd className="mt-0.5 font-mono text-[13px] font-semibold tracking-wide text-near-black">{m.value}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
       </div>
     </section>

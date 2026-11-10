@@ -131,9 +131,9 @@ export function isExternalOnly(product: WooProduct): boolean {
 export function ctaLabel(product: WooProduct): string {
   if (!product.is_in_stock) return 'Out of stock';
   if (isExternalOnly(product)) return 'Order with key number';
-  if (product.type !== 'variable') return 'Add to basket';
-  if (product.id === PRODUCT_IDS.RIM_CYLINDER) return 'Choose finish';
-  return 'Choose size';
+  if (product.type !== 'variable') return 'Buy now';
+  if (product.id === PRODUCT_IDS.RIM_CYLINDER) return 'Buy now';
+  return 'Buy now';
 }
 
 /** WooCommerce photos first, then the Allegion brand renders registered for this product id. */

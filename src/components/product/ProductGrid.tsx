@@ -33,7 +33,7 @@ export function ProductGrid({ products, loading = false, limit, skeletonCount = 
 
   return (
     <>
-      <ul className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3 xl:grid-cols-4" aria-busy={loading}>
+      <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-busy={loading}>
         {loading
           ? Array.from({ length: skeletonCount }).map((_, i) => (
               <li key={i}><ProductCardSkeleton /></li>

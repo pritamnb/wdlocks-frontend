@@ -39,11 +39,10 @@ for (const route of ROUTES) {
   });
 }
 
-test('header is translucent black with the expected links, in order', async ({ page, isMobile }) => {
+test('header is white with the expected links, in order', async ({ page, isMobile }) => {
   await page.goto('/');
-  const header = await page.locator('header').evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, blur: getComputedStyle(el).backdropFilter }));
-  expect(header.bg, 'translucent near-black header').toMatch(/\/ 0\.(7|8)\d*\)$/);
-  expect(header.blur).toContain('blur');
+  const bg = await page.locator('header').evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(bg, 'white header').toBe('rgb(255, 255, 255)');
   if (isMobile) {
     await page.getByRole('button', { name: 'Open menu' }).click();
     const dialog = page.getByRole('dialog');
@@ -70,11 +69,11 @@ test('homepage: hero film, section order, white Why Watchdog, 63% truth, large a
   const order = await page.evaluate(() => Array.from(document.querySelectorAll('main section')).map((s) => s.id || s.getAttribute('aria-labelledby') || s.getAttribute('aria-label') || ''));
   const idx = (k: string) => order.findIndex((o) => o === k);
   expect(idx('why-watchdog')).toBeGreaterThan(idx('protection'));
-  expect(idx('buy-band-title')).toBeGreaterThan(idx('why-watchdog'));
-  expect(idx('truths-title')).toBeGreaterThan(idx('buy-band-title'));
+  expect(idx('truths-title')).toBeGreaterThan(idx('why-watchdog'));
+  expect(idx('buy-band-title')).toBeGreaterThan(idx('truths-title'));
   await expect(page.locator('#why-watchdog')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
-  await expect(page.locator('section[aria-labelledby="truths-title"]')).toContainText('63%');
-  await expect(page.getByRole('link', { name: 'How secure is your home?' })).toHaveAttribute('href', '/home-truths#crime-checker');
+  await expect(page.locator('section[aria-labelledby="truths-title"]')).toContainText('64%');
+  await expect(page.locator('section[aria-labelledby="truths-title"]').getByRole('link', { name: 'Learn more' })).toHaveAttribute('href', '/home-truths');
   await expect(page.getByRole('heading', { name: 'The toughest test ever.' })).toBeVisible();
   await expect(page.locator('footer [aria-label="Social media"] a')).toHaveCount(2);
   await expect(page.locator('a[href="/guarantee"]').first()).toBeAttached();

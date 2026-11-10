@@ -43,7 +43,7 @@ export default async function HomePage() {
       <Hero />
       <TrustStrip tone="dark" />
 
-      <section id="products" className="scroll-mt-24 py-20" aria-labelledby="products-title">
+      <section id="products" className="scroll-mt-24 bg-white py-20" aria-labelledby="products-title">
         <div className="container-wd">
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-block rounded-full bg-red px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white">Our products</span>
@@ -58,8 +58,8 @@ export default async function HomePage() {
 
       <Protection />
       <WhyWatchdog />
-      <BuyBand />
       <HomeTruths />
+      <BuyBand />
       <KeySection />
       <KeyedAlikeSection />
       <InsideTheLock />

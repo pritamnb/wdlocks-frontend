@@ -44,19 +44,18 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
   return (
     <article
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-2xl border border-cream-dark bg-cream',
-        'transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-cream-dark/80 hover:shadow-card-hover',
-        'before:absolute before:inset-x-0 before:top-0 before:z-10 before:h-[3px] before:origin-left before:scale-x-0 before:bg-red before:transition-transform before:duration-150 group-hover:before:scale-x-100 focus-within:before:scale-x-100',
+        'group relative flex flex-col overflow-hidden rounded-[10px] bg-[#f0f0f0]',
+        'transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgb(0_0_0/0.35)]',
       )}
     >
-      <Link href={href} className="relative block aspect-square overflow-hidden bg-warm-white" aria-label={name} tabIndex={-1}>
+      <Link href={href} className="relative block aspect-[4/3] overflow-hidden bg-[#f0f0f0] sm:aspect-square" aria-label={name} tabIndex={-1}>
         {image ? (
           hoverClip ? (
             <HoverPreview src={BRAND_VIDEO.clips[hoverClip].mp4} className="absolute inset-0">
-              <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" className="brighten-img object-contain p-6" />
+              <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="object-contain p-8 transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
             </HoverPreview>
           ) : (
-            <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" className="brighten-img object-contain p-6" />
+            <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="object-contain p-8 transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
           )
         ) : (
           <div className="flex h-full items-center justify-center text-charcoal/40">No image</div>
@@ -72,22 +71,22 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
         )}
       </Link>
 
-      <div className="flex flex-1 flex-col items-center p-5 text-center">
-        <h3 className="text-lg font-semibold leading-snug text-near-black">
+      <div className="flex flex-1 flex-col items-center px-6 pb-7 pt-2 text-center">
+        <h3 className="text-[22px] font-medium leading-snug text-near-black sm:text-2xl">
           <Link href={href} className="transition-colors duration-150 hover:text-red focus-visible:text-red">
             {entry?.shortName ?? name}
           </Link>
         </h3>
-        {entry?.blurb && <p className="mt-2 text-sm text-charcoal/75">{entry.blurb}</p>}
-        <p className="mt-3 font-playfair text-xl font-semibold tabular-nums text-near-black">
+        {entry?.blurb && <p className="mt-2 max-w-[28ch] text-[15px] leading-relaxed text-[#353535]/80">{entry.blurb}</p>}
+        <p className="mt-3 text-base font-semibold tabular-nums text-near-black">
           {isVariable && product.prices.price_range && <span className="mr-1 font-sans text-xs font-normal text-charcoal/75">From</span>}
           {productPriceLabel(product)}
         </p>
-        <div className="mt-auto w-full pt-4">
+        <div className="mt-auto w-full pt-5">
           {externalOnly ? (
             <Link
               href={`/products/${CATALOGUE_BY_ID[product.id]?.slug ?? product.slug}`}
-              className="inline-flex h-11 w-full items-center justify-center gap-1 rounded-md bg-near-black px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-charcoal"
+              className="mx-auto inline-flex h-12 w-full max-w-[220px] items-center justify-center rounded-lg bg-red px-6 text-base font-semibold text-white transition-colors duration-300 hover:bg-red-deep"
               aria-label={`${ctaLabel(product)}: ${name}`}
             >
               {ctaLabel(product)}
@@ -96,7 +95,7 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
             <Button
               size="md"
               variant="primary"
-              className="w-full rounded-md"
+              className="mx-auto h-12 w-full max-w-[220px] rounded-lg text-base"
               onClick={(e) => void onCta(e)}
               loading={busy}
               disabled={!product.is_in_stock || !product.is_purchasable}
@@ -113,8 +112,8 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
 
 export function ProductCardSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-cream-dark bg-cream" aria-hidden="true">
-      <Skeleton className="aspect-square w-full rounded-none bg-warm-white" />
+    <div className="flex flex-col overflow-hidden rounded-[10px] bg-[#f0f0f0]" aria-hidden="true">
+      <Skeleton className="aspect-square w-full rounded-none bg-[#e6e6e6]" />
       <div className="space-y-2 p-4 sm:p-5">
         <Skeleton className="h-3 w-1/3" />
         <Skeleton className="h-4 w-3/4" />
