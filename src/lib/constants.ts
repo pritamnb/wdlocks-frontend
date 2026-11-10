@@ -32,14 +32,14 @@ export const SITE = {
   shortName: 'WD Locks',
   tagline: 'Security you can trust.',
   description:
-    'BSI Kitemarked 3-star euro cylinder locks. Sold Secure Diamond rated. Same-day dispatch before 3pm.',
+    'BSI Kitemarked 3-star euro cylinder locks. Sold Secure Diamond rated. Same-day dispatch before 2pm.',
   locale: 'en_GB',
   email: 'sales@wdlocks.co.uk',
   phone: '0203 857 4718',
   phoneHref: 'tel:02038574718',
   freephone: '0800 389 9965',
   freephoneHref: 'tel:08003899965',
-  dispatchCutoff: '3pm',
+  dispatchCutoff: '2pm',
 } as const;
 
 /** TODO: confirm the client's Trustpilot profile URL before go-live. */
@@ -47,7 +47,7 @@ export const TRUSTPILOT_URL = 'https://uk.trustpilot.com/review/wdlocks.co.uk';
 
 /** NOTE: the live store charges for delivery (Royal Mail from £6.40) — do not advertise free delivery. */
 export const ANNOUNCEMENT =
-  'Same-day dispatch before 3pm · BSI Kitemarked 3 Star · 3 keys with every lock';
+  'Same-day dispatch before 2pm · BSI Kitemarked 3 Star · 3 keys with every lock';
 
 export const TRUST_SIGNALS = [
   { id: 'bsi', label: 'BSI Kitemarked', detail: 'TS 007 3-star rated', image: '/brand/bsi-kitemark.webp' },
@@ -85,8 +85,8 @@ export const SHIPPING_OPTIONS = [
   { id: 'saturday', label: 'Saturday Delivery', eta: 'Saturday', pricePence: 2880, transitDays: [1, 1] as const },
 ] as const;
 
-/** Dispatch cut-off: orders before 15:00 Europe/London Mon–Fri ship the same day. */
-export const DISPATCH = { cutoffHour: 15, timeZone: 'Europe/London' } as const;
+/** Dispatch cut-off: orders before 14:00 Europe/London Mon–Fri ship the same day. */
+export const DISPATCH = { cutoffHour: 14, timeZone: 'Europe/London' } as const;
 
 /** Products pushed as "Quick add" upsells in the basket drawer (simple products only). */
 export const UPSELL_PRODUCT_IDS: readonly number[] = [PRODUCT_IDS.LUBRICANT, PRODUCT_IDS.KEYED_ALIKE];
@@ -319,28 +319,28 @@ export const PRODUCT_BULLETS: Readonly<Partial<Record<number, string[]>>> = {
     'Cut only against the number stamped on your key.',
     'Dimple and snake-groove profile, precision machine cut.',
     'Thick, durable bow stamped Watchdog Stays Locked.',
-    'Dispatched the same day before 3pm.',
+    'Dispatched the same day before 2pm.',
   ],
   [PRODUCT_IDS.EXTRA_KEYS_1]: [
     'Genuine Watchdog key from the manufacturer.',
     'For Watchdog 1 Star cylinders.',
     'Precision machine cut to the Watchdog profile.',
     'Thick, durable bow stamped Watchdog Stays Locked.',
-    'Dispatched the same day before 3pm.',
+    'Dispatched the same day before 2pm.',
   ],
   [PRODUCT_IDS.RIM_CYLINDER]: [
     'Replacement for Yale-type night latch cylinders on timber doors.',
     'Brass or satin nickel finish to match your door furniture.',
     'Three keys as standard, cut to your key number.',
     'Fits standard rim night latches; fixing screws included.',
-    'Dispatched the same day before 3pm.',
+    'Dispatched the same day before 2pm.',
   ],
   [PRODUCT_IDS.HALF_CYLINDER]: [
     'Half euro cylinder, 10mm inside / 35mm outside, for garages, shutters and key switches.',
     'Same 3 Star ALPS anti-snap body as the full cylinder.',
     'BSI Kitemark TS 007 3 Star and Sold Secure Diamond.',
     'Three keys as standard; can be keyed alike with your door locks.',
-    'Dispatched the same day before 3pm.',
+    'Dispatched the same day before 2pm.',
   ],
   [PRODUCT_IDS.KEYED_ALIKE]: [
     'Every Watchdog cylinder in your order pinned to one key number.',
@@ -354,14 +354,14 @@ export const PRODUCT_BULLETS: Readonly<Partial<Record<number, string[]>>> = {
     'Dry graphite formula: no oil, no WD-40, no gumming.',
     'Keeps the eleven pins turning freely and protects your guarantee.',
     'Apply into the keyway every six months, or sooner if the key stiffens.',
-    'Dispatched the same day before 3pm.',
+    'Dispatched the same day before 2pm.',
   ],
   [PRODUCT_IDS.BRUNO_TEDDY]: [
     'Blocks the relay signal thieves use for keyless-entry theft.',
     'Pop your car key inside and the fob is silent to scanners.',
     'Fits every keyless fob; a soft toy on the hall table, not a metal pouch.',
     'Tested signal-blocking lining; machine washable cover.',
-    'Dispatched the same day before 3pm.',
+    'Dispatched the same day before 2pm.',
   ],
 };
 
@@ -838,7 +838,7 @@ export const TRADE = {
   reasons: [
     { title: 'The highest grades, on one cylinder', body: 'BSI Kitemark TS 007 3 Star, Sold Secure Diamond and Secured by Design. One product that satisfies every specifier, insurer and police-preferred requirement.' },
     { title: 'A guarantee your customer registers in two minutes', body: 'Every genuine Watchdog carries the £5,000 security guarantee. Your customer activates it on this site; you fit and move on.' },
-    { title: 'Keyed-alike and extra keys, cut to number', body: 'Suite a whole property to one key, or order spares against the key number. Dispatched the same working day before 3pm.' },
+    { title: 'Keyed-alike and extra keys, cut to number', body: 'Suite a whole property to one key, or order spares against the key number. Dispatched the same working day before 2pm.' },
     { title: 'Made by Brisant Secure, part of Allegion', body: 'Designed and supplied from Dewsbury, West Yorkshire, by the same group behind the UK\u2019s best-known 3 Star cylinders.' },
   ],
   steps: [

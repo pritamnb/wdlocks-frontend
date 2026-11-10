@@ -9,7 +9,7 @@ export function BuyBand() {
       <div className="container-wd grid items-center gap-8 py-16 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <h2 id="buy-band-title" className="heading-display text-3xl text-white sm:text-4xl">Buy more Watchdog locks and keys here.</h2>
-          <p className="mt-4 max-w-lg text-white/90">Genuine Watchdog keys cut to your key number and 3 Star ALPS cylinders in every common size, dispatched the same day before 3pm.</p>
+          <p className="mt-4 max-w-lg text-white/90">Genuine Watchdog keys cut to your key number and 3 Star ALPS cylinders in every common size, dispatched the same day before 2pm.</p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link href="/products/watchdog-3-star-alps-extra-keys" className="inline-flex h-12 items-center justify-center rounded-full bg-near-black px-7 text-sm font-semibold text-white transition-colors duration-150 hover:bg-charcoal">
               Buy keys here

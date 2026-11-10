@@ -71,7 +71,7 @@ export function KeepValid() {
     {
       eyebrow: 'Genuine keys only',
       title: 'Copied keys void the guarantee.',
-      body: 'Only a key cut by Watchdog to your key number keeps the lock, and the guarantee, as they should be. Extra keys are cut to order and dispatched the same day before 3pm.',
+      body: 'Only a key cut by Watchdog to your key number keeps the lock, and the guarantee, as they should be. Extra keys are cut to order and dispatched the same day before 2pm.',
       cta: 'Order extra keys',
       href: `/products/${bySlug('EXTRA_KEYS_3')}`,
       render: BRAND_RENDERS.keysEngraved,

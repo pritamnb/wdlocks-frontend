@@ -30,7 +30,7 @@ export function Reviews() {
           {[
             { k: '3★', v: 'BSI Kitemark TS 007' },
             { k: '£5k', v: 'Security guarantee' },
-            { k: '< 3pm', v: 'Same-day dispatch' },
+            { k: '< 2pm', v: 'Same-day dispatch' },
           ].map((s) => (
             <div key={s.v} className="rounded-2xl border border-white/10 bg-white/5 p-6">
               <p className="font-playfair text-4xl font-semibold text-white">{s.k}</p>

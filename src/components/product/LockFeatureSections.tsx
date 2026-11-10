@@ -85,7 +85,7 @@ export function LockFeatureSections() {
           <h2 id="fitted-title" className="heading-display mt-5 text-4xl text-white sm:text-5xl">
             Fitted by locksmiths <span className="text-red">across the UK</span>.
           </h2>
-          <p className="mt-4 text-white/75">Choose your size above and it ships the same day before 3pm, with three keys and a fitting guide in the box.</p>
+          <p className="mt-4 text-white/75">Choose your size above and it ships the same day before 2pm, with three keys and a fitting guide in the box.</p>
           <Link href="#sizing" className="mt-7 inline-flex h-12 items-center rounded-full bg-red px-7 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
             Choose my size
           </Link>

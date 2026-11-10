@@ -152,7 +152,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           )}
 
           <ul className="mt-5 grid grid-cols-2 gap-2 text-sm text-charcoal/85 sm:grid-cols-3">
-            {['BSI Kitemark TS 007 3★', 'Sold Secure Diamond', 'Secured by Design', 'Same-day dispatch < 3pm', '3 keys included', 'Tracked UK delivery'].map((t) => (
+            {['BSI Kitemark TS 007 3★', 'Sold Secure Diamond', 'Secured by Design', 'Same-day dispatch < 2pm', '3 keys included', 'Tracked UK delivery'].map((t) => (
               <li key={t} className="flex items-center gap-2">
                 <span aria-hidden="true" className="text-red">✓</span>
                 {t}
@@ -182,7 +182,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           <ProductCloser
             eyebrow="Get the 3 Star lock"
             title={<>Fitted by locksmiths <span className="text-red">across the UK</span>.</>}
-            body="Every Watchdog door lock carries the BSI Kitemark 3 Star and ships the same day before 3pm with three keys in the box."
+            body="Every Watchdog door lock carries the BSI Kitemark 3 Star and ships the same day before 2pm with three keys in the box."
             cta="Choose a Watchdog lock"
             href="/products/3-star-alps-cylinder-door-lock"
           />

@@ -24,7 +24,7 @@ const common: FaqItem[] = [
   },
   {
     q: 'When will my order arrive?',
-    a: 'Orders placed before 3pm Monday to Friday are dispatched the same working day. Choose Royal Mail 1st Class Signed For (3–5 working days), Special Delivery 24hr or Saturday Delivery at checkout.',
+    a: 'Orders placed before 2pm Monday to Friday are dispatched the same working day. Choose Royal Mail 1st Class Signed For (3–5 working days), Special Delivery 24hr or Saturday Delivery at checkout.',
   },
   {
     q: 'What is the £5,000 security guarantee?',

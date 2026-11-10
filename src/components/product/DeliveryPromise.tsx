@@ -7,7 +7,7 @@ import { formatPrice } from '@/lib/wdlocks-api';
 import { cn } from '@/lib/cn';
 
 /**
- * Ultion-style "Delivers Wed 11th November" promise, computed client-side from the 3pm London cut-off.
+ * Ultion-style "Delivers Wed 11th November" promise, computed client-side from the 2pm London cut-off.
  * Renders nothing until mounted so server and client markup match.
  */
 export function DeliveryPromise({ compact = false, className }: { compact?: boolean; className?: string }) {

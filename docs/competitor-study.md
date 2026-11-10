@@ -496,6 +496,12 @@ production (every route renders cleanly, header/menus, homepage structure, produ
 trade forms, crime checker, contact, blog/terms/privacy, no stray links, 404, and the live basket flow in its own serial
 project). Result: 51 passed, 1 flaky (basket drawer on desktop, passes on retry).
 
+### Pass 22 — 10 Nov 2026, 2pm cut-off
+Dispatch cut-off changed from 3pm to 2pm on the client's instruction (Jayesh, 10 Nov): announcement bar, product
+pills and bullets, delivery panels, checkout review, FAQs, guarantee and trade copy, and the delivery-estimate logic
+(`DISPATCH.cutoffHour` 14, Europe/London). Note: wdlocks.co.uk still says "cut-off time to 3pm" in its side cart; the
+client should align the WordPress copy.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
