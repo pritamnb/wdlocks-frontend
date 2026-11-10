@@ -259,6 +259,8 @@ export const PRODUCT_PILLS: Readonly<Partial<Record<number, string[]>>> = {
   [PRODUCT_IDS.THUMB_TURN]: ['TS 007 3★ certified', 'Anti-snap'],
   [PRODUCT_IDS.HALF_CYLINDER]: ['TS 007 3★ certified', 'Anti-snap'],
   [PRODUCT_IDS.RIM_CYLINDER]: ['Nightlatch cylinder', 'Brass or nickel'],
+  [PRODUCT_IDS.EXTRA_KEYS_3]: ['Genuine Watchdog key', 'Cut to your number'],
+  [PRODUCT_IDS.EXTRA_KEYS_1]: ['Genuine Watchdog key', 'Precision cut'],
 };
 export const PRODUCT_BULLETS: Readonly<Partial<Record<number, string[]>>> = {
   [PRODUCT_IDS.CYLINDER_LOCK]: [
@@ -276,6 +278,21 @@ export const PRODUCT_BULLETS: Readonly<Partial<Record<number, string[]>>> = {
     'BSI Kitemark TS 007 3 Star, the highest cylinder rating.',
     'Thumb turn inside: no key needed to get out in an emergency.',
     'ALPS locks the cam the instant you remove your key.',
+  ],
+  [PRODUCT_IDS.EXTRA_KEYS_3]: [
+    'Genuine Watchdog key from the manufacturer.',
+    'Keeps your £5,000 guarantee valid.',
+    'Cut only against the number stamped on your key.',
+    'Dimple and snake-groove profile, precision machine cut.',
+    'Thick, durable bow stamped Watchdog Stays Locked.',
+    'Dispatched the same day before 3pm.',
+  ],
+  [PRODUCT_IDS.EXTRA_KEYS_1]: [
+    'Genuine Watchdog key from the manufacturer.',
+    'For Watchdog 1 Star cylinders.',
+    'Precision machine cut to the Watchdog profile.',
+    'Thick, durable bow stamped Watchdog Stays Locked.',
+    'Dispatched the same day before 3pm.',
   ],
 };
 

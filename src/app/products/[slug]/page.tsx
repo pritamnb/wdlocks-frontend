@@ -14,6 +14,8 @@ import { sanitizeProductHtml } from '@/lib/sanitize';
 import { galleryImagesFor } from '@/lib/product-helpers';
 import { BRAND_VIDEO, BROCHURE, CATALOGUE_BY_ID, KEY_PRODUCT_IDS, PRODUCT_BULLETS, PRODUCT_IDS, PRODUCT_PILLS, SITE, SITE_URL } from '@/lib/constants';
 import { LockFeatureSections } from '@/components/product/LockFeatureSections';
+import { KeysConfigurator } from '@/components/product/KeysConfigurator';
+import { KeysFeatureSections } from '@/components/product/KeysFeatureSections';
 import { InlineFilm } from '@/components/media/InlineFilm';
 import { ChapterLoop } from '@/components/media/ChapterLoop';
 
@@ -105,6 +107,11 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               <figcaption className="px-4 pb-4 text-center text-xs text-white/60">The Watchdog Stays Locked key — dimple cuts and snake groove, cut against your key number.</figcaption>
             </figure>
           )}
+          {KEY_PRODUCT_IDS.has(product.id) && (
+            <p className="mt-3 flex items-center justify-center gap-2 rounded-full border border-red/30 bg-red/5 px-4 py-2 text-xs font-medium text-red">
+              <span aria-hidden="true">⚠</span> Non-genuine keys damage your lock and invalidate your guarantee.
+            </p>
+          )}
         </div>
 
         <div>
@@ -153,7 +160,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
           <div className="mt-8">
             <ErrorBoundary>
-              <AddToCart product={product} />
+              {product.id === PRODUCT_IDS.EXTRA_KEYS_3 || product.id === PRODUCT_IDS.EXTRA_KEYS_1 ? <KeysConfigurator product={product} /> : <AddToCart product={product} />}
             </ErrorBoundary>
           </div>
 
@@ -165,6 +172,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       </div>
 
       {(product.id === PRODUCT_IDS.CYLINDER_LOCK || product.id === PRODUCT_IDS.THUMB_TURN) && <LockFeatureSections />}
+      {(product.id === PRODUCT_IDS.EXTRA_KEYS_3 || product.id === PRODUCT_IDS.EXTRA_KEYS_1) && <KeysFeatureSections />}
 
       {product.id === PRODUCT_IDS.CYLINDER_LOCK && (
         <section className="mt-16 border-t border-cream-dark pt-14" aria-labelledby="product-film-title">

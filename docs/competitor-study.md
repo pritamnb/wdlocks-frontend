@@ -365,6 +365,16 @@ with the cam clip, red "Anti-snap, by design", six "As safe as houses" tiles fro
 locksmiths across the UK" CTA, then the existing inline film, description accordion, FAQ. Skipped: Ultion's keycode field
 (our keyed-alike/extra-keys products carry the key number) and the Trustpilot slider (no verified source).
 
+### Pass 10 — 10 Nov 2026, keys pages rebuilt to Ultion's Get Keys flow
+Per `docs/keys-page-replication-spec.md`: pills, H1, live price, seven bullets; "How many keys do you need?" chips 1–6 with 3
+preselected and the spare-key note; key-number field with format check and a "Where is my key number?" helper (key render,
+three places to find it, phone fallback); "Get price and buy" reveals the total and, for the 3 Star keys (4266, which need the
+key number as a WooCommerce field the Store API cannot set), a "Continue to secure checkout" link to the wdlocks.co.uk product
+page carrying quantity and key number. The 1 Star keys (6062) add to the basket natively with Add to basket / Checkout now.
+Below: dark "The real deal. Precision-cut keys from Watchdog" and cream "Key protection by key number". Warning badge under
+the gallery: non-genuine keys damage the lock and invalidate the guarantee. Trustpilot slider skipped (no verified source).
+Open: confirm the Watchdog key-number format with the client; extend the handoff plugin with `wd_keycode`.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
