@@ -58,8 +58,9 @@ export function CallbackForm() {
   const [topic, setTopic] = React.useState('');
   const [company, setCompany] = React.useState('');
   const [status, setStatus] = React.useState<Status>({ kind: 'idle' });
-  const [windows, setWindows] = React.useState<string[]>(() => callbackWindows(new Date(2000, 0, 1, 8)));
-  React.useEffect(() => setWindows(callbackWindows()), []);
+  // Server render uses a fixed morning so the markup matches; the client recomputes from the real clock after mount.
+  const isClient = React.useSyncExternalStore(() => () => {}, () => true, () => false);
+  const windows = isClient ? callbackWindows() : callbackWindows(new Date(2000, 0, 1, 8));
 
   const canSend = name.trim().length >= 2 && /^[+\d][\d\s()-]{8,19}$/.test(phone.trim()) && !!when && status.kind !== 'sending';
 

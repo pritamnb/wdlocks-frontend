@@ -441,6 +441,16 @@ panel (Ultion's is #f0f0f0), **scrubbed by scroll** so the cylinder flies apart 
 the way back; reduced motion shows the exploded still. Noted for the client: clause 14.1.5 says the claim form is
 "available here" but the terms page has no link.
 
+### Pass 18 — 10 Nov 2026, Contact page
+Per `docs/contact-replication-spec.md`: new `/contact` on Ultion's "Talk to an expert" layout — red "Here to help" pill,
+H1, callback card (name, number, "When shall we call you?" windows computed from the clock, optional topic, Book my
+call), "Give us a call" (sales line, freephone, emergency locksmiths 24 hours → wdlocksmiths.co.uk), "Send us an email"
+with the socials, "Send us a message" form (wdlocks.co.uk's own form cannot submit: its Spectra script is not loaded),
+"Visit the shop" with address and an OpenStreetMap embed, compact trust strip, buy band; Organization + ContactPoint
+JSON-LD. Delivery: `/api/contact` emails both forms to sales@wdlocks.co.uk through Resend once `RESEND_API_KEY` is set
+(README); until then the API answers 503 and the page opens the visitor's mail app with the request pre-filled.
+Header, Keys menu and footer "Contact" now go to `/contact`. No opening hours shown (none published; client to confirm).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
