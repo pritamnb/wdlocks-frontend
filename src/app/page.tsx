@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getProductsSSR } from '@/lib/api';
 import { Hero } from '@/components/home/Hero';
 import { TrustStrip } from '@/components/home/TrustStrip';
+import { VideoBar } from '@/components/home/VideoBar';
 import { HomeTruths } from '@/components/home/HomeTruths';
 import { Turntable } from '@/components/home/Turntable';
 import { InsideTheLock } from '@/components/home/InsideTheLock';
@@ -39,6 +40,7 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       <Hero />
       <TrustStrip />
+      <VideoBar />
 
       <section className="py-20" aria-labelledby="products-title">
         <div className="container-wd">

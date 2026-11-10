@@ -19,7 +19,7 @@ const companyLinks = [
 ];
 
 function FooterLink({ href, label, external }: { href: string; label: string; external?: boolean }) {
-  const cls = 'text-sm text-charcoal/80 transition-colors duration-150 hover:text-red';
+  const cls = 'text-sm text-white/75 transition-colors duration-150 hover:text-red';
   return external ? (
     <a href={href} className={cls} rel="noopener">{label}</a>
   ) : (
@@ -30,10 +30,10 @@ function FooterLink({ href, label, external }: { href: string; label: string; ex
 export function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="mt-24 border-t border-cream-dark bg-cream-dark text-charcoal" id="contact">
+    <footer className="mt-24 border-t border-white/10 bg-near-black text-white" id="contact">
       <div className="container-wd grid grid-cols-2 gap-10 py-14 md:grid-cols-4">
         <div>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">Products</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Products</h2>
           <ul className="space-y-2.5">
             {CATALOGUE.map((p) => (
               <li key={p.id}><FooterLink href={`/products/${p.slug}`} label={p.shortName} /></li>
@@ -41,24 +41,24 @@ export function Footer() {
           </ul>
         </div>
         <div>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">Help</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Help</h2>
           <ul className="space-y-2.5">
             {helpLinks.map((l) => <li key={l.label}><FooterLink {...l} /></li>)}
           </ul>
         </div>
         <div>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">Company</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Company</h2>
           <ul className="space-y-2.5">
             {companyLinks.map((l) => <li key={l.label}><FooterLink {...l} /></li>)}
           </ul>
-          <address className="mt-6 space-y-1 text-sm not-italic text-charcoal/80">
-            <a href={SITE.phoneHref} className="block font-medium text-near-black hover:text-red">{SITE.phone}</a>
+          <address className="mt-6 space-y-1 text-sm not-italic text-white/75">
+            <a href={SITE.phoneHref} className="block font-medium text-white hover:text-red">{SITE.phone}</a>
             <a href={SITE.freephoneHref} className="block hover:text-red">Freephone {SITE.freephone}</a>
             <a href={`mailto:${SITE.email}`} className="block hover:text-red">{SITE.email}</a>
           </address>
         </div>
         <div>
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">Trusted &amp; accredited</h2>
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Trusted &amp; accredited</h2>
           <ul className="space-y-3">
             {TRUST_SIGNALS.map((t) => (
               <li key={t.id} className="flex items-center gap-3">
@@ -68,16 +68,16 @@ export function Footer() {
                   <span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-md bg-warm-white text-red">◆</span>
                 )}
                 <div>
-                  <span className="block text-sm font-medium text-near-black">{t.label}</span>
-                  <span className="block text-xs text-charcoal/75">{t.detail}</span>
+                  <span className="block text-sm font-medium text-white">{t.label}</span>
+                  <span className="block text-xs text-white/60">{t.detail}</span>
                 </div>
               </li>
             ))}
           </ul>
         </div>
       </div>
-      <div className="border-t border-charcoal/10">
-        <div className="container-wd flex flex-col items-start justify-between gap-2 py-5 text-xs text-charcoal/75 sm:flex-row sm:items-center">
+      <div className="border-t border-white/10">
+        <div className="container-wd flex flex-col items-start justify-between gap-2 py-5 text-xs text-white/60 sm:flex-row sm:items-center">
           <p>© {year} {SITE.name}. All rights reserved.</p>
           <p>Secure checkout at wdlocks.co.uk · Prices include VAT</p>
         </div>

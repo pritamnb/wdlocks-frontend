@@ -333,6 +333,15 @@ live: 5000 px Watchdog render as the hero; Watchdog X-ray in Why Watchdog (the U
 turntable on the keys pages; the 38 s "Inside the lock" macro film inline on the dark panel (muted in-view autoplay, sound on request, clickable chapters — Pritam rejected the modal version); the same inline treatment now carries the explainer in Why Watchdog (7–40 s cut, white fades, multiply-blended onto the cream); in-view playback fixed to pause when the player leaves the viewport; brochure PDF in the footer and
 on product pages. Only a Watchdog exploded view and keyed-alike clip remain to ask Allegion for.
 
+### Pass 7 — 10 Nov 2026, client QA feedback
+Client (via Paramjit, WhatsApp): "stick to the black and red concept — instead of the orange [Ultion] use our red" and "add the
+video bar as in [Ultion's 'See Ultion in action']". Done: header and footer are now near-black with white type, red accents and a
+white-text logo variant; the announcement bar was already Watchdog red. New "See Watchdog in action" bar after the trust strip:
+four cards (explainer 0:40, Inside the lock 0:38, cylinder turntable 0:10, key turntable 0:10) with duration and a red
+"Watch full video" button opening a dark player with controls and sound. The cream canvas is kept (Pritam's brief); if the
+client means the whole canvas should be black, that is a separate decision. Customer-story / CCTV films like Ultion's do not
+exist yet — the bar is built to take them when they do (add entries to `VIDEO_BAR`).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

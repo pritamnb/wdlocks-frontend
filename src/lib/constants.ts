@@ -218,6 +218,26 @@ export const BRAND_VIDEO = {
 } as const;
 
 export type ClipId = keyof typeof BRAND_VIDEO.clips;
+
+export interface VideoBarEntry {
+  id: string;
+  title: string;
+  durationLabel: string;
+  poster: string;
+  mp4: string;
+  aspect: '16/9' | '5/4';
+  blurb: string;
+}
+
+/** "See Watchdog in action" cards, in display order. Client-supplied films only. */
+export const VIDEO_BAR: ReadonlyArray<VideoBarEntry> = [
+  { id: 'explainer', title: 'How a Watchdog lock works', durationLabel: '00:40', poster: BRAND_VIDEO.film.poster, mp4: BRAND_VIDEO.film.mp4, aspect: '16/9', blurb: 'Manufacturer film. ' + BRAND_VIDEO.film.chapters },
+  { id: 'inside', title: 'Inside the lock', durationLabel: '00:38', poster: BRAND_VIDEO.insideFilm.poster, mp4: BRAND_VIDEO.insideFilm.mp4, aspect: '5/4', blurb: 'Manufacturer film. ' + BRAND_VIDEO.insideFilm.chapters },
+  { id: 'turntable', title: 'Every angle, every mark', durationLabel: '00:10', poster: BRAND_VIDEO.turntable.poster, mp4: BRAND_VIDEO.turntable.mp4, aspect: '16/9', blurb: 'Silent 3D turntable of the 3 Star ALPS cylinder showing the engraved Kitemark, TS 007 and Sold Secure marks.' },
+  { id: 'key', title: 'The Watchdog key', durationLabel: '00:10', poster: BRAND_VIDEO.clips.keyTurntable.poster, mp4: BRAND_VIDEO.clips.keyTurntable.mp4, aspect: '16/9', blurb: 'Silent 3D turntable of the Watchdog Stays Locked key: dimple cuts and snake groove.' },
+];
+
+
 export type FilmId = 'explainer' | 'inside';
 
 /** Client brochure (Brisant/Allegion, 2025 v2), 4 pages. */

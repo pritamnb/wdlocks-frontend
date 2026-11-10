@@ -3,11 +3,11 @@ import Link from 'next/link';
 import { SITE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 
-export function Logo({ className, priority = false }: { className?: string; priority?: boolean }) {
+export function Logo({ className, priority = false, tone = 'dark' }: { className?: string; priority?: boolean; tone?: 'dark' | 'light' }) {
   return (
     <Link href="/" className={cn('inline-flex items-center', className)} aria-label={`${SITE.name} home`}>
       <Image
-        src="/brand/watchdog-stays-locked.png"
+        src={tone === 'light' ? '/brand/watchdog-stays-locked-light.png' : '/brand/watchdog-stays-locked.png'}
         alt={SITE.name}
         width={822}
         height={106}

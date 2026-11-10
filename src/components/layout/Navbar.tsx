@@ -61,7 +61,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
     <header
       ref={headerRef}
       className={cn(
-        'sticky top-0 z-40 border-b bg-cream/92 backdrop-blur supports-[backdrop-filter]:bg-cream/85 transition-[box-shadow,border-color] duration-150',
+        'sticky top-0 z-40 border-b border-white/10 bg-near-black text-white transition-[box-shadow,border-color] duration-150',
         scrolled ? 'border-cream-dark shadow-[0_8px_24px_-16px_rgb(10_8_6/0.35)]' : 'border-transparent',
       )}
       onBlur={(e) => {
@@ -71,7 +71,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
       <div className="container-wd flex h-16 items-center justify-between gap-3 sm:h-[72px]">
         <button
           type="button"
-          className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full text-near-black transition-colors duration-150 hover:bg-cream-mid lg:hidden"
+          className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full text-white transition-colors duration-150 hover:bg-white/10 lg:hidden"
           aria-label="Open menu"
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen(true)}
@@ -81,7 +81,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
           </svg>
         </button>
 
-        <Logo priority className="lg:mr-4" />
+        <Logo priority tone="light" className="lg:mr-4" />
 
         <nav className="hidden flex-1 lg:block" aria-label="Primary">
           <ul className="flex items-center gap-0.5">
@@ -95,8 +95,8 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                   <button
                     type="button"
                     className={cn(
-                      'inline-flex h-10 items-center gap-1 rounded-full px-3.5 text-sm font-medium transition-colors duration-150 hover:bg-cream-mid',
-                      openGroup === link.menu ? 'text-red' : 'text-near-black',
+                      'inline-flex h-10 items-center gap-1 rounded-full px-3.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-white/10 hover:text-red',
+                      openGroup === link.menu ? 'text-red' : 'text-white',
                     )}
                     aria-expanded={openGroup === link.menu}
                     aria-controls={MEGA_ID}
@@ -118,7 +118,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                 </li>
               ) : (
                 <li key={link.label}>
-                  <Link href={link.href} className="inline-flex h-10 items-center rounded-full px-3.5 text-sm font-medium text-near-black transition-colors duration-150 hover:bg-cream-mid hover:text-red">
+                  <Link href={link.href} className="inline-flex h-10 items-center rounded-full px-3.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-white/10 hover:text-red">
                     {link.label}
                   </Link>
                 </li>
@@ -131,14 +131,14 @@ export function Navbar({ products }: { products: WooProduct[] }) {
           <a
             href={GUARANTEE.registerUrl}
             rel="noopener"
-            className="hidden h-10 items-center rounded-full border border-red px-4 text-sm font-semibold text-red transition-colors duration-150 hover:bg-red hover:text-white md:inline-flex"
+            className="hidden h-10 items-center rounded-full border border-red px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red md:inline-flex"
           >
             Activate {GUARANTEE.amountLabel} guarantee
           </a>
           <button
             type="button"
             onClick={openCart}
-            className="relative -mr-2 inline-flex h-10 items-center gap-2 rounded-full px-3 text-near-black transition-colors duration-150 hover:bg-cream-mid"
+            className="relative -mr-2 inline-flex h-10 items-center gap-2 rounded-full px-3 text-white transition-colors duration-150 hover:bg-white/10"
             aria-label={`Open basket, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
             aria-haspopup="dialog"
           >
