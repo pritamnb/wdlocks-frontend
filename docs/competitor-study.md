@@ -408,6 +408,12 @@ filled red "Buy online" + outline red "Explore"), a red "More products" column a
 full-screen black panel with the light logo, 2xl white top-level items, expanded groups listing products with red Explore /
 Buy online links, a MOST VIEWED block, contact details and a sticky red guarantee button.
 
+### Pass 15 — 10 Nov 2026, QA pass
+Live crawl + browser checks at 1366 px and 375 px on every route: all routes 200, no console errors, no missing alt or
+broken images, no horizontal overflow, JSON-LD valid, one visible `h1` per page, basket flow (add → drawer → /basket →
+/checkout → remove) works end to end. Fixed: the 404 page now has its own title and `noindex`. Report:
+[qa-report-2026-11-10.md](qa-report-2026-11-10.md).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

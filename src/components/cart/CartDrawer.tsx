@@ -15,7 +15,7 @@ import { canCheckout } from '@/lib/checkout';
 import { CATALOGUE_BY_ID, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
 
 export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
-  const { cart, status, error, isOpen, closeCart, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, clearCart, addToCart, isAdding } = useCart();
+  const { cart, status, error, isOpen, closeCart, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, addToCart, isAdding } = useCart();
   const items = cart?.items ?? [];
   const checkout = canCheckout(cart);
 
