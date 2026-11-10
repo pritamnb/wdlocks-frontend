@@ -306,7 +306,8 @@ Used (trimmed, resized, transparent PNG in `public/brand/product/`): angled cyli
 (Why Watchdog + gallery), end-on view (Home Truths + gallery), engraved keys (Keys menu tile + keys/keyed-alike galleries),
 £5,000 key tag (Guarantee section). Not used: the "1-Star PLUS" render (Ultion-branded), the white-background KeysOnRing
 thumbnails and the small rim-cylinder JPEGs (the live store already has rim photos). Two videos (turntable animation 58 MB,
-Watchdog.mp4 202 MB) arrived by WeTransfer and expire 10 Nov 2026 — download them for the P2 video carousel.
+Watchdog.mp4 202 MB) arrived by WeTransfer; downloaded 10 Nov 2026 to
+`/Users/pritam/Documents/wdlocks/client-assets/wetransfer-2026-11-10/` (outside the repo — too large for git). Use for the P2 video carousel / hero loop.
 
 ## 9. Independent review
 

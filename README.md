@@ -119,6 +119,11 @@ native checkout (Store API `/checkout` + Stripe; `@stripe/stripe-js` is already 
 3. Add the domain; `next.config.ts` already sends CSP, HSTS, X-Frame-Options, nosniff, Referrer-Policy and
    redirects `/shop` → `/products`, `/product/:slug` → `/products/:slug`.
 
+## Client assets
+
+Allegion renders live in `public/brand/product/`. The two product videos (turntable animation 58 MB, Watchdog.mp4 202 MB)
+are kept outside the repo at `../client-assets/wetransfer-2026-11-10/`; compress before adding to the site.
+
 ## Known TODOs
 
 - **Delivery:** the live store charges Royal Mail rates (from £6.40) — the site no longer advertises free
