@@ -309,6 +309,17 @@ thumbnails and the small rim-cylinder JPEGs (the live store already has rim phot
 Watchdog.mp4 202 MB) arrived by WeTransfer; downloaded 10 Nov 2026 to
 `/Users/pritam/Documents/wdlocks/client-assets/wetransfer-2026-11-10/` (outside the repo — too large for git). The turntable clip is now live as the homepage "Every angle. Every mark." section (near-black panel, 960px silent H.264 ~0.75 MB, plays only while on screen, poster for reduced-motion). Watchdog.mp4 (40 s explainer, with audio) is now live too: 720p H.264 (~3.7 MB) behind a click-to-play poster in the Why Watchdog section and under the cylinder gallery (opens the site modal, VideoObject schema on the product page); plus three silent chapter loops (dimple key 7–11 s, pins 11–20 s, ALPS cam 20–30 s) faded to white so they multiply-blend onto cream — pins and ALPS in the Home Truths tiles, dimple key under the gallery on the extra-keys and keyed-alike pages. Encoded with ffmpeg from client-assets/wetransfer-2026-11-10.
 
+### Pass 5 — 10 Nov 2026, hover motions and description clean-up
+- Hover-to-play: chapter clips fade in over product cards and mega-menu tiles (mouse/trackpad only, reduced-motion aware);
+  the film poster previews the turntable loop. Shared `HoverPreview` component.
+- The 3 Star cylinder description on wdlocks.co.uk contains raw CSS (`.watchdog-video-wrapper {…}`) pasted as text and an
+  empty video wrapper because WordPress strips the embed from the Store API. The sanitiser now drops CSS-shaped paragraphs
+  and fills the "Watch how the ALPS lock works" accordion with the self-hosted film. **Client should still delete the stray
+  CSS from the product description in WooCommerce** — it shows on the old site too.
+- Second WeTransfer from Allegion (10 Nov, expires 11 Nov 11:07 UTC): folder WATCHDOG, 6 items, 52 MB — 3-starPLUS.8.png,
+  3Star-Explode-Image.6.png, 5K-half_card-light_background.png, Key.6-alpha.png, Key.6.png, KeyedAlike.Version3.mp4.
+  Paramjit's note: "More video as in ultion website". Not yet downloaded (needs Pritam's OK).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
