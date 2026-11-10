@@ -46,9 +46,9 @@ export function HoverPreview({ src, blend = 'multiply', hideChildren = true, cla
 
   return (
     <div
-      className={cn('relative', className)}
-      onPointerEnter={enabled ? start : undefined}
-      onPointerLeave={enabled ? stop : undefined}
+      className={cn(!className?.includes('absolute') && 'relative', className)}
+      onMouseEnter={enabled ? start : undefined}
+      onMouseLeave={enabled ? stop : undefined}
       onFocus={enabled ? start : undefined}
       onBlur={enabled ? stop : undefined}
     >
