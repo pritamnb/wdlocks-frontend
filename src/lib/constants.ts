@@ -127,7 +127,7 @@ export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured
       { label: 'All products', href: '/products' },
       { label: 'Sizing guide', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
       { label: 'Keyed-alike service', href: '/products/watchdog-keyed-a-like' },
-      { label: 'Trade application', href: `${WC_BASE}/trade-application/`, external: true },
+      { label: 'Trade application', href: '/trade' },
     ],
     aside: { eyebrow: 'Not sure of your size?', title: 'Measure in 60 seconds.', cta: 'Open the sizing guide →', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
   },
@@ -816,4 +816,41 @@ export const CONTACT = {
     { label: 'Instagram', href: 'https://www.instagram.com/watchdog_locks' },
   ],
   topics: ['Choosing or sizing a lock', 'An order I have placed', 'Extra keys or key numbers', 'Guarantee or a claim', 'Trade and installer accounts', 'Something else'],
+} as const;
+
+/** Trade application page. The WordPress form (Elementor, post 4783 / form bc00e91) is where applications are recorded. */
+export const TRADE = {
+  href: '/trade',
+  applyUrl: `${WC_BASE}/trade-application/`,
+  /** 'handoff' until one live test submission has been approved and verified, then 'proxy' (same as the guarantee form). */
+  formMode: 'handoff' as 'handoff' | 'proxy',
+  form: {
+    endpoint: `${WC_BASE}/wp-admin/admin-ajax.php`,
+    postId: 4783,
+    formId: 'bc00e91',
+    refererTitle: 'Trade Application | Watchdog Locks',
+    fields: { company: 'cname', contact: 'field_27542ea', address: 'field_dbab9c8', postcode: 'field_f60e7bd', email: 'emailaddress', phone: 'field_2c3a377', business: 'message' },
+  },
+  businessTypes: ['Locksmith', 'Door or window installer', 'Fabricator', 'Property maintenance or landlord', 'Retailer or merchant', 'Other'],
+  volumes: ['1–10 locks a month', '10–50 locks a month', '50+ locks a month', 'Not sure yet'],
+  /** Only facts with a public source; pricing, credit and carriage terms are added once the client confirms them. */
+  reasons: [
+    { title: 'The highest grades, on one cylinder', body: 'BSI Kitemark TS 007 3 Star, Sold Secure Diamond and Secured by Design. One product that satisfies every specifier, insurer and police-preferred requirement.' },
+    { title: 'A guarantee your customer registers in two minutes', body: 'Every genuine Watchdog carries the £5,000 security guarantee. Your customer activates it on this site; you fit and move on.' },
+    { title: 'Keyed-alike and extra keys, cut to number', body: 'Suite a whole property to one key, or order spares against the key number. Dispatched the same working day before 3pm.' },
+    { title: 'Made by Brisant Secure, part of Allegion', body: 'Designed and supplied from Dewsbury, West Yorkshire, by the same group behind the UK\u2019s best-known 3 Star cylinders.' },
+  ],
+  steps: [
+    { title: 'Apply', body: 'Tell us about your business: company, contact, trading address and what you fit or sell. Two minutes.' },
+    { title: 'We confirm your account', body: 'The team checks the application and comes back to you by email or phone, usually within a working day or two.' },
+    { title: 'Order the way that suits you', body: 'By phone, by email or online once your account is set up. Trade terms are confirmed with your account.' },
+  ],
+  faq: [
+    { q: 'Who can open a trade account?', a: 'Locksmiths, door and window installers, fabricators, property maintenance companies, landlords with a portfolio, and retailers. If you fit or sell locks for a living, apply.' },
+    { q: 'How long does approval take?', a: 'The team reviews applications during working hours and usually replies within a working day or two.' },
+    { q: 'Is there a minimum order?', a: 'Trade terms, including any minimum order and carriage arrangements, are confirmed with your account. Ask when you apply if you have a particular requirement.' },
+    { q: 'Can I order keyed-alike suites for a whole development?', a: 'Yes. Watchdog cylinders can be keyed alike across a property, and extra keys are cut against the key number, so you can suite a block or a site to one key.' },
+    { q: 'Do my customers get the £5,000 guarantee?', a: 'Yes. Every genuine Watchdog lock is covered once your customer registers it within 28 days of installation, free, on this site.' },
+    { q: 'Already a trade customer?', a: 'Call 0203 857 4718 or email sales@wdlocks.co.uk and the team will take your order.' },
+  ],
 } as const;

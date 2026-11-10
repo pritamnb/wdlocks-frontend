@@ -1,6 +1,6 @@
 # Trade application page — plan
 
-Status: **planned, not built** (10 Nov 2026). Requested as "make a plan to implement".
+Status: **built 10 Nov 2026** (`/trade`, handoff mode; proxy awaits one approved test submission). The plan below is what was implemented.
 
 ## What exists today
 

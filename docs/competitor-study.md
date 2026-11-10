@@ -467,6 +467,17 @@ icons, full-width shop card with address beside the map — the "Visit the shop"
 application: plan written in `docs/trade-application-plan.md` (the WordPress page's body is a stray Bristol locksmith
 article; the Elementor form is reusable with the guarantee-form pattern).
 
+### Pass 20 — 10 Nov 2026, Trade page
+Per `docs/trade-application-plan.md`: new `/trade` — dark hero ("Fit the lock you can stand behind.", X-ray render,
+Apply + Call), four sourced reasons (one cylinder for every specifier; £5,000 guarantee the customer registers;
+keyed-alike and keys cut to number; made by Brisant Secure, part of Allegion), three steps, the application section
+(company, contact, trading address, postcode, phone, email, type of business, optional volume and website), six FAQs
+with FAQPage JSON-LD, the accreditation explainers and an "Already a trade customer?" closer. The application form ships
+in **handoff** mode (card → the WordPress form); the **proxy** (`/api/trade` → Elementor post 4783 / form `bc00e91`,
+business type + volume + website folded into the Type of Business field) is built and waits for one approved test
+submission, as with the guarantee form. Trust strip, Locks menu and footer "Trade application" now go to `/trade`;
+sitemap entry. No pricing, credit or carriage terms are stated until the client confirms them.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

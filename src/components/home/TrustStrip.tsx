@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { TRUST_SIGNALS, WC_BASE } from '@/lib/constants';
+import Link from 'next/link';
+import { TRUST_SIGNALS } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 
 /** Thin accreditation bar. `tone="dark"` is the Ultion-style strip under the hero; default is the cream version used on product pages. */
@@ -21,9 +22,9 @@ export function TrustStrip({ compact = false, tone = 'light' }: { compact?: bool
           ))}
         </li>
         <li className="text-sm">
-          <a href={`${WC_BASE}/trade-application/`} rel="noopener" className={cn('font-medium underline underline-offset-4 transition-colors duration-150 hover:text-red', dark ? 'text-white/80 decoration-white/30' : 'text-charcoal/80 decoration-cream-dark hover:decoration-red')}>
+          <Link href="/trade" className={cn('font-medium underline underline-offset-4 transition-colors duration-150 hover:text-red', dark ? 'text-white/80 decoration-white/30' : 'text-charcoal/80 decoration-cream-dark hover:decoration-red')}>
             Are you an installer? Apply for trade →
-          </a>
+          </Link>
         </li>
       </ul>
     </section>

@@ -7,7 +7,7 @@ const helpLinks = [
   { label: 'Delivery & dispatch', href: '/#delivery' },
   { label: 'Guarantee registration', href: '/guarantee' },
   { label: 'Brochure (PDF)', href: BROCHURE.href, external: true },
-  { label: 'Trade application', href: `${WC_BASE}/trade-application/`, external: true },
+  { label: 'Trade application', href: '/trade' },
   { label: 'Terms & conditions', href: `${WC_BASE}/terms-and-conditions/`, external: true },
 ];
 
