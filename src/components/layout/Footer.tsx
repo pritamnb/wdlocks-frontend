@@ -15,7 +15,7 @@ const companyLinks = [
   { label: 'Why Watchdog', href: '/#why-watchdog' },
   { label: 'Home truths', href: '/home-truths' },
   { label: 'Blog', href: `${WC_BASE}/my-blog/`, external: true },
-  { label: 'Contact', href: '/#contact' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 function FooterLink({ href, label, external }: { href: string; label: string; external?: boolean }) {

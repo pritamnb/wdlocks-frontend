@@ -115,7 +115,7 @@ export const NAV_LINKS = [
   { label: 'Keys & Aftercare', href: '/products#keys-and-aftercare', menu: 'keys' as MenuGroupId },
   { label: 'Why Watchdog', href: '/#why-watchdog', menu: null },
   { label: 'Home truths', href: '/home-truths', menu: null },
-  { label: 'Contact', href: '/#contact', menu: null },
+  { label: 'Contact', href: '/contact', menu: null },
 ] as const;
 
 /** Mega-menu contents: featured product cards + secondary text links, per group. Keys reference CATALOGUE. */
@@ -139,7 +139,7 @@ export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured
       { label: 'Activate £5,000 guarantee', href: '/guarantee' },
       { label: 'Why Watchdog', href: '/#why-watchdog' },
       { label: 'Home truths', href: '/home-truths' },
-      { label: 'Contact us', href: '/#contact' },
+      { label: 'Contact us', href: '/contact' },
     ],
     aside: { eyebrow: 'Lost a key?', title: 'Extra keys cut to your key number.', cta: 'Order extra keys →', href: '/products/watchdog-3-star-alps-extra-keys', image: 'keysEngraved' },
   },
@@ -795,4 +795,19 @@ export const GUARANTEE_PAGE = {
     { q: 'Will copied keys or no lubrication void it?', a: 'Yes. The lock must only ever have been used with genuine Watchdog keys and lubricated with Lution XM every 6 months or 5,000 cycles. Extra keys and lubricant are on this site.' },
     { q: 'How long does the guarantee last?', a: 'Five years from the date the lock was installed.' },
   ],
+} as const;
+
+/** Contact page (Ultion's "Talk to an expert" layout). Address and socials from wdlocks.co.uk/contact, 10 Nov 2026. */
+export const CONTACT = {
+  href: '/contact',
+  address: { line1: '397-399 Greenford Road', town: 'Greenford, Middlesex', postcode: 'UB6 8RF', country: 'GB' },
+  /** UB6 8RF centroid (postcodes.io) for the map embed. */
+  mapCentre: { lat: 51.5332, lng: -0.3489 },
+  /** Watchdog Locksmiths advertise emergency cover 24 hours a day on wdlocksmiths.co.uk. */
+  emergency: { label: 'Emergency locksmiths, 24 hours a day', href: 'https://wdlocksmiths.co.uk/' },
+  social: [
+    { label: 'Facebook', href: 'https://www.facebook.com/watchdoglocks/' },
+    { label: 'Instagram', href: 'https://www.instagram.com/watchdog_locks' },
+  ],
+  topics: ['Choosing or sizing a lock', 'An order I have placed', 'Extra keys or key numbers', 'Guarantee or a claim', 'Trade and installer accounts', 'Something else'],
 } as const;

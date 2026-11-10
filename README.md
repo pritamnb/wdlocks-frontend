@@ -28,6 +28,7 @@ Environment variables (all public, no secrets):
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL of this frontend (metadata, sitemap, OG) | `https://shop.example.co.uk` |
 | `NEXT_PUBLIC_WC_BASE` | WooCommerce origin | `https://wdlocks.co.uk` |
 | `NEXT_PUBLIC_CART_HANDOFF_PLUGIN` | `true` once `backend/wd-cart-handoff.php` is installed on WordPress (enables multi-line checkout) | `false` |
+| `RESEND_API_KEY` | Resend API key; when set, the contact page's callback and message forms are emailed to `CONTACT_TO` (default sales@wdlocks.co.uk) from `CONTACT_FROM` (default `Watchdog Locks <noreply@wdlocks.co.uk>`, a domain verified in Resend). Unset: the forms open the visitor's mail app instead | — |
 
 ## Project structure
 
