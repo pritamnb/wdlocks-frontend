@@ -104,7 +104,7 @@ export const NAV_LINKS = [
 ] as const;
 
 /** Mega-menu contents: featured product cards + secondary text links, per group. Keys reference CATALOGUE. */
-export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured: ProductKey[]; more: Array<{ label: string; href: string; external?: boolean }> }>> = {
+export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured: ProductKey[]; more: Array<{ label: string; href: string; external?: boolean }>; aside: { eyebrow: string; title: string; cta: string; href: string; image?: 'keysEngraved' | 'cylinderFront' } }>> = {
   locks: {
     title: 'Locks',
     featured: ['CYLINDER_LOCK', 'THUMB_TURN', 'RIM_CYLINDER', 'HALF_CYLINDER'],
@@ -114,6 +114,7 @@ export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured
       { label: 'Keyed-alike service', href: '/products/watchdog-keyed-a-like' },
       { label: 'Trade application', href: `${WC_BASE}/trade-application/`, external: true },
     ],
+    aside: { eyebrow: 'Not sure of your size?', title: 'Measure in 60 seconds.', cta: 'Open the sizing guide →', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
   },
   keys: {
     title: 'Keys & Aftercare',
@@ -124,7 +125,34 @@ export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured
       { label: 'Why Watchdog', href: '/#why-watchdog' },
       { label: 'Contact us', href: '/#contact' },
     ],
+    aside: { eyebrow: 'Lost a key?', title: 'Extra keys cut to your key number.', cta: 'Order extra keys →', href: '/products/watchdog-3-star-alps-extra-keys', image: 'keysEngraved' },
   },
+};
+
+/* ---------------------------------------------------------------------------
+ * Brand renders supplied by Allegion (Phil Else) via Watchdog Fire & Security, 10 Nov 2026.
+ * Transparent PNGs trimmed and resized; sources kept in the client's email thread
+ * "watchdog lock images required". The Ultion-branded "1-Star PLUS" render was NOT used.
+ * ------------------------------------------------------------------------- */
+export const BRAND_RENDERS = {
+  /** Full cylinder, angled, red cam, Kitemark markings — hero and gallery. */
+  cylinderAngled: { src: '/brand/product/cylinder-angled.png', width: 793, height: 589, alt: 'Watchdog 3 Star ALPS euro cylinder with red anti-snap cam and BSI Kitemark markings' },
+  /** Close-up of the engraved Watchdog / Brisant Secure / Sold Secure SS312 markings. */
+  cylinderDetail: { src: '/brand/product/cylinder-detail.png', width: 928, height: 814, alt: 'Close-up of the Watchdog cylinder engraving: 3 Star Kitemark, Sold Secure SS312, powered by Brisant Secure' },
+  /** End-on view: brass plug, red cam, 3 stars and Kitemark heart. */
+  cylinderFront: { src: '/brand/product/cylinder-front.png', width: 470, height: 900, alt: 'Front view of the Watchdog cylinder showing the 3 Star Kitemark and red cam' },
+  /** Three engraved Watchdog Locksmiths keys on a ring. */
+  keysEngraved: { src: '/brand/product/keys-engraved.png', width: 928, height: 1000, alt: 'Three Watchdog dimple keys engraved with Watchdog Locksmiths 0800 389 9965' },
+  /** Key tag: Stays Locked, £5000 guarantee, activate at wdlocks.co.uk. */
+  guaranteeKeytag: { src: '/brand/product/guarantee-keytag.png', width: 754, height: 900, alt: 'Watchdog key tag: if a burglar snaps your lock and breaks in, £5,000 guarantee, activate for free at wdlocks.co.uk' },
+} as const;
+
+/** Extra gallery images appended after the WooCommerce photos on specific product pages. */
+export const EXTRA_GALLERY_RENDERS: Readonly<Partial<Record<number, ReadonlyArray<keyof typeof BRAND_RENDERS>>>> = {
+  [PRODUCT_IDS.CYLINDER_LOCK]: ['cylinderAngled', 'cylinderDetail', 'cylinderFront'],
+  [PRODUCT_IDS.EXTRA_KEYS_3]: ['keysEngraved'],
+  [PRODUCT_IDS.EXTRA_KEYS_1]: ['keysEngraved'],
+  [PRODUCT_IDS.KEYED_ALIKE]: ['keysEngraved'],
 };
 
 /* ---------------------------------------------------------------------------

@@ -1,3 +1,6 @@
+import Image from 'next/image';
+import { BRAND_RENDERS } from '@/lib/constants';
+
 const features = [
   {
     title: 'Anti-snap, by design',
@@ -21,15 +24,36 @@ export function WhyWatchdog() {
   return (
     <section id="why-watchdog" className="scroll-mt-24 py-20" aria-labelledby="why-title">
       <div className="container-wd">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">Why Watchdog</p>
-          <h2 id="why-title" className="heading-display mt-3 text-3xl sm:text-4xl">
-            Built to stop the burglar’s favourite trick.
-          </h2>
-          <p className="mt-4 text-charcoal/80">
-            Lock snapping accounts for a large share of UK break-ins through uPVC and composite doors.
-            A 3-star cylinder is the single most effective upgrade you can make.
-          </p>
+        <div className="grid items-center gap-10 lg:grid-cols-12">
+          <div className="max-w-2xl lg:col-span-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">Why Watchdog</p>
+            <h2 id="why-title" className="heading-display mt-3 text-3xl sm:text-4xl">
+              Built to stop the burglar’s favourite trick.
+            </h2>
+            <p className="mt-4 text-charcoal/80">
+              Lock snapping accounts for a large share of UK break-ins through uPVC and composite doors.
+              A 3-star cylinder is the single most effective upgrade you can make.
+            </p>
+            <p className="mt-3 text-sm text-charcoal/70">
+              Every Watchdog is engraved with its Kitemark licence, BS EN 1303 grading and Sold Secure SS312 number, so
+              you can check what is protecting your door.
+            </p>
+          </div>
+          <figure className="relative mx-auto w-full max-w-md lg:col-span-5">
+            <div className="cream-panel overflow-hidden rounded-[2rem] border border-cream-dark p-6">
+              <Image
+                src={BRAND_RENDERS.cylinderDetail.src}
+                alt={BRAND_RENDERS.cylinderDetail.alt}
+                width={BRAND_RENDERS.cylinderDetail.width}
+                height={BRAND_RENDERS.cylinderDetail.height}
+                sizes="(max-width: 1024px) 90vw, 440px"
+                className="h-auto w-full drop-shadow-[0_18px_24px_rgb(10_8_6/0.25)]"
+              />
+            </div>
+            <figcaption className="mt-3 text-center text-xs text-charcoal/70">
+              Engraved: Watchdog 3★ · Sold Secure SS312 · powered by Brisant Secure
+            </figcaption>
+          </figure>
         </div>
         <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f, i) => (

@@ -11,6 +11,7 @@ import { ProductFaq } from '@/components/product/ProductFaq';
 import { faqsForProduct } from '@/lib/faqs';
 import { decodeEntities, productPriceLabel, stripHtml } from '@/lib/wdlocks-api';
 import { sanitizeProductHtml } from '@/lib/sanitize';
+import { galleryImagesFor } from '@/lib/product-helpers';
 import { CATALOGUE_BY_ID, SITE, SITE_URL } from '@/lib/constants';
 
 export const revalidate = 60;
@@ -51,6 +52,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   const name = decodeEntities(product.name);
   const entry = CATALOGUE_BY_ID[product.id];
+  const gallery = galleryImagesFor(product.id, product.images);
   const category = entry?.category ?? product.categories[0]?.name;
   const price = Number.parseInt(product.prices.price, 10) / 10 ** product.prices.currency_minor_unit;
 
@@ -59,7 +61,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     '@type': 'Product',
     name,
     description: stripHtml(product.short_description || product.description, 300),
-    image: product.images.map((i) => i.src),
+    image: gallery.map((i) => (i.src.startsWith('/') ? `${SITE_URL}${i.src}` : i.src)),
     sku: product.sku || undefined,
     brand: { '@type': 'Brand', name: 'Watchdog' },
     url: `${SITE_URL}/products/${slug}`,
@@ -79,7 +81,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Products', href: '/products' }, { label: entry?.shortName ?? name }]} />
 
       <div className="mt-6 grid gap-10 lg:grid-cols-2 lg:gap-14">
-        <ProductGallery images={product.images} name={name} />
+        <ProductGallery images={gallery} name={name} />
 
         <div>
           {category && <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red">{category}</p>}

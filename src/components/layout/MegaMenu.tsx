@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { WooProduct } from '@/types';
-import { CATALOGUE, MENU_GROUPS, type MenuGroupId } from '@/lib/constants';
+import { BRAND_RENDERS, CATALOGUE, MENU_GROUPS, type MenuGroupId } from '@/lib/constants';
 import { productPriceLabel } from '@/lib/wdlocks-api';
 import { cn } from '@/lib/cn';
 
@@ -87,13 +87,23 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
                   </li>
                 ))}
               </ul>
-              <div className="mt-6 rounded-2xl bg-navy p-4 text-white">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-grey">Not sure of your size?</p>
-                <p className="mt-1 font-playfair text-lg font-semibold leading-snug">Measure in 60 seconds.</p>
-                <Link href="/products/3-star-alps-cylinder-door-lock#sizing" onClick={onNavigate} className="mt-2 inline-block text-sm font-medium text-white underline-offset-4 hover:underline">
-                  Open the sizing guide →
-                </Link>
-              </div>
+              <Link href={data.aside.href} onClick={onNavigate} className="group/aside relative mt-6 block overflow-hidden rounded-2xl bg-navy p-4 text-white">
+                {data.aside.image && (
+                  <Image
+                    src={BRAND_RENDERS[data.aside.image].src}
+                    alt=""
+                    width={BRAND_RENDERS[data.aside.image].width}
+                    height={BRAND_RENDERS[data.aside.image].height}
+                    sizes="120px"
+                    className="pointer-events-none absolute -bottom-4 -right-3 w-[110px] rotate-12 opacity-80 drop-shadow-[0_12px_16px_rgb(0_0_0/0.4)] transition-transform duration-300 group-hover/aside:rotate-6 group-hover/aside:scale-105"
+                  />
+                )}
+                <div className={cn('relative', data.aside.image && 'pr-20')}>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-grey">{data.aside.eyebrow}</p>
+                  <p className="mt-1 font-playfair text-lg font-semibold leading-snug">{data.aside.title}</p>
+                  <span className="mt-2 inline-block text-sm font-medium text-white underline-offset-4 group-hover/aside:underline">{data.aside.cta}</span>
+                </div>
+              </Link>
             </div>
           </div>
           <div className="border-t border-cream-dark bg-cream-mid/70">

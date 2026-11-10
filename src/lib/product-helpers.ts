@@ -8,8 +8,11 @@ import {
   COLOUR_ATTRIBUTE,
   VARIATIONS_BY_PRODUCT,
   EXTERNAL_ONLY_PRODUCT_IDS,
+  BRAND_RENDERS,
+  EXTRA_GALLERY_RENDERS,
   type CatalogueEntry,
 } from '@/lib/constants';
+import type { WooImage } from '@/types';
 import type { WooProduct } from '@/types';
 
 export interface VariationOption {
@@ -131,4 +134,14 @@ export function ctaLabel(product: WooProduct): string {
   if (product.type !== 'variable') return 'Add to basket';
   if (product.id === PRODUCT_IDS.RIM_CYLINDER) return 'Choose finish';
   return 'Choose size';
+}
+
+/** WooCommerce photos first, then the Allegion brand renders registered for this product id. */
+export function galleryImagesFor(productId: number, images: WooImage[]): WooImage[] {
+  const extra = EXTRA_GALLERY_RENDERS[productId] ?? [];
+  const renders: WooImage[] = extra.map((key, i) => {
+    const r = BRAND_RENDERS[key];
+    return { id: -(i + 1), src: r.src, thumbnail: r.src, srcset: '', sizes: '', name: key, alt: r.alt };
+  });
+  return [...images, ...renders];
 }

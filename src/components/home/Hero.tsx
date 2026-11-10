@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { ButtonLink } from '@/components/ui/Button';
-import { GUARANTEE, SITE } from '@/lib/constants';
+import { BRAND_RENDERS, GUARANTEE, SITE } from '@/lib/constants';
 
 export function Hero({ imageSrc, imageAlt }: { imageSrc?: string; imageAlt?: string }) {
   return (
@@ -42,14 +42,14 @@ export function Hero({ imageSrc, imageAlt }: { imageSrc?: string; imageAlt?: str
           </dl>
         </div>
         <div className="relative lg:col-span-6">
-          <div className="group relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden rounded-[2rem] bg-warm-white shadow-card ring-1 ring-cream-dark">
+          <div className="group relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden rounded-[2rem] bg-[radial-gradient(ellipse_at_30%_20%,var(--warm-white)_0%,var(--cream-mid)_70%,var(--cream-dark)_100%)] shadow-card ring-1 ring-cream-dark">
             <Image
-              src={imageSrc ?? '/brand/watchdog-logo.png'}
-              alt={imageAlt ?? 'Watchdog 3 Star ALPS Cylinder Lock'}
+              src={imageSrc ?? BRAND_RENDERS.cylinderAngled.src}
+              alt={imageAlt ?? BRAND_RENDERS.cylinderAngled.alt}
               fill
               priority
               sizes="(max-width: 1024px) 90vw, 560px"
-              className="brighten-img object-contain p-10"
+              className="object-contain p-10 drop-shadow-[0_24px_28px_rgb(10_8_6/0.28)] transition-transform duration-500 group-hover:scale-[1.03]"
             />
             <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-warm-white/90 px-3 py-1.5 text-xs font-semibold text-charcoal shadow-sm ring-1 ring-cream-dark">
               <Image src="/brand/bsi-kitemark.webp" alt="" width={18} height={18} className="h-[18px] w-[18px] object-contain" />

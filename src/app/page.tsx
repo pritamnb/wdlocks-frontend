@@ -9,7 +9,7 @@ import { Reviews } from '@/components/home/Reviews';
 import { Delivery } from '@/components/home/Delivery';
 import { ProductGrid } from '@/components/product/ProductGrid';
 import { ButtonLink } from '@/components/ui/Button';
-import { PRODUCT_IDS, SITE, SITE_URL } from '@/lib/constants';
+import { SITE, SITE_URL } from '@/lib/constants';
 
 export const revalidate = 60;
 
@@ -20,7 +20,6 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const products = await getProductsSSR();
-  const hero = products.find((p) => p.id === PRODUCT_IDS.CYLINDER_LOCK);
 
   const orgJsonLd = {
     '@context': 'https://schema.org',
@@ -36,7 +35,7 @@ export default async function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
-      <Hero imageSrc={hero?.images[0]?.src} imageAlt={hero?.images[0]?.alt} />
+      <Hero />
       <TrustStrip />
 
       <section className="py-20" aria-labelledby="products-title">
