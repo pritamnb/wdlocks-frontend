@@ -187,7 +187,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         const next = await removeItem({ key });
         setCart(next);
-        if (item) toast({ type: 'info', message: `${item.name} removed` });
+        if (item) {
+          const undo = async () => {
+            try {
+              const restored = await addItem({ id: item.id, quantity: item.quantity });
+              setCart(restored);
+            } catch (err) {
+              toast({ type: 'error', message: friendlyCartError(err) });
+            }
+          };
+          toast({ type: 'info', message: `${item.name} removed`, duration: 6000, action: { label: 'Undo', onClick: () => void undo() } });
+        }
         return true;
       } catch (err) {
         setCart(snapshot); // rollback, then resync with the server's truth

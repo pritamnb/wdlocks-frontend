@@ -12,6 +12,21 @@ export const SITE_URL =
 /** true once backend/wd-cart-handoff.php is installed on WordPress — enables multi-line checkout handoff. */
 export const HANDOFF_PLUGIN_INSTALLED = process.env.NEXT_PUBLIC_CART_HANDOFF_PLUGIN === 'true';
 
+export const PRODUCT_IDS = {
+  CYLINDER_LOCK: 5141,
+  RIM_CYLINDER: 5112,
+  THUMB_TURN: 5077,
+  HALF_CYLINDER: 3861,
+  LUBRICANT: 4384,
+  EXTRA_KEYS_3: 4266,
+  EXTRA_KEYS_1: 6062,
+  KEYED_ALIKE: 5642,
+  BRUNO_TEDDY: 5565,
+} as const;
+
+export type ProductKey = keyof typeof PRODUCT_IDS;
+
+
 export const SITE = {
   name: 'Watchdog Locks',
   shortName: 'WD Locks',
@@ -36,17 +51,81 @@ export const ANNOUNCEMENT =
 
 export const TRUST_SIGNALS = [
   { id: 'bsi', label: 'BSI Kitemarked', detail: 'TS 007 3-star rated', image: '/brand/bsi-kitemark.webp' },
-  { id: 'sold-secure', label: 'Sold Secure Diamond', detail: 'Highest standard, 2024', image: null },
+  { id: 'sold-secure', label: 'Sold Secure Diamond', detail: 'Highest standard, 2024', image: '/brand/sold-secure-diamond.png' },
   { id: 'trustpilot', label: '5★ Trustpilot', detail: 'Rated excellent by UK customers', image: null },
   { id: 'sbd', label: 'Secured by Design', detail: 'Police preferred specification', image: '/brand/secured-by-design.png' },
 ] as const;
 
-export const NAV_LINKS = [
-  { label: 'Products', href: '/products', megaMenu: true },
-  { label: 'Why Watchdog', href: '/#why-watchdog', megaMenu: false },
-  { label: 'Reviews', href: '/#reviews', megaMenu: false },
-  { label: 'Contact', href: '/#contact', megaMenu: false },
+/** £5,000 security guarantee — registration lives on the WooCommerce site. */
+export const GUARANTEE = {
+  amountLabel: '£5,000',
+  registerUrl: `${WC_BASE}/guarantee-registration/`,
+  blurb: 'Register your Watchdog lock and we activate KeyControl plus your £5,000 security guarantee.',
+} as const;
+
+/** Shipping options as configured on the live WooCommerce store (read from its checkout on 2026-11-10). Pence. */
+export const SHIPPING_OPTIONS = [
+  { id: 'rm-signed', label: 'Royal Mail 1st Class Signed For', eta: '3–5 working days', pricePence: 640, transitDays: [3, 5] as const },
+  { id: 'rm-24', label: 'Royal Mail Special Delivery 24hr', eta: 'next working day', pricePence: 1000, transitDays: [1, 1] as const },
+  { id: 'saturday', label: 'Saturday Delivery', eta: 'Saturday', pricePence: 2880, transitDays: [1, 1] as const },
 ] as const;
+
+/** Dispatch cut-off: orders before 15:00 Europe/London Mon–Fri ship the same day. */
+export const DISPATCH = { cutoffHour: 15, timeZone: 'Europe/London' } as const;
+
+/** Products pushed as "Quick add" upsells in the basket drawer (simple products only). */
+export const UPSELL_PRODUCT_IDS: readonly number[] = [PRODUCT_IDS.LUBRICANT, PRODUCT_IDS.KEYED_ALIKE];
+
+/** Default variation preselected on variable products (the most common composite-door size). */
+export const DEFAULT_VARIATION_ID: Readonly<Record<number, number>> = {
+  [PRODUCT_IDS.CYLINDER_LOCK]: 5168, // 35 Inside / 35 Outside
+  [PRODUCT_IDS.THUMB_TURN]: 5107, // 35 Thumb / 35 Outside
+  [PRODUCT_IDS.RIM_CYLINDER]: 5137, // Brass
+};
+
+/** Mobile menu "Most viewed" quick links. */
+export const MOST_VIEWED = [
+  { label: 'Buy a 3 Star cylinder', href: '/products/3-star-alps-cylinder-door-lock' },
+  { label: 'Thumb turn locks', href: '/products/3-star-alps-euro-cylinder-thumb-turn-lock' },
+  { label: 'Order extra keys', href: '/products/watchdog-3-star-alps-extra-keys' },
+  { label: 'Activate my guarantee', href: `${WC_BASE}/guarantee-registration/`, external: true },
+  { label: 'Lock lubricant', href: '/products/watchdog-3-star-alps-lock-lubricant' },
+] as const;
+
+export type MenuGroupId = 'locks' | 'keys';
+
+/** Header navigation. Items with `menu` open a card-style mega-menu (see MegaMenu.tsx). */
+export const NAV_LINKS = [
+  { label: 'Locks', href: '/products', menu: 'locks' as MenuGroupId },
+  { label: 'Keys & Aftercare', href: '/products#keys-and-aftercare', menu: 'keys' as MenuGroupId },
+  { label: 'Why Watchdog', href: '/#why-watchdog', menu: null },
+  { label: 'Reviews', href: '/#reviews', menu: null },
+  { label: 'Contact', href: '/#contact', menu: null },
+] as const;
+
+/** Mega-menu contents: featured product cards + secondary text links, per group. Keys reference CATALOGUE. */
+export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured: ProductKey[]; more: Array<{ label: string; href: string; external?: boolean }> }>> = {
+  locks: {
+    title: 'Locks',
+    featured: ['CYLINDER_LOCK', 'THUMB_TURN', 'RIM_CYLINDER', 'HALF_CYLINDER'],
+    more: [
+      { label: 'All products', href: '/products' },
+      { label: 'Sizing guide', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
+      { label: 'Keyed-alike service', href: '/products/watchdog-keyed-a-like' },
+      { label: 'Trade application', href: `${WC_BASE}/trade-application/`, external: true },
+    ],
+  },
+  keys: {
+    title: 'Keys & Aftercare',
+    featured: ['EXTRA_KEYS_3', 'EXTRA_KEYS_1', 'LUBRICANT', 'BRUNO_TEDDY'],
+    more: [
+      { label: 'Keyed-alike service', href: '/products/watchdog-keyed-a-like' },
+      { label: 'Activate £5,000 guarantee', href: `${WC_BASE}/guarantee-registration/`, external: true },
+      { label: 'Why Watchdog', href: '/#why-watchdog' },
+      { label: 'Contact us', href: '/#contact' },
+    ],
+  },
+};
 
 /* ---------------------------------------------------------------------------
  * Design tokens (mirrored as CSS custom properties in globals.css)
@@ -58,7 +137,13 @@ export const COLOURS = {
   warmWhite: '#FDFAF6',
   red: '#DA1519',
   redDark: '#B8100F',
+  /** Deep red used on wdlocks.co.uk/shop hover states. */
+  redDeep: '#C00802',
   charcoal: '#292734',
+  /** Navy from wdlocks.co.uk/shop — dark panels. */
+  navy: '#27374D',
+  /** Blue-grey from wdlocks.co.uk/shop — borders on dark panels. */
+  blueGrey: '#DDE6ED',
   nearBlack: '#0A0806',
 } as const;
 
@@ -70,20 +155,6 @@ export const FONTS = {
 /* ---------------------------------------------------------------------------
  * Product catalogue
  * ------------------------------------------------------------------------- */
-export const PRODUCT_IDS = {
-  CYLINDER_LOCK: 5141,
-  RIM_CYLINDER: 5112,
-  THUMB_TURN: 5077,
-  HALF_CYLINDER: 3861,
-  LUBRICANT: 4384,
-  EXTRA_KEYS_3: 4266,
-  EXTRA_KEYS_1: 6062,
-  KEYED_ALIKE: 5642,
-  BRUNO_TEDDY: 5565,
-} as const;
-
-export type ProductKey = keyof typeof PRODUCT_IDS;
-
 export interface CatalogueEntry {
   key: ProductKey;
   id: number;
@@ -94,6 +165,8 @@ export interface CatalogueEntry {
   category: string;
   /** Short marketing blurb used in the mega-menu and cards. */
   blurb: string;
+  /** Shows a "Popular" badge on cards and in the mega-menu. */
+  popular?: boolean;
 }
 
 /**
@@ -111,6 +184,7 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
     type: 'variable',
     category: 'Euro Cylinder Lock',
     blurb: 'Anti-snap, anti-bump euro cylinder. 17 sizes.',
+    popular: true,
   },
   {
     key: 'THUMB_TURN',
@@ -121,6 +195,7 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
     type: 'variable',
     category: 'Euro Thumb Turn Cylinder Lock',
     blurb: 'Key outside, thumb turn inside. 12 sizes.',
+    popular: true,
   },
   {
     key: 'RIM_CYLINDER',
@@ -181,6 +256,7 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
     type: 'simple',
     category: 'Keys and Aftercare',
     blurb: 'Keeps your cylinder turning smoothly.',
+    popular: true,
   },
   {
     key: 'BRUNO_TEDDY',

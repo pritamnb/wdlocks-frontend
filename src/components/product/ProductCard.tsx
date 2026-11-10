@@ -55,13 +55,16 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
             fill
             priority={priority}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-contain p-6 transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+            className="brighten-img object-contain p-6"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-charcoal/40">No image</div>
         )}
         {!product.is_in_stock && (
           <span className="absolute left-3 top-3 rounded-full bg-near-black px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">Out of stock</span>
+        )}
+        {entry?.popular && product.is_in_stock && (
+          <span className="absolute right-3 top-3 rounded-full bg-red px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">Popular</span>
         )}
         {product.on_sale && product.is_in_stock && (
           <span className="absolute left-3 top-3 rounded-full bg-red px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">Sale</span>

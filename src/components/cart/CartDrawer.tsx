@@ -1,22 +1,24 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
+import type { WooProduct } from '@/types';
 import { Modal, CloseButton } from '@/components/ui/Modal';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { CartLineItem } from '@/components/cart/CartLineItem';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
-import { formatPrice } from '@/lib/wdlocks-api';
+import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
-import { SITE } from '@/lib/constants';
+import { CATALOGUE_BY_ID, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
 
-export function CartDrawer() {
-  const { cart, status, error, isOpen, closeCart, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, clearCart } = useCart();
+export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
+  const { cart, status, error, isOpen, closeCart, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, clearCart, addToCart, isAdding } = useCart();
   const [checkingOut, setCheckingOut] = React.useState(false);
   const items = cart?.items ?? [];
   const checkout = canCheckout(cart);
 
-  // If the shopper comes back via bfcache / back button, re-enable the button.
   React.useEffect(() => {
     const onShow = (e: PageTransitionEvent) => {
       if (e.persisted) setCheckingOut(false);
@@ -28,11 +30,16 @@ export function CartDrawer() {
   const goToCheckout = async () => {
     if (!cart || !checkout.ok) return;
     setCheckingOut(true);
-    const url = buildCheckoutUrl(cart); // snapshot the lines BEFORE clearing
-    // The WooCommerce checkout now owns the basket: empty ours so a returning shopper can't re-send it.
+    const url = buildCheckoutUrl(cart);
     await clearCart();
     window.location.assign(url);
   };
+
+  // "Don't forget" upsells: simple products not already in the basket.
+  const inCart = new Set(items.map((i) => i.id));
+  const upsells = UPSELL_PRODUCT_IDS.map((id) => products.find((p) => p.id === id))
+    .filter((p): p is WooProduct => Boolean(p) && !inCart.has(p!.id) && p!.is_in_stock)
+    .slice(0, 2);
 
   return (
     <Modal open={isOpen} onClose={closeCart} variant="right" labelledBy="cart-title" className="flex flex-col">
@@ -68,10 +75,10 @@ export function CartDrawer() {
             </Button>
           </div>
         ) : items.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center py-16 text-center">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
             <span aria-hidden="true" className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cream text-2xl">🧺</span>
             <p className="font-playfair text-lg font-semibold text-near-black">Your basket is empty</p>
-            <p className="mt-1 text-sm text-charcoal/70">Every lock ships with 3 keys as standard.</p>
+            <p className="mt-1 text-sm text-charcoal/75">Every lock ships with 3 keys as standard.</p>
             <ButtonLink href="/products" variant="dark" size="md" className="mt-6" onClick={closeCart}>
               Shop locks
             </ButtonLink>
@@ -90,6 +97,32 @@ export function CartDrawer() {
             ))}
           </ul>
         )}
+
+        {upsells.length > 0 && (
+          <div className="mt-2 mb-4 rounded-2xl border border-cream-dark bg-cream p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-charcoal/75">Don’t forget</p>
+            <ul className="mt-2 space-y-2">
+              {upsells.map((p) => {
+                const entry = CATALOGUE_BY_ID[p.id];
+                const img = p.images[0];
+                return (
+                  <li key={p.id} className="group flex items-center gap-3 rounded-xl bg-warm-white p-2 ring-1 ring-cream-dark">
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-cream">
+                      {img && <Image src={img.thumbnail || img.src} alt="" fill sizes="48px" className="brighten-img object-contain p-1" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-near-black">{entry?.shortName ?? decodeEntities(p.name)}</p>
+                      <p className="text-xs text-charcoal/75">{entry?.blurb}</p>
+                    </div>
+                    <Button size="sm" variant="dark" loading={isAdding} onClick={() => void addToCart({ id: p.id, quantity: 1, name: entry?.shortName ?? p.name, openDrawer: false })}>
+                      {formatPrice(p.prices.price)} · Add
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </div>
 
       {items.length > 0 && (
@@ -100,16 +133,23 @@ export function CartDrawer() {
               <a href={SITE.phoneHref} className="font-semibold text-near-black hover:text-red">{SITE.phone}</a>
             </div>
           )}
+          <DeliveryPromise compact className="mb-3" />
           <dl className="flex items-baseline justify-between">
             <dt className="text-sm text-charcoal/80">Subtotal <span className="text-xs">(inc. VAT)</span></dt>
             <dd className="font-playfair text-2xl font-semibold tabular-nums text-near-black">{formatPrice(subtotalPence)}</dd>
           </dl>
-          <p className="mt-1 text-xs text-charcoal/75">Royal Mail tracked delivery, calculated at checkout.</p>
+          <p className="mt-1 text-xs text-charcoal/75">Royal Mail tracked delivery from {formatPrice(640)}, chosen at checkout.</p>
           <Button size="lg" className="mt-4 w-full" onClick={() => void goToCheckout()} loading={checkingOut} disabled={pendingKeys.size > 0 || !checkout.ok}>
             Checkout securely
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
           </Button>
-          <button type="button" onClick={closeCart} className="mt-3 w-full text-center text-sm font-medium text-charcoal/70 transition-colors duration-150 hover:text-red">
+          <ul className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px] text-charcoal/80">
+            <li className="rounded-lg bg-cream px-2 py-1.5">🔒 Secure checkout</li>
+            <li className="rounded-lg bg-cream px-2 py-1.5">📦 Same-day dispatch</li>
+            <li className="rounded-lg bg-cream px-2 py-1.5">🔑 3 keys included</li>
+          </ul>
+          <p className="mt-2 text-center text-[11px] text-charcoal/75">You’ll complete payment on wdlocks.co.uk, our secure WooCommerce checkout.</p>
+          <button type="button" onClick={closeCart} className="mt-2 w-full text-center text-sm font-medium text-charcoal/75 transition-colors duration-150 hover:text-red">
             Continue shopping
           </button>
         </div>

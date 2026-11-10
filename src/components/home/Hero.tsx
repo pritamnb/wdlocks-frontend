@@ -1,30 +1,26 @@
 import Image from 'next/image';
 import { ButtonLink } from '@/components/ui/Button';
-import { SITE } from '@/lib/constants';
+import { GUARANTEE, SITE } from '@/lib/constants';
 
 export function Hero({ imageSrc, imageAlt }: { imageSrc?: string; imageAlt?: string }) {
   return (
-    <section className="relative overflow-hidden" aria-labelledby="hero-title">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-40 -top-40 h-[560px] w-[560px] rounded-full bg-[radial-gradient(closest-side,rgb(218_21_25/0.10),transparent)]"
-      />
-      <div className="container-wd grid items-center gap-10 py-14 sm:py-20 lg:grid-cols-12 lg:gap-8 lg:py-28">
+    <section className="cream-panel relative overflow-hidden border-b border-cream-dark" aria-labelledby="hero-title">
+      <div className="container-wd grid items-center gap-10 py-14 sm:py-20 lg:grid-cols-12 lg:gap-8 lg:py-24">
         <div className="lg:col-span-6">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-cream-dark bg-warm-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/70">
+          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-cream-dark bg-warm-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/75">
             <span className="h-1.5 w-1.5 rounded-full bg-red" aria-hidden="true" />
-            TS 007 3-Star · Sold Secure Diamond
+            Watchdog 3 Star ALPS · Kitemarked · Sold Secure Diamond
           </p>
-          <h1 id="hero-title" className="heading-display text-[2.75rem] leading-[1.02] sm:text-6xl lg:text-7xl">
-            {SITE.tagline}
+          <h1 id="hero-title" className="heading-display text-[2.6rem] leading-[1.02] sm:text-6xl lg:text-[4.4rem]">
+            A snapped lock takes <span className="text-red">seconds</span>.<br className="hidden sm:block" /> A Watchdog doesn&rsquo;t snap.
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-charcoal/85">
-            Watchdog 3 Star ALPS euro cylinders are BSI Kitemarked, anti-snap, anti-bump and anti-drill.
-            Fitted in minutes, trusted by locksmiths, and dispatched the same day when you order before {SITE.dispatchCutoff}.
+            {SITE.tagline} The 3 Star ALPS euro cylinder locks itself the moment you remove the key, resists snapping,
+            bumping, drilling and picking, and fits in five minutes with one screwdriver.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <ButtonLink href="/products" size="lg">
-              Shop locks
+            <ButtonLink href="/products/3-star-alps-cylinder-door-lock" size="lg">
+              Get a Watchdog lock
             </ButtonLink>
             <ButtonLink href="/products/3-star-alps-cylinder-door-lock#sizing" variant="secondary" size="lg">
               Find my size
@@ -32,45 +28,45 @@ export function Hero({ imageSrc, imageAlt }: { imageSrc?: string; imageAlt?: str
           </div>
           <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-cream-dark pt-6 text-sm">
             <div>
-              <dt className="text-charcoal/75">Rating</dt>
-              <dd className="mt-0.5 font-semibold text-near-black">3 Star Kitemark</dd>
+              <dt className="text-charcoal/75">Security rating</dt>
+              <dd className="mt-0.5 font-semibold text-near-black">3 Star Kitemark TS 007</dd>
+            </div>
+            <div>
+              <dt className="text-charcoal/75">Key combinations</dt>
+              <dd className="mt-0.5 font-semibold text-near-black">800,000+ · 11 pins</dd>
             </div>
             <div>
               <dt className="text-charcoal/75">Dispatch</dt>
-              <dd className="mt-0.5 font-semibold text-near-black">Same day before 3pm</dd>
-            </div>
-            <div>
-              <dt className="text-charcoal/75">Keys included</dt>
-              <dd className="mt-0.5 font-semibold text-near-black">3 as standard</dd>
+              <dd className="mt-0.5 font-semibold text-near-black">Same day before {SITE.dispatchCutoff}</dd>
             </div>
           </dl>
         </div>
         <div className="relative lg:col-span-6">
-          <div className="relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden rounded-[2rem] bg-warm-white shadow-card">
-            {imageSrc ? (
-              <Image
-                src={imageSrc}
-                alt={imageAlt ?? 'Watchdog 3 Star ALPS Cylinder Lock'}
-                fill
-                priority
-                sizes="(max-width: 1024px) 90vw, 560px"
-                className="object-contain p-10"
-              />
-            ) : (
-              <Image
-                src="/brand/watchdog-logo.png"
-                alt="Watchdog Locks"
-                fill
-                priority
-                sizes="(max-width: 1024px) 90vw, 560px"
-                className="object-contain p-20"
-              />
-            )}
+          <div className="group relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden rounded-[2rem] bg-warm-white shadow-card ring-1 ring-cream-dark">
+            <Image
+              src={imageSrc ?? '/brand/watchdog-logo.png'}
+              alt={imageAlt ?? 'Watchdog 3 Star ALPS Cylinder Lock'}
+              fill
+              priority
+              sizes="(max-width: 1024px) 90vw, 560px"
+              className="brighten-img object-contain p-10"
+            />
+            <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-warm-white/90 px-3 py-1.5 text-xs font-semibold text-charcoal shadow-sm ring-1 ring-cream-dark">
+              <Image src="/brand/bsi-kitemark.webp" alt="" width={18} height={18} className="h-[18px] w-[18px] object-contain" />
+              Kitemark TS 007 3★
+            </div>
           </div>
-          <div className="absolute -bottom-4 left-4 rounded-2xl bg-near-black px-4 py-3 text-white shadow-xl sm:left-8">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-white/60">Anti-snap guarantee</p>
-            <p className="font-playfair text-lg font-semibold">Snaps safe, stays locked.</p>
-          </div>
+          <a
+            href={GUARANTEE.registerUrl}
+            rel="noopener"
+            className="group absolute -bottom-5 left-4 flex items-center gap-4 rounded-2xl bg-navy px-5 py-4 text-white shadow-xl ring-1 ring-blue-grey/30 transition-transform duration-150 hover:-translate-y-0.5 sm:left-8"
+          >
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-grey">Protected by Watchdog</p>
+              <p className="font-playfair text-lg font-semibold leading-tight">Get your {GUARANTEE.amountLabel} guarantee</p>
+            </div>
+            <span className="inline-flex h-9 items-center rounded-full bg-red px-3.5 text-sm font-semibold transition-colors duration-150 group-hover:bg-red-deep">Activate</span>
+          </a>
         </div>
       </div>
     </section>

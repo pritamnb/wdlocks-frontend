@@ -5,12 +5,15 @@ import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
+import { getProductsSSR } from '@/lib/api';
 
 /**
  * Site chrome: providers + announcement bar + navbar + page + footer + cart drawer.
- * Fonts are attached to <html> in app/layout.tsx (next/font must run there).
+ * Products are fetched here (ISR 60s) so the mega-menu, mobile menu and basket upsells
+ * can show live images and prices without a client fetch.
  */
-export function RootLayout({ children }: { children: ReactNode }) {
+export async function RootLayout({ children }: { children: ReactNode }) {
+  const products = await getProductsSSR();
   return (
     <ToastProvider>
       <CartProvider>
@@ -21,12 +24,12 @@ export function RootLayout({ children }: { children: ReactNode }) {
           Skip to content
         </a>
         <AnnouncementBar />
-        <Navbar />
+        <Navbar products={products} />
         <main id="main" className="flex-1">
           {children}
         </main>
         <Footer />
-        <CartDrawer />
+        <CartDrawer products={products} />
       </CartProvider>
     </ToastProvider>
   );

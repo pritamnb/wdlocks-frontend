@@ -10,7 +10,10 @@
   --warm-white: #FDFAF6;
   --red: #DA1519;
   --red-dark: #B8100F;
+  --red-deep: #C00802;
   --charcoal: #292734;
+  --navy: #27374D;
+  --blue-grey: #DDE6ED;
   --near-black: #0A0806;
 
   /* next/font injects --font-inter / --font-playfair on <html>; fall back to the brief's stacks. */
@@ -33,6 +36,9 @@
   --color-red: var(--red);
   --color-red-dark: var(--red-dark);
   --color-charcoal: var(--charcoal);
+  --color-red-deep: var(--red-deep);
+  --color-navy: var(--navy);
+  --color-blue-grey: var(--blue-grey);
   --color-near-black: var(--near-black);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -59,7 +65,21 @@
     font-family: var(--font-body);
     font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
+    position: relative;
   }
+  /* Creamy paper grain: a fixed, non-interactive noise layer over the cream canvas. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.55;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.93  0 0 0 0 0.90  0 0 0 0 0.85  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size: 160px 160px;
+  }
+  body > * { position: relative; z-index: 1; }
   ::selection {
     background: var(--red);
     color: #fff;
@@ -119,5 +139,35 @@
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: var(--cream-dark) transparent;
+  }
+  /* Ultion-style "extra light" hover: image starts muted and brightens into colour on hover. */
+  .brighten-img {
+    filter: grayscale(30%) brightness(0.96);
+    opacity: 0.82;
+    transition: filter 300ms ease-in-out, opacity 300ms ease-in-out, transform 300ms ease-in-out;
+  }
+  .group:hover .brighten-img,
+  .group:focus-within .brighten-img {
+    filter: grayscale(0) brightness(1.04);
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  .cream-panel {
+    background:
+      radial-gradient(120% 80% at 100% 0%, rgb(218 21 25 / 0.06), transparent 60%),
+      linear-gradient(180deg, var(--warm-white), var(--cream-mid));
+  }
+  .marquee {
+    display: inline-flex;
+    gap: 3rem;
+    white-space: nowrap;
+    animation: marquee 28s linear infinite;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee { animation: none; }
   }
 }

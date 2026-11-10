@@ -1,19 +1,21 @@
 'use client';
 
 import * as React from 'react';
-import { ANNOUNCEMENT } from '@/lib/constants';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { SITE } from '@/lib/constants';
+import { estimateDelivery, formatCountdown } from '@/lib/delivery';
 
-const STORAGE_KEY = 'wd:announcement-dismissed:v1';
+const STORAGE_KEY = 'wd:announcement-dismissed:v2';
 const EVENT = 'wd:announcement-change';
 
 function readDismissed(): boolean {
   try {
     return window.localStorage.getItem(STORAGE_KEY) === '1';
   } catch {
-    return false; // storage unavailable (private mode) — keep bar visible
+    return false;
   }
 }
-
 function subscribe(callback: () => void) {
   window.addEventListener('storage', callback);
   window.addEventListener(EVENT, callback);
@@ -23,9 +25,24 @@ function subscribe(callback: () => void) {
   };
 }
 
+/**
+ * Contextual utility strip (Ultion pattern): product pages get the dispatch/delivery promise,
+ * everything else nudges existing owners towards extra keys and the guarantee.
+ */
 export function AnnouncementBar() {
-  // Server snapshot = not dismissed, so SSR/hydration match; the client value takes over right after.
+  const pathname = usePathname();
   const dismissed = React.useSyncExternalStore(subscribe, readDismissed, () => false);
+  // Countdown is client-only; render the static version on the server to avoid hydration mismatch.
+  const [est, setEst] = React.useState<ReturnType<typeof estimateDelivery> | null>(null);
+  React.useEffect(() => {
+    const tick = () => setEst(estimateDelivery());
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (dismissed) return null;
+  const onProduct = pathname.startsWith('/products/');
 
   const dismiss = () => {
     try {
@@ -36,21 +53,26 @@ export function AnnouncementBar() {
     window.dispatchEvent(new Event(EVENT));
   };
 
-  if (dismissed) return null;
-
-  const parts = ANNOUNCEMENT.split(' · ');
-
   return (
-    <div className="relative bg-red text-white" role="region" aria-label="Store announcements">
+    <div className={onProduct ? 'relative bg-near-black text-white' : 'relative bg-red text-white'} role="region" aria-label="Store announcements">
       <div className="container-wd flex min-h-9 items-center justify-center py-1.5 pr-10 text-center text-[13px] font-medium leading-snug sm:text-sm">
-        <p className="m-0">
-          {parts.map((part, i) => (
-            <span key={part} className={i > 0 ? 'hidden sm:inline' : undefined}>
-              {i > 0 && <span aria-hidden="true" className="mx-2 opacity-70">·</span>}
-              {part}
+        {onProduct ? (
+          <p className="m-0">
+            <span className="font-semibold uppercase tracking-[0.12em] text-cream-dark">Order today, dispatched {est?.shipsToday ? 'today' : 'next working day'}</span>
+            {est?.shipsToday && est.minutesToCutoff > 0 && (
+              <span className="hidden sm:inline"> · order within <strong>{formatCountdown(est.minutesToCutoff)}</strong> for same-day dispatch</span>
+            )}
+          </p>
+        ) : (
+          <p className="m-0">
+            Already own a Watchdog lock?{' '}
+            <Link href="/products/watchdog-3-star-alps-extra-keys" className="underline decoration-white/60 underline-offset-2 hover:decoration-white">Order extra keys</Link>
+            <span className="hidden sm:inline">
+              {' '}<span aria-hidden="true" className="mx-2 opacity-70">·</span>Same-day dispatch before {SITE.dispatchCutoff}
+              <span aria-hidden="true" className="mx-2 opacity-70">·</span>BSI Kitemarked 3 Star
             </span>
-          ))}
-        </p>
+          </p>
+        )}
       </div>
       <button
         type="button"

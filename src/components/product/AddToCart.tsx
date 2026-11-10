@@ -8,6 +8,7 @@ import { VariationSelector } from '@/components/product/VariationSelector';
 import { useCart } from '@/hooks/useCart';
 import { decodeEntities, formatPrice } from '@/lib/wdlocks-api';
 import { isExternalOnly } from '@/lib/product-helpers';
+import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 
 /** Product-page purchase box: inline size/finish picker for variable products, qty + add for simple ones. */
 export function AddToCart({ product }: { product: WooProduct }) {
@@ -37,12 +38,13 @@ export function AddToCart({ product }: { product: WooProduct }) {
   if (product.type === 'variable') {
     return (
       <section id="sizing" className="scroll-mt-28 rounded-2xl border border-cream-dark bg-warm-white p-5" aria-labelledby="pdp-options-label">
-        <VariationSelector product={product} headingId="pdp-options" />
+        <VariationSelector product={product} headingId="pdp-options" showUpsells />
       </section>
     );
   }
 
   return (
+    <div className="space-y-4">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <QuantityControl value={quantity} onChange={setQuantity} itemName={name} min={1} max={product.sold_individually ? 1 : 99} disabled={isAdding} />
       <Button
@@ -60,6 +62,8 @@ export function AddToCart({ product }: { product: WooProduct }) {
           'Out of stock'
         )}
       </Button>
+    </div>
+    <DeliveryPromise />
     </div>
   );
 }
