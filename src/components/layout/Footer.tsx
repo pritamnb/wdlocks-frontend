@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CATALOGUE, SITE, WC_BASE, TRUST_SIGNALS, TRUSTPILOT_URL } from '@/lib/constants';
+import { CATALOGUE, SITE, WC_BASE, TRUST_SIGNALS } from '@/lib/constants';
 
 const helpLinks = [
   { label: 'Sizing guide', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
@@ -64,16 +64,10 @@ export function Footer() {
                 {t.image ? (
                   <Image src={t.image} alt="" width={40} height={40} className="h-10 w-10 rounded-md bg-warm-white object-contain p-1" />
                 ) : (
-                  <span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-md bg-warm-white text-red">
-                    {t.id === 'trustpilot' ? '★' : '◆'}
-                  </span>
+                  <span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-md bg-warm-white text-red">◆</span>
                 )}
                 <div>
-                  {t.id === 'trustpilot' ? (
-                    <a href={TRUSTPILOT_URL} rel="noopener" className="block text-sm font-medium text-near-black hover:text-red">{t.label}</a>
-                  ) : (
-                    <span className="block text-sm font-medium text-near-black">{t.label}</span>
-                  )}
+                  <span className="block text-sm font-medium text-near-black">{t.label}</span>
                   <span className="block text-xs text-charcoal/75">{t.detail}</span>
                 </div>
               </li>

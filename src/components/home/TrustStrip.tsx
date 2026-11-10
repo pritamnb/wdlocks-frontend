@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { TRUST_SIGNALS, TRUSTPILOT_URL, WC_BASE } from '@/lib/constants';
+import { TRUST_SIGNALS, WC_BASE } from '@/lib/constants';
 
 export function TrustStrip({ compact = false }: { compact?: boolean }) {
   return (
@@ -10,13 +10,9 @@ export function TrustStrip({ compact = false }: { compact?: boolean }) {
             {t.image ? (
               <Image src={t.image} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
             ) : (
-              <span aria-hidden="true" className="text-red">{t.id === 'trustpilot' ? '★★★★★' : '◆'}</span>
+              <span aria-hidden="true" className="text-red">◆</span>
             )}
-            {t.id === 'trustpilot' ? (
-              <a href={TRUSTPILOT_URL} rel="noopener" className="hover:text-red transition-colors duration-150">{t.label}</a>
-            ) : (
-              <span>{t.label}</span>
-            )}
+            <span>{t.label}</span>
           </li>
         ))}
         <li className="text-sm">

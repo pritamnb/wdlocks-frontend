@@ -11,7 +11,7 @@ export function Guarantee() {
             <h2 id="guarantee-title" className="heading-display mt-3 text-3xl sm:text-4xl">
               Register your lock. Activate your {GUARANTEE.amountLabel} guarantee.
             </h2>
-            <p className="mt-4 max-w-lg text-charcoal/85">{GUARANTEE.blurb} Registration also switches on KeyControl, so nobody can have your key copied without your permission.</p>
+            <p className="mt-4 max-w-lg text-charcoal/85">{GUARANTEE.blurb} With key-copy protection, nobody can have a key cut to your number without your say-so.</p>
             <a
               href={GUARANTEE.registerUrl}
               rel="noopener"

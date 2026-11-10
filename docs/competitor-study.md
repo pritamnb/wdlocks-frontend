@@ -47,7 +47,7 @@ Store API `/checkout` (what `@stripe/stripe-js` was installed for). Recommendati
 - Commerce plugins: WooCommerce Blocks mini-cart, Stripe (UPE + Express Checkout element), Klarna Payments, PayPal,
   Product Bundles, Product Add-Ons, Product Extras (PEWC), Woo Custom Product Add-ons, Variation Swatches Pro,
   Additional Variation Images. Marketing: GTM (`GTM-PZ2NQF2`), Facebook pixel, OneTrust consent, Jetpack stats,
-  Trustpilot widgets. Public Store API exposes 90 products (locks are configured as variable products with 100+
+  Trustpilot *imagery* — **corrected after review: there is no Trustpilot script; the stars are a static SVG, "12500+ reviews" is hard-coded text and every review carousel is hard-coded HTML**. Public Store API exposes 90 products (locks are configured as variable products with 100+
   variations: e.g. "3 Star Lock to Code" has 131 variations).
 - The lock product itself is sold through a bespoke configurator page (`/get-locks/product/`) and keys through
   `/get-keys/product/`; standard WooCommerce product pages are used for accessories.
@@ -57,7 +57,7 @@ Store API `/checkout` (what `@stripe/stripe-js` was installed for). Recommendati
   Accessories ▾ · Talk to us**. Right: outlined orange pill **Activate guarantee**, basket icon with count.
 - Under the header: an orange utility strip "Looking to buy extra keys? Click here" (changes per page: "extra
   locks" on the locks page; a yellow "★ ORDER TODAY, DELIVERS TOMORROW ★" marquee on product pages).
-- **Mega-menu on hover** (no delay, fade in): a full-width dark panel with a row of 3–5 product **cards** (dark-grey
+- **Mega-menu on hover** (instant toggle — the review found no transition on `.sub-menu`): a full-width dark panel with a row of 3–5 product **cards** (dark-grey
   rounded tiles: product photo, name, one-line benefit, orange "Buy Online" pill, optional ghost "Explore" pill,
   orange "POPULAR" badge, "Works with Apple Find My" badge) plus a right column **"More Products"** of underlined
   text links. A thin strip under the panel shows Trustpilot stars "12500+ reviews".
@@ -69,7 +69,7 @@ Store API `/checkout` (what `@stripe/stripe-js` was installed for). Recommendati
   - Card background image: default `filter: grayscale(30%); opacity: .15` (or .2/.25 for `brighten`/`brightest`
     cards); on `.product:hover` → `filter: grayscale(0); opacity: .4–.65`, `transition: opacity .3s ease-in-out`.
     This is the "extra light" effect: the photo brightens and regains colour behind the text.
-  - Nav link hover colour → yellow `rgb(254,203,62)` over .3s; buttons fill orange `rgb(242,113,47)`; footer link
+  - Nav link hover colour → yellow `rgb(254,203,62)` over .3s; the outlined header CTA fills orange `#f2712f` while solid buttons hover to `#f37b3d`; footer link
     underline fades out via `text-decoration-color: transparent`.
   - Variation swatches: hover = white bg + 3px #ddd ring; selected = 2px black ring; disabled = 60% opacity with a
     cross; out-of-stock = strikethrough.
@@ -78,8 +78,8 @@ Store API `/checkout` (what `@stripe/stripe-js` was installed for). Recommendati
   owners to keys/guarantee, newcomers to locks).
 
 ### 2.3 Homepage sections (in order)
-1. Hero: full-bleed autoplay video of a break-in; eyebrow "Ultion Lock Protection"; 3-line H1 "In **9 seconds**
-   you'll want to replace your lock" (number in orange); CTAs "Get an Ultion Lock" + "▶ Watch full video (1:18s)";
+1. Hero: full-bleed autoplay video of a break-in; eyebrow "Ultion Lock Protection"; 3-line headline "In **9 seconds**
+   you'll want to replace your lock" (number in orange; **it is an `<h2>` — the homepage has no `<h1>`**); CTAs "Get an Ultion Lock" + "▶ Watch full video (1:18s)";
    floating card "Get your £5000 guarantee → Activate Now"; "12500+ reviews"; "Are you an installer? Click Here".
 2. "OUR PRODUCTS" pill → H2 "Find the right protection for you" → 2×4 light-grey cards (3 Star PLUS Lock, Keys,
    KeyTag, NUKI, Lubricant, 2 Star PLUS Handle, 2 Star Handle, Padlock), each photo + name + benefit + "Buy Now".
@@ -110,7 +110,8 @@ Store API `/checkout` (what `@stripe/stripe-js` was installed for). Recommendati
    zero decisions.
 3. **Add another lock** clones a second block and reveals "Use different keys for each lock / Use the same key for
    all locks" (keyed-alike), total updates live (£63 → £126). Sticky summary "TOTAL · QTY · Checkout Now".
-4. **Checkout Now** → POST `admin-ajax.php?action=checkout_products` → redirect straight to **`/checkout/`** (cart
+4. **Checkout Now** → POST `admin-ajax.php?action=locks_add_products_to_basket` (corrected after review; the page also
+   calls `get_lock_product_sizes`, `get_locks_totals` and `delivery_date_notice`) → `window.location.replace` to **`/checkout/`** (cart
    page skipped). Stripped header (logo + Trustpilot "12500+ Reviews"). Collapsed "Got a Coupon?". **Shipping
    Details**: Email, Phone, First, Last, **Find Address via Postcode**, "Shipping Address same as Billing Address"
    (ticked). **Payment**: Stripe card fields inline (Visa/MC/Amex/Discover icons), PayPal, Klarna "Pay over time /
@@ -135,7 +136,7 @@ KeyCode (inline validation "Please enter some text in this field."); "How many K
 Basket; product-specific review carousel; long feature storytelling with repeated "Buy KeyTag" CTAs.
 
 ### 2.7 Category landing (Locks)
-`/ultion-locks/` is a brand landing page, not a grid: pill "ULTION LOCKS", giant H1 "The Ultion 3★PLUS", 3-line
+`/ultion-locks/` is a brand landing page, not a grid: pill "ULTION LOCKS", giant headline "The Ultion 3★PLUS" (an `<h2>`; no `<h1>` on the page), 3-line
 intro, "Get Price" → configurator, "▶ See How It Protects Your Home (1:17s)", large render, reviews, features.
 
 ### 2.8 Basket drawer and mobile
@@ -196,7 +197,7 @@ intro, "Get Price" → configurator, "▶ See How It Protects Your Home (1:17s)"
 | Segmentation | new vs existing owner modal | none | none | Add non-blocking "Already own a Watchdog lock?" toggle (keys / guarantee) |
 | Keys ordering | dedicated page, qty chips 1–6 (3 default), keycode, anti-counterfeit copy | WooCommerce add-on field (headless can't submit) | links out to old site | Build /keys page mirroring Ultion; submit via handoff URL with key number (phase 2) |
 | Performance | heavy (videos, ~295 requests) | heavy (1.3 MB CSS/JS) | ~250 KB gz JS, SSG | Keep lean; no autoplay video by default |
-| Content | Home Truths stats, blog, guarantee registration, installer/trade | blog, trade, guarantee | none | Add "Why Watchdog" stats + link to guarantee/trade pages |
+| Content | Home Truths stats + postcode crime checker, blog, guarantee registration form, keyed-alike comparison table, callback form with opening hours (installer link goes off-site to brisant-secure.com — Ultion has no trade page) | blog, **trade application page**, guarantee | none | Add "Why Watchdog" stats, comparison table, surface WD's own trade page |
 
 ---
 
@@ -227,7 +228,12 @@ intro, "Get Price" → configurator, "▶ See How It Protects Your Home (1:17s)"
 - Trust strip on the empty basket state and cart page ("3 million+ homes · £5,000 guarantee · reviews" pattern) — use only verified WD figures.
 - Callback request path (time-slot picker) as a conversion route for undecided buyers.
 
-**P1 — this week**
+**P1 — this week (expanded after review)**
+8a. Rewrite the guarantee copy so it no longer paraphrases Ultion's, and decide with the client whether to keep the term "KeyControl" (Ultion uses the same word; the old WD site also does).
+8b. Request-a-callback form with opening hours and a time-slot picker; add the second phone line (freephone) with a clear label.
+8c. Keycode validation (one letter + 7–8 digits on Ultion; confirm WD's format) shared by extra keys, keyed-alike and guarantee registration.
+8d. State shipping zones explicitly (UK only, per the old site's terms).
+8e. Record and use the price advantage: WD keys £12 vs Ultion £22.50; WD lock £34.99 vs Ultion from £53.
 9. Restyle the WooCommerce checkout page on wdlocks.co.uk: hide header nav, add Trustpilot/accreditation strip,
    postcode lookup, cards before PayPal, remove the inline T&Cs document. (WordPress change.)
 10. Install `backend/wd-cart-handoff.php` and set `NEXT_PUBLIC_CART_HANDOFF_PLUGIN=true` so multi-line baskets
@@ -238,6 +244,8 @@ intro, "Get Price" → configurator, "▶ See How It Protects Your Home (1:17s)"
 13. Segmentation prompt (new vs existing owner) as a non-blocking banner.
 
 **P2 — later**
+13a. Postcode crime checker (Police data) as on Ultion's Home Truths page.
+13b. Owner hub page (guarantee status, key re-orders, fitting videos).
 14. Native checkout (Store API `/checkout` + Stripe Elements) so the customer never leaves the new domain.
 15. Customer video carousel ("See Watchdog in action") when the client supplies footage.
 16. Blog / Home Truths content pages pulled from WordPress via the REST API.
@@ -250,6 +258,10 @@ intro, "Get Price" → configurator, "▶ See How It Protects Your Home (1:17s)"
 - Chat tab overlapping the mobile CTA.
 - Fabricated/placeholder testimonials — only real, attributable reviews.
 - Preselecting PayPal over cards at checkout (old WD Locks).
+- Hard-coded named review quotes with a static star image and no review schema (Ultion).
+- Pages with no `<h1>` and generic titles like "Home - Ultion Lock" (Ultion).
+- Two unlabelled phone numbers; terms that say UK-only while the checkout ships to IE/FR (Ultion).
+- Naming collision risk: Ultion markets an "ALPS" range; WD's flagship is the "3 Star ALPS". Keep WD's wording distinct and attribute Brisant Secure where appropriate.
 
 ---
 
@@ -260,6 +272,7 @@ intro, "Get Price" → configurator, "▶ See How It Protects Your Home (1:17s)"
   (text), navy `#27374D` (dark panels, replaces near-black where a softer dark is wanted), blue-grey `#DDE6ED`
   (borders on dark panels).
 - Type: Playfair Display for display headings, Inter for everything else (matches the old site's Inter).
+- For contrast, Ultion's system is Adobe Fonts Sofia Pro + Alternate Gothic No.2 on `#090909` with orange `#f2712f` (hover `#f37b3d`), yellow `#fecb3e` and grey `#f4f4f4`. The cream/charcoal/red direction here is a deliberate divergence, not an omission.
 
 ---
 
@@ -279,8 +292,20 @@ Second pass (after the crawler report, same night):
 - Deep-link preselection of a size via `?size=35-35` or `?variation=5168` (Ultion pre-selects attributes from the mega-menu query string).
 - "Are you an installer? Apply for trade →" link in the trust strip (Ultion separates B2C and trade on every page).
 
+Third pass (after the independent review):
+- Trust signals now use only verified marks (Checkatrade replaces the unverified "5★ Trustpilot" tile); the reviews section no longer asserts a star rating and links to independent reviews instead.
+- Guarantee copy rewritten in WD's own words (no Ultion paraphrase); "KeyControl" replaced by plain "key-copy protection" pending the client's decision.
+- "Standard cylinder vs Watchdog 3 Star ALPS" comparison table on the homepage (content-only, mirrors Ultion's keyed-alike comparison pattern using only claims already on wdlocks.co.uk).
+- Delivery section states UK-only shipping; extra-keys card shows the £12 price advantage.
+
 ## 9. Independent review
-_To be appended by the reviewer agent after it re-visits ultion-lock.co.uk and cross-checks every claim above._
+
+A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
+
+- **Incorrect (fixed above):** the configurator's AJAX action name; "Trustpilot widgets" (static imagery and hard-coded quotes only); the Ultion hero/landing headlines are `<h2>`s with no `<h1>`; Ultion has no trade page (the installer link is off-site).
+- **Nuance applied:** mega-menu opens instantly (no fade); button hover colours; the delivery marquee is server-computed via `delivery_date_notice`; the mobile drawer CTA is flex-aligned rather than sticky; the mini-cart lubricant upsell is a hidden product and WooCommerce redirects to `/cart/` after a normal add; WD's side-cart notice reads "Cut-off time to 3pm"; WD homepage has 36 stylesheets + 48 scripts.
+- **Unverifiable statically (browser-only, observed by me):** the Welcome modal, the checkout contents (DPD £7.95, "Delivers Wed 11th November"), the £63 configurator price, request counts, the chat-tab overlap, WD's computed palette and shipping rates.
+- **Missing coverage added to the backlog:** `/ultion-alps/` naming collision, `/home-truths/` crime checker, keyed-alike comparison table, guarantee registration form flows, contact page hours + callback, keycode business rules, hidden upsell product, price comparison, Yoast JSON-LD, Allegion parent brand, dual phone numbers, shipping zones.
 
 ## 10. Appendix — crawler findings (site map, catalogue, tech, SEO)
 _Verbatim report of the crawler agent (curl + Store API, read-only, 2026-11-10)._

@@ -40,6 +40,37 @@ export function WhyWatchdog() {
             </li>
           ))}
         </ul>
+
+        <div className="mt-14 overflow-hidden rounded-2xl border border-cream-dark bg-warm-white">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Standard euro cylinder compared with the Watchdog 3 Star ALPS</caption>
+            <thead className="bg-cream-mid text-xs uppercase tracking-[0.12em] text-charcoal/75">
+              <tr>
+                <th scope="col" className="px-5 py-3 font-semibold">Feature</th>
+                <th scope="col" className="px-5 py-3 font-semibold">Standard 1★ cylinder</th>
+                <th scope="col" className="px-5 py-3 font-semibold text-red">Watchdog 3 Star ALPS</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-cream-dark">
+              {[
+                ['Anti-snap protection', 'Often none', 'Sacrificial snap lines + locked cam'],
+                ['Locks itself when the key is removed', 'No', 'Yes — ALPS'],
+                ['BSI Kitemark rating', '1 Star (needs a 2★ handle)', '3 Star on its own'],
+                ['Sold Secure Diamond 2024', 'No', 'Yes'],
+                ['Secured by Design', 'Rarely', 'Yes'],
+                ['Key pins / combinations', '5–6 pins', '11 pins · 800,000+'],
+                ['Keys in the box', 'Usually 2', '3'],
+                ['Security guarantee', 'None', '£5,000 on registration'],
+              ].map(([f, a, b]) => (
+                <tr key={f}>
+                  <th scope="row" className="px-5 py-3 font-medium text-near-black">{f}</th>
+                  <td className="px-5 py-3 text-charcoal/80">{a}</td>
+                  <td className="px-5 py-3 font-semibold text-near-black">{b}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   );

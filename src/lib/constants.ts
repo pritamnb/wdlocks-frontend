@@ -52,7 +52,7 @@ export const ANNOUNCEMENT =
 export const TRUST_SIGNALS = [
   { id: 'bsi', label: 'BSI Kitemarked', detail: 'TS 007 3-star rated', image: '/brand/bsi-kitemark.webp' },
   { id: 'sold-secure', label: 'Sold Secure Diamond', detail: 'Highest standard, 2024', image: '/brand/sold-secure-diamond.png' },
-  { id: 'trustpilot', label: '5★ Trustpilot', detail: 'Rated excellent by UK customers', image: null },
+  { id: 'checkatrade', label: 'Checkatrade', detail: 'Vetted and monitored', image: '/brand/checkatrade.png' },
   { id: 'sbd', label: 'Secured by Design', detail: 'Police preferred specification', image: '/brand/secured-by-design.png' },
 ] as const;
 
@@ -60,7 +60,7 @@ export const TRUST_SIGNALS = [
 export const GUARANTEE = {
   amountLabel: '£5,000',
   registerUrl: `${WC_BASE}/guarantee-registration/`,
-  blurb: 'Register your Watchdog lock and we activate KeyControl plus your £5,000 security guarantee.',
+  blurb: 'Once your Watchdog lock is fitted, register it with us. Registration switches on key-copy protection and activates your £5,000 security guarantee.',
 } as const;
 
 /** Shipping options as configured on the live WooCommerce store (read from its checkout on 2026-11-10). Pence. */
@@ -225,7 +225,7 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
     shortName: '3 Star Extra Keys',
     type: 'simple',
     category: 'Keys and Aftercare',
-    blurb: 'Cut to your 3 Star ALPS lock.',
+    blurb: 'Cut to your key number. £12 per key.',
   },
   {
     key: 'EXTRA_KEYS_1',

@@ -27,7 +27,7 @@ export function Delivery() {
                 </li>
               ))}
             </ul>
-            <p className="mt-2 text-xs text-charcoal/75">Chosen at checkout. Orders before {SITE.dispatchCutoff} Mon–Fri ship the same working day.</p>
+            <p className="mt-2 text-xs text-charcoal/75">UK delivery only. Chosen at checkout; orders before {SITE.dispatchCutoff} Mon–Fri ship the same working day.</p>
           </div>
           <div className="rounded-2xl bg-warm-white p-5 ring-1 ring-cream-dark">
             <h3 className="font-semibold text-near-black">Talk to a human</h3>

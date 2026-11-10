@@ -28,7 +28,7 @@ const common: FaqItem[] = [
   },
   {
     q: 'What is the £5,000 security guarantee?',
-    a: 'Register your lock at wdlocks.co.uk/guarantee-registration after fitting. Registration activates KeyControl, which stops unauthorised key copying, and your £5,000 security guarantee.',
+    a: 'Register your lock at wdlocks.co.uk/guarantee-registration after fitting. Registration switches on key-copy protection, so keys can only be cut to your number with your permission, and activates your £5,000 security guarantee.',
   },
 ];
 
