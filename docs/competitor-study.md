@@ -318,7 +318,9 @@ Watchdog.mp4 202 MB) arrived by WeTransfer; downloaded 10 Nov 2026 to
   CSS from the product description in WooCommerce** — it shows on the old site too.
 - Second WeTransfer from Allegion (10 Nov, expires 11 Nov 11:07 UTC): folder WATCHDOG, 6 items, 52 MB — 3-starPLUS.8.png,
   3Star-Explode-Image.6.png, 5K-half_card-light_background.png, Key.6-alpha.png, Key.6.png, KeyedAlike.Version3.mp4.
-  Paramjit's note: "More video as in ultion website". Not yet downloaded (needs Pritam's OK).
+  Paramjit's note: "More video as in ultion website". Downloaded 10 Nov to
+  `/Users/pritam/Documents/wdlocks/client-assets/wetransfer-2026-11-10b/WATCHDOG/` (outside the repo). PNGs are 4000–6000 px
+  with alpha; the video is 6 s 4K with an audio track.
 
 ## 9. Independent review
 

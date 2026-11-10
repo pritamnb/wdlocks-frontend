@@ -122,7 +122,8 @@ native checkout (Store API `/checkout` + Stripe; `@stripe/stripe-js` is already 
 ## Client assets
 
 Allegion renders live in `public/brand/product/`. The two product videos (turntable animation 58 MB, Watchdog.mp4 202 MB)
-are kept outside the repo at `../client-assets/wetransfer-2026-11-10/`; compress before adding to the site.
+are kept outside the repo at `../client-assets/wetransfer-2026-11-10/`, and the second batch (exploded view, key renders,
+£5K card, 6 s keyed-alike clip) at `../client-assets/wetransfer-2026-11-10b/WATCHDOG/`; compress before adding to the site.
 
 ## Known TODOs
 
