@@ -2,11 +2,12 @@ import Image from 'next/image';
 import { BRAND_RENDERS, type ClipId } from '@/lib/constants';
 import { ChapterLoop } from '@/components/media/ChapterLoop';
 
-const facts: Array<{ stat: string; unit: string; body: string; clip?: ClipId }> = [
-  { stat: '11', unit: 'pins', body: 'Most cylinders decode the key with 5 or 6 pins. Watchdog uses 11 for 800,000+ combinations.', clip: 'pins' },
-  { stat: '3★', unit: 'Kitemark TS 007', body: 'The highest BSI rating for euro cylinders. Tested for snapping, drilling, picking and bumping.' },
-  { stat: '0', unit: 'seconds exposed', body: 'ALPS — Always Locked Protection System — locks the cam the instant you remove your key.', clip: 'alps' },
-  { stat: '5', unit: 'minute fit', body: 'Measure, undo one screw, swap the cylinder. Three keys and a fitting guide in every box.' },
+type Visual = { clip: ClipId } | { image: { src: string; alt: string; className?: string } };
+const facts: Array<{ stat: string; unit: string; body: string; visual: Visual }> = [
+  { stat: '11', unit: 'pins', body: 'Most cylinders decode the key with 5 or 6 pins. Watchdog uses 11 for 800,000+ combinations.', visual: { clip: 'pins' } },
+  { stat: '3★', unit: 'Kitemark TS 007', body: 'The highest BSI rating for euro cylinders. Tested for snapping, drilling, picking and bumping.', visual: { image: { src: '/brand/bsi-kitemark.webp', alt: 'BSI Kitemark', className: 'p-8' } } },
+  { stat: '0', unit: 'seconds exposed', body: 'ALPS — Always Locked Protection System — locks the cam the instant you remove your key.', visual: { clip: 'alps' } },
+  { stat: '5', unit: 'minute fit', body: 'Measure, undo one screw, swap the cylinder. Three keys and a fitting guide in every box.', visual: { image: { src: BRAND_RENDERS.cylinderSide.src, alt: BRAND_RENDERS.cylinderSide.alt, className: 'p-5' } } },
 ];
 
 /** Product-fact strip in the style of Ultion's "Home Truths" — only claims the client already makes on wdlocks.co.uk. */
@@ -38,11 +39,15 @@ export function HomeTruths() {
         <dl className="mt-12 grid gap-px overflow-hidden rounded-2xl bg-blue-grey/20 sm:grid-cols-2 lg:grid-cols-4">
           {facts.map((f) => (
             <div key={f.unit} className="flex flex-col bg-navy p-6 transition-colors duration-150 hover:bg-[#2f4160]">
-              {f.clip && (
-                <div className="mb-5 overflow-hidden rounded-xl bg-white ring-1 ring-white/15">
-                  <ChapterLoop clip={f.clip} blend="plain" />
-                </div>
-              )}
+              <div className="mb-5 overflow-hidden rounded-xl bg-white ring-1 ring-white/15">
+                {'clip' in f.visual ? (
+                  <ChapterLoop clip={f.visual.clip} blend="plain" />
+                ) : (
+                  <div className="relative aspect-video w-full">
+                    <Image src={f.visual.image.src} alt={f.visual.image.alt} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className={`object-contain ${f.visual.image.className ?? 'p-4'}`} />
+                  </div>
+                )}
+              </div>
               <dt className="mt-auto flex items-baseline gap-2">
                 <span className="font-playfair text-5xl font-semibold text-white">{f.stat}</span>
                 <span className="text-sm font-semibold uppercase tracking-wide text-red">{f.unit}</span>

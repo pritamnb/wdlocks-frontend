@@ -147,6 +147,8 @@ export const BRAND_RENDERS = {
   heroCylinder: { src: '/brand/product/cylinder-hero.png', width: 1600, height: 1139, alt: 'Watchdog 3 Star ALPS euro cylinder with red anti-snap cam and BSI Kitemark markings' },
   /** X-ray render of the Watchdog cylinder showing the pin stack and springs (black background). */
   cylinderXray: { src: '/brand/product/cylinder-xray.jpg', width: 1400, height: 878, alt: 'X-ray view of the Watchdog cylinder showing the eleven pins, springs and red ALPS cam inside the body' },
+  /** Side-on Watchdog cylinder render (brochure email, 6 Nov), used for sizing/fitting contexts. */
+  cylinderSide: { src: '/brand/product/cylinder-side.png', width: 1200, height: 535, alt: 'Watchdog 3 Star ALPS cylinder seen side-on, showing the red cam and engraved markings' },
   /** Single Watchdog key, "Watchdog Stays Locked" bow. */
   keySingle: { src: '/brand/product/key-single.png', width: 734, height: 1000, alt: 'A single Watchdog dimple key with the Watchdog Stays Locked bow' },
   /** Key tag: Stays Locked, £5000 guarantee, activate at wdlocks.co.uk. */
