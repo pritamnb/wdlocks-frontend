@@ -3,6 +3,7 @@ import { getProductsSSR } from '@/lib/api';
 import { Hero } from '@/components/home/Hero';
 import { TrustStrip } from '@/components/home/TrustStrip';
 import { HomeTruths } from '@/components/home/HomeTruths';
+import { Turntable } from '@/components/home/Turntable';
 import { WhyWatchdog } from '@/components/home/WhyWatchdog';
 import { Guarantee } from '@/components/home/Guarantee';
 import { Reviews } from '@/components/home/Reviews';
@@ -54,8 +55,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <HomeTruths />
+      <Turntable />
       <WhyWatchdog />
+      <HomeTruths />
       <Guarantee />
       <Reviews />
       <Delivery />

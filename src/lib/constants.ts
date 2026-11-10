@@ -147,6 +147,15 @@ export const BRAND_RENDERS = {
   guaranteeKeytag: { src: '/brand/product/guarantee-keytag.png', width: 754, height: 900, alt: 'Watchdog key tag: if a burglar snaps your lock and breaks in, £5,000 guarantee, activate for free at wdlocks.co.uk' },
 } as const;
 
+/** Manufacturer turntable animation (10 s, silent, black background). Encoded from client-assets/wetransfer-2026-11-10. */
+export const BRAND_VIDEO = {
+  turntable: {
+    mp4: '/brand/video/turntable.mp4',
+    poster: '/brand/video/turntable-poster.jpg',
+    alt: 'Watchdog 3 Star cylinder rotating slowly to show the engraved Kitemark, TS 007 and Sold Secure markings',
+  },
+} as const;
+
 /** Extra gallery images appended after the WooCommerce photos on specific product pages. */
 export const EXTRA_GALLERY_RENDERS: Readonly<Partial<Record<number, ReadonlyArray<keyof typeof BRAND_RENDERS>>>> = {
   [PRODUCT_IDS.CYLINDER_LOCK]: ['cylinderAngled', 'cylinderDetail', 'cylinderFront'],
