@@ -115,6 +115,7 @@ export const NAV_LINKS = [
   { label: 'Keys & Aftercare', href: '/products#keys-and-aftercare', menu: 'keys' as MenuGroupId },
   { label: 'Why Watchdog', href: '/#why-watchdog', menu: null },
   { label: 'Home truths', href: '/home-truths', menu: null },
+  { label: 'Trades', href: '/trade', menu: null },
   { label: 'Contact', href: '/contact', menu: null },
 ] as const;
 
