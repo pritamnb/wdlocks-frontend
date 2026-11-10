@@ -132,7 +132,8 @@
   .prose-wd img { @apply my-4 max-w-full h-auto rounded-lg; }
   .prose-wd figure { @apply my-4; }
   .prose-wd figcaption { @apply text-xs text-charcoal/75 mt-1; }
-  .prose-wd table { @apply my-4 w-full text-sm; }
+  .prose-wd table { @apply my-4 block w-full max-w-full overflow-x-auto text-sm; } /* legal tables scroll on phones instead of widening the page */
+  .prose-wd { overflow-wrap: anywhere; }
   .prose-wd td, .prose-wd th { @apply border border-cream-dark px-3 py-2 text-left; }
 }
 
@@ -191,7 +192,7 @@
   position: absolute;
   left: 0.75rem;
   right: 0.75rem;
-  bottom: 1.1rem;
+  bottom: -0.45rem; /* just under the label; the item is text-height, not header-height */
   height: 2px;
   background: var(--red);
   transform: scaleX(0);

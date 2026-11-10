@@ -14,7 +14,7 @@ export function ProductGallery({ images, name, badge }: { images: WooImage[]; na
   }
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <div className="relative aspect-square w-full overflow-hidden rounded-[10px] bg-[#f0f0f0]">
         {badge && (
           <span className="absolute left-4 top-4 z-10 flex h-14 w-14 flex-col items-center justify-center rounded-full bg-red text-center text-white shadow-lg">

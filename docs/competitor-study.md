@@ -532,6 +532,14 @@ two-line labels and became invisible on white), items no longer wrap; the **expl
 exactly when the Protection block is centred in the viewport, then holds (progress = section entering at the bottom
 → section centre at viewport centre).
 
+### Pass 26 — 10 Nov 2026, two phone-layout bugs the new e2e check caught
+Added an e2e assertion that the layout viewport equals the visual viewport on every route (Chrome silently zooms
+a page out when something is wider than the phone, which the old overflow check could not see). It caught two: the
+cylinder product page laid out at 512 px because its seven gallery thumbnails set the grid column's minimum width
+(fixed with `min-w-0` on the column and the gallery), and the privacy page's three-column table widened phones to
+450 px (prose tables now scroll horizontally; long words wrap anywhere). Also: the header guarantee button no longer
+wraps onto two lines, and the nav underline sits just under the label.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

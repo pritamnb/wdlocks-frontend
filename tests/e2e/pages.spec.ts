@@ -21,9 +21,10 @@ for (const route of ROUTES) {
     const h1s = page.locator('h1:visible');
     await expect(h1s).toHaveCount(1);
 
-    // No horizontal overflow at this viewport.
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
-    expect(overflow, 'horizontal overflow').toBe(false);
+    // No horizontal overflow, and the layout viewport must not have been widened by oversized content (mobile zoom-out).
+    const vp = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > window.innerWidth + 1, layout: window.innerWidth, visual: Math.round(window.visualViewport?.width ?? window.innerWidth) }));
+    expect(vp.overflow, 'horizontal overflow').toBe(false);
+    expect(vp.layout, 'layout viewport widened by content').toBeLessThanOrEqual(vp.visual + 1);
 
     // Every image that finished loading has real pixels.
     const broken = await page.evaluate(() => Array.from(document.images).filter((i) => i.complete && i.naturalWidth === 0 && i.offsetParent !== null && !i.closest('[hidden]')).map((i) => i.src));

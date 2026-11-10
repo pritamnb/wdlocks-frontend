@@ -130,7 +130,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
         <div className="flex items-center gap-1.5">
           <a
             href={GUARANTEE.href}
-            className="hidden h-10 items-center rounded-full bg-red px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red-deep md:inline-flex"
+            className="hidden h-10 items-center whitespace-nowrap rounded-full bg-red px-4 text-sm font-semibold text-white transition-colors duration-300 hover:bg-red-deep md:inline-flex"
           >
             Activate {GUARANTEE.amountLabel} guarantee
           </a>

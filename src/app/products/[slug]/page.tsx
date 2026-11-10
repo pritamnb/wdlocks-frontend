@@ -100,7 +100,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Products', href: '/products' }, { label: entry?.shortName ?? name }]} />
 
       <div className="mt-6 grid gap-10 lg:grid-cols-2 lg:gap-14">
-        <div>
+        {/* min-w-0: the thumbnail scroll row must not set the column's minimum width (7 thumbs widened phones to 512 px). */}
+        <div className="min-w-0">
           <ProductGallery images={gallery} name={name} badge={PRODUCT_PILLS[product.id]?.[0]?.includes('3★') ? 'star security' : undefined} />
           {KEY_PRODUCT_IDS.has(product.id) && (
             <figure className="mt-4 overflow-hidden rounded-[1.5rem] bg-near-black shadow-card">
