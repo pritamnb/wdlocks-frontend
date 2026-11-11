@@ -10,6 +10,7 @@ import {
   EXTERNAL_ONLY_PRODUCT_IDS,
   BRAND_RENDERS,
   EXTRA_GALLERY_RENDERS,
+  PRIMARY_IMAGE_OVERRIDES,
   type CatalogueEntry,
 } from '@/lib/constants';
 import type { WooImage } from '@/types';
@@ -119,7 +120,9 @@ export function productHref(id: number): string | null {
   return entry ? `/products/${entry.slug}` : null;
 }
 
-export function primaryImage(product: WooProduct) {
+export function primaryImage(product: WooProduct): WooImage | null {
+  const o = PRIMARY_IMAGE_OVERRIDES[product.id];
+  if (o) return { id: -100, src: o.src, thumbnail: o.src, srcset: '', sizes: '', name: 'override', alt: o.alt };
   return product.images[0] ?? null;
 }
 
@@ -138,10 +141,13 @@ export function ctaLabel(product: WooProduct): string {
 
 /** WooCommerce photos first, then the Allegion brand renders registered for this product id. */
 export function galleryImagesFor(productId: number, images: WooImage[]): WooImage[] {
+  const o = PRIMARY_IMAGE_OVERRIDES[productId];
+  // The override replaces the first WooCommerce photo (same shot, larger) rather than duplicating it.
+  const base = o ? [{ id: -100, src: o.src, thumbnail: o.src, srcset: '', sizes: '', name: 'override', alt: o.alt }, ...images.slice(1)] : images;
   const extra = EXTRA_GALLERY_RENDERS[productId] ?? [];
   const renders: WooImage[] = extra.map((key, i) => {
     const r = BRAND_RENDERS[key];
     return { id: -(i + 1), src: r.src, thumbnail: r.src, srcset: '', sizes: '', name: key, alt: r.alt };
   });
-  return [...images, ...renders];
+  return [...base, ...renders];
 }

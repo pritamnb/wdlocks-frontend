@@ -8,6 +8,7 @@ import { Modal, CloseButton } from '@/components/ui/Modal';
 import { Logo } from '@/components/layout/Logo';
 import { CATALOGUE, GUARANTEE, MENU_GROUPS, MOST_VIEWED, NAV_LINKS, SITE, type MenuGroupId } from '@/lib/constants';
 import { cn } from '@/lib/cn';
+import { primaryImage } from '@/lib/product-helpers';
 
 const byKey = Object.fromEntries(CATALOGUE.map((p) => [p.key, p]));
 
@@ -42,7 +43,7 @@ export function MobileMenu({ open, onClose, products }: { open: boolean; onClose
                   <ul className="mb-4 space-y-3">
                     {MENU_GROUPS[l.menu].featured.map((key) => {
                       const entry = byKey[key];
-                      const img = productById.get(entry.id)?.images[0];
+                      const liveP = productById.get(entry.id); const img = liveP ? primaryImage(liveP) : null;
                       return (
                         <li key={entry.id} className="flex items-center gap-3">
                           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-warm-white">

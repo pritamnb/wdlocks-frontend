@@ -8,6 +8,7 @@ import { BRAND_RENDERS, BRAND_VIDEO, CARD_HOVER_CLIPS, CATALOGUE, MENU_GROUPS, t
 import { HoverPreview } from '@/components/media/HoverPreview';
 import { productPriceLabel } from '@/lib/wdlocks-api';
 import { cn } from '@/lib/cn';
+import { primaryImage } from '@/lib/product-helpers';
 
 const byKey = Object.fromEntries(CATALOGUE.map((p) => [p.key, p]));
 
@@ -44,10 +45,10 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
               {data.featured.map((key) => {
                 const entry = byKey[key];
                 const live = productById.get(entry.id);
-                const image = live?.images[0];
+                const image = live ? primaryImage(live) : null;
                 const href = `/products/${entry.slug}`;
                 return (
-                  <li key={entry.id} className="group relative overflow-hidden rounded-[10px] border border-white/10 bg-[#111013] text-cream transition-[border-color,transform,box-shadow,background-color] duration-300 ease-out hover:-translate-y-0.5 hover:border-cream/30 hover:bg-[#161418] hover:shadow-[0_18px_36px_-18px_rgb(0_0_0/0.9)]">
+                  <li key={entry.id} className="group relative flex flex-col overflow-hidden rounded-[10px] border border-white/10 bg-[#111013] text-cream transition-[border-color,transform,box-shadow,background-color] duration-300 ease-out hover:-translate-y-0.5 hover:border-cream/30 hover:bg-[#161418] hover:shadow-[0_18px_36px_-18px_rgb(0_0_0/0.9)]">
                     <Link href={href} onClick={onNavigate} className="absolute inset-0 z-10" aria-label={entry.shortName} />
                     <div className="relative h-36 overflow-hidden bg-[#111013]">
                       {image ? (
@@ -65,16 +66,15 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
                         <span className="absolute right-2 top-2 rounded-full bg-red px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">Popular</span>
                       )}
                     </div>
-                    <div className="p-3.5">
+                    {/* Fixed rows (title, 2-line blurb, price + button pinned to the bottom) so every card's button sits on the same line. */}
+                    <div className="flex flex-1 flex-col p-3.5">
                       <p className="text-[17px] font-semibold leading-snug">{entry.shortName}</p>
-                      <p className="mt-0.5 line-clamp-2 text-xs text-cream/60 transition-colors duration-300 group-hover:text-cream/85">{entry.blurb}</p>
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-sm font-semibold tabular-nums">{live ? productPriceLabel(live) : ''}</span>
-                        <span className="relative z-20 inline-flex gap-1.5">
-                          <Link href={href} onClick={onNavigate} className="whitespace-nowrap rounded-[4px] border border-red bg-red px-2.5 py-1 text-[12px] font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
-                            Buy online
-                          </Link>
-                        </span>
+                      <p className="mt-0.5 line-clamp-2 min-h-[2lh] text-xs leading-[1.4] text-cream/60 transition-colors duration-300 group-hover:text-cream/85">{entry.blurb}</p>
+                      <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+                        <span className="text-[15px] font-semibold tabular-nums">{live ? productPriceLabel(live) : ''}</span>
+                        <Link href={href} onClick={onNavigate} className="relative z-20 inline-flex h-9 items-center whitespace-nowrap rounded-md bg-red px-3.5 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
+                          Buy now
+                        </Link>
                       </div>
                     </div>
                   </li>

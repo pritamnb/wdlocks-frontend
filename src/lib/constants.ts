@@ -424,6 +424,15 @@ export const PRODUCT_FEATURES: Readonly<Partial<Record<number, ReadonlyArray<Pro
 export const KEY_PRODUCT_IDS: ReadonlySet<number> = new Set([PRODUCT_IDS.EXTRA_KEYS_3, PRODUCT_IDS.EXTRA_KEYS_1, PRODUCT_IDS.KEYED_ALIKE]);
 
 /** Extra gallery images appended after the WooCommerce photos on specific product pages. */
+/**
+ * Replacements for WooCommerce product photos that are too small to show large. The rim cylinder photo on
+ * wdlocks.co.uk is 218 × 218 px; this is a 4× Lanczos upscale of the same shot (sharper than the browser's own scaling,
+ * but still no new detail — a real high-resolution photo from the client should replace it).
+ */
+export const PRIMARY_IMAGE_OVERRIDES: Readonly<Partial<Record<number, { src: string; width: number; height: number; alt: string }>>> = {
+  [PRODUCT_IDS.RIM_CYLINDER]: { src: '/brand/product/rim-cylinder-brass.png', width: 872, height: 872, alt: 'Watchdog brass rim cylinder for nightlatches' },
+};
+
 export const EXTRA_GALLERY_RENDERS: Readonly<Partial<Record<number, ReadonlyArray<keyof typeof BRAND_RENDERS>>>> = {
   [PRODUCT_IDS.CYLINDER_LOCK]: ['cylinderAngled', 'cylinderDetail', 'cylinderFront'],
   [PRODUCT_IDS.EXTRA_KEYS_3]: ['keysEngraved'],
