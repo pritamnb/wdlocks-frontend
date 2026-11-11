@@ -148,7 +148,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
             <span className="hidden text-[15px] font-semibold sm:inline">Basket</span>
             <span
               className={cn(
-                'absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1 text-[11px] font-semibold text-white ring-2 ring-white transition-transform duration-150',
+                'absolute left-5 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1 text-[11px] font-semibold text-white ring-2 ring-white transition-transform duration-150',
                 itemCount === 0 && status !== 'loading' ? 'scale-0' : 'scale-100',
               )}
               aria-hidden="true"
