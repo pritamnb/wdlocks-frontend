@@ -46,7 +46,7 @@ test('header is white with the expected links, in order', async ({ page, isMobil
   expect(bg, 'white header').toBe('rgb(255, 255, 255)');
   // Announcement strip: next-day promise + the extra-keys link on every non-product page; yellow delivery line on products.
   const bar = page.getByRole('region', { name: 'Store announcements' });
-  await expect(bar).toContainText('In a rush? Order by 2pm');
+  await expect(bar).not.toContainText('In a rush');
   await expect(bar.getByRole('link', { name: 'Click here' })).toHaveAttribute('href', '/products/watchdog-3-star-alps-extra-keys');
   await page.goto('/products/3-star-alps-cylinder-door-lock');
   const promise = page.getByRole('region', { name: 'Delivery promise' });
@@ -68,6 +68,8 @@ test('header is white with the expected links, in order', async ({ page, isMobil
     const menu = page.locator('#primary-mega-menu');
     await expect(menu).toBeVisible();
     await expect(menu.locator('li')).toHaveCount(8); // 4 product cards + 4 "more" links
+    await expect(menu).toContainText('In a rush? Order by 2pm for guaranteed Next Day Delivery.');
+    await expect(menu.getByRole('link', { name: 'Explore' })).toHaveCount(0);
     await page.keyboard.press('Escape');
     await expect(menu).toBeHidden();
   }

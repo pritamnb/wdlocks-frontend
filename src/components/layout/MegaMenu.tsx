@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { WooProduct } from '@/types';
-import { BRAND_RENDERS, BRAND_VIDEO, CARD_HOVER_CLIPS, CATALOGUE, MENU_GROUPS, type MenuGroupId } from '@/lib/constants';
+import { BRAND_RENDERS, BRAND_VIDEO, CARD_HOVER_CLIPS, CATALOGUE, MENU_GROUPS, type MenuGroupId, SITE } from '@/lib/constants';
 import { HoverPreview } from '@/components/media/HoverPreview';
 import { productPriceLabel } from '@/lib/wdlocks-api';
 import { cn } from '@/lib/cn';
@@ -71,11 +71,8 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                         <span className="text-sm font-semibold tabular-nums">{live ? productPriceLabel(live) : ''}</span>
                         <span className="relative z-20 inline-flex gap-1.5">
-                          <Link href={href} onClick={onNavigate} className="whitespace-nowrap rounded-[4px] border border-red bg-red px-2 py-1 text-[12px] font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
+                          <Link href={href} onClick={onNavigate} className="whitespace-nowrap rounded-[4px] border border-red bg-red px-2.5 py-1 text-[12px] font-semibold text-white transition-colors duration-150 hover:bg-red-deep">
                             Buy online
-                          </Link>
-                          <Link href={href} onClick={onNavigate} className="whitespace-nowrap rounded-[4px] border border-red px-2 py-1 text-[12px] font-semibold text-red transition-colors duration-150 hover:bg-red hover:text-white">
-                            Explore
                           </Link>
                         </span>
                       </div>
@@ -127,6 +124,10 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
               <span>£5,000 security guarantee</span>
             </div>
           </div>
+          {/* Delivery promise strip (client, 11 Nov): lives here rather than in the bar under the header. */}
+          <p className="m-0 border-t border-white/10 bg-[#141316] py-2.5 text-center text-[14px] font-semibold text-cream">
+            <span aria-hidden="true" className="mr-1.5">📦</span>In a rush? Order by {SITE.dispatchCutoff} for guaranteed Next Day Delivery.
+          </p>
         </motion.div>
       )}
     </AnimatePresence>

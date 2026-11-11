@@ -51,7 +51,6 @@ export function MobileMenu({ open, onClose, products }: { open: boolean; onClose
                           <div className="min-w-0">
                             <Link href={`/products/${entry.slug}`} onClick={onClose} className="block text-lg font-semibold leading-tight text-white">{entry.shortName}</Link>
                             <div className="mt-1 flex gap-4 text-sm font-medium text-red">
-                              <Link href={`/products/${entry.slug}`} onClick={onClose}>Explore</Link>
                               <Link href={`/products/${entry.slug}#sizing`} onClick={onClose}>Buy online</Link>
                             </div>
                           </div>

@@ -61,10 +61,10 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
         {image ? (
           hoverClip ? (
             <HoverPreview src={BRAND_VIDEO.clips[hoverClip].mp4} className="absolute inset-0">
-              <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
+              <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
             </HoverPreview>
           ) : (
-            <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
+            <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
           )
         ) : (
           <div className="flex h-full items-center justify-center text-charcoal/40">No image</div>

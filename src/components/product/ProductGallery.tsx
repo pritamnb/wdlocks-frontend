@@ -29,7 +29,7 @@ export function ProductGallery({ images, name, badge }: { images: WooImage[]; na
           fill
           priority={index === 0}
           sizes="(max-width: 1024px) 100vw, 50vw"
-          className="object-contain p-8"
+          className="object-contain mix-blend-multiply p-8"
         />
       </div>
       {images.length > 1 && (
@@ -46,7 +46,7 @@ export function ProductGallery({ images, name, badge }: { images: WooImage[]; na
                   i === index ? 'border-red' : 'border-cream-dark',
                 )}
               >
-                <Image src={img.thumbnail || img.src} alt="" fill sizes="64px" className="object-contain p-1.5" />
+                <Image src={img.thumbnail || img.src} alt="" fill sizes="64px" className="object-contain mix-blend-multiply p-1.5" />
               </button>
             </li>
           ))}

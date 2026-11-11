@@ -8,7 +8,7 @@ import { estimateDelivery, formatDeliveryDate } from '@/lib/delivery';
 
 /**
  * Utility strip under the header (Ultion pattern, 11 Nov wording from the client):
- * - every page: "In a rush? Order by 2pm for guaranteed Next Day Delivery" and "Looking to buy extra keys? Click here";
+ * - every page: "Looking to buy extra keys? Click here" (the next-day promise lives in the products mega menu);
  * - product pages: Ultion's yellow "Order today, delivers tomorrow" line instead (the date comes from the live
  *   dispatch estimate, so after the cut-off or at weekends it names the actual day).
  * Not dismissible: the client wants these links in front of every visitor, like Ultion's bar.
@@ -43,12 +43,7 @@ export function AnnouncementBar() {
 
   return (
     <div className="bg-red text-white" role="region" aria-label="Store announcements">
-      <div className="container-wd flex min-h-9 flex-col items-center justify-center gap-0.5 py-1.5 text-center text-[13px] font-semibold leading-snug sm:flex-row sm:gap-0 sm:text-[15px]">
-        <p className="m-0">
-          <span aria-hidden="true" className="mr-1.5">📦</span>
-          In a rush? Order by {SITE.dispatchCutoff} for guaranteed Next Day Delivery.
-        </p>
-        <span aria-hidden="true" className="mx-3 hidden opacity-70 sm:inline">·</span>
+      <div className="container-wd flex min-h-9 items-center justify-center py-1.5 text-center text-[13px] font-semibold leading-snug sm:text-[15px]">
         <p className="m-0">
           Looking to buy extra keys?{' '}
           <Link href="/products/watchdog-3-star-alps-extra-keys" className="underline decoration-white/70 underline-offset-2 hover:decoration-white">
