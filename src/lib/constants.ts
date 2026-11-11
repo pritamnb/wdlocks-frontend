@@ -192,7 +192,7 @@ export const BRAND_VIDEO = {
   },
   /**
    * Exploded view of the cylinder, 1.0 s, all-intra so it can be stepped backwards. A brand-free crop of the client's
-   * home-lock-exploded.mp4: x 120–1090 of the frame from 1.0 s on (brass plug, Sold Secure housing, the whole red cam
+   * home-lock-exploded.mp4: x 120–1090, y 60–800 of the frame from 1.0 s on (brass plug, Sold Secure housing, the whole red cam
    * carrier, pins and springs) — the right-hand housing, engraved ULTION, is never in frame. Background lifted to white so it
    * multiply-blends onto the grey panel.
    */
@@ -201,7 +201,7 @@ export const BRAND_VIDEO = {
     poster: '/brand/video/exploded-crop-poster.jpg',
     endPoster: '/brand/video/exploded-crop-end.jpg',
     width: 776,
-    height: 800,
+    height: 592,
     alt: 'Exploded view of the cylinder: brass plug, cam carrier, anti-drill pins and springs separating',
   },
   turntable: {

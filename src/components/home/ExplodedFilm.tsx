@@ -109,7 +109,7 @@ export function ExplodedFilm({ className }: { className?: string }) {
             playsInline
             preload="none"
             aria-label={clip.alt}
-            className={cn('aspect-[776/800] w-full mix-blend-multiply transition-opacity duration-300', ready ? 'opacity-100' : 'opacity-0')}
+            className={cn('aspect-[776/592] w-full mix-blend-multiply transition-opacity duration-300', ready ? 'opacity-100' : 'opacity-0')}
           />
           {!ready && <Image src={clip.poster} alt="" aria-hidden="true" width={clip.width} height={clip.height} sizes="(min-width: 1024px) 760px, 100vw" className="absolute inset-0 w-full mix-blend-multiply" />}
         </>

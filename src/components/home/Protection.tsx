@@ -22,8 +22,10 @@ export function Protection() {
             Learn more
           </Link>
         </div>
-        <div className="lg:col-span-7">
-          <ExplodedFilm className="ml-auto w-full max-w-[600px] lg:max-w-[640px]" />
+        <div className="relative lg:col-span-7">
+          <ExplodedFilm className="ml-auto w-full max-w-[640px] lg:max-w-[700px]" />
+          {/* The crop's right edge cuts a coupling piece; fade it into the panel (an overlay keeps the film's multiply blend intact). */}
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#f0f0f0] to-transparent sm:w-24" aria-hidden="true" />
         </div>
       </div>
     </section>
