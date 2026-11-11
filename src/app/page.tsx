@@ -8,7 +8,7 @@ import { Protection } from '@/components/home/Protection';
 import { InsideTheLock } from '@/components/home/InsideTheLock';
 import { WhyWatchdog } from '@/components/home/WhyWatchdog';
 import { Guarantee } from '@/components/home/Guarantee';
-import { BuyBand } from '@/components/home/BuyBand';
+import { SkySports } from '@/components/home/SkySports';
 import { KeySection } from '@/components/home/KeySection';
 import { KeyedAlikeSection } from '@/components/home/KeyedAlikeSection';
 import { Accreditations } from '@/components/home/Accreditations';
@@ -59,7 +59,7 @@ export default async function HomePage() {
       <Protection />
       <WhyWatchdog />
       <HomeTruths />
-      <BuyBand />
+      <SkySports />
       <KeySection />
       <KeyedAlikeSection />
       <InsideTheLock />

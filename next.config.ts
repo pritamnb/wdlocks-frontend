@@ -23,7 +23,8 @@ const csp = [
   "font-src 'self' data:",
   `connect-src 'self' https://${WC_HOST} https://api.stripe.com https://m.stripe.network https://q.stripe.com https://r.stripe.com${isDev ? ' ws: wss:' : ''}`,
   // The Home Truths crime checker embeds an OpenStreetMap frame centred on the searched postcode.
-  'frame-src https://www.openstreetmap.org https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://checkout.stripe.com',
+  // youtube-nocookie: the Sky Sports advert on the homepage ("How we protect you").
+  'frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://checkout.stripe.com',
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

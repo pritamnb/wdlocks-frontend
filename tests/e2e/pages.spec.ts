@@ -82,11 +82,14 @@ test('homepage: hero film, section order, white Why Watchdog, 63% truth, large a
   const idx = (k: string) => order.findIndex((o) => o === k);
   expect(idx('why-watchdog')).toBeGreaterThan(idx('protection'));
   expect(idx('truths-title')).toBeGreaterThan(idx('why-watchdog'));
-  expect(idx('buy-band-title')).toBeGreaterThan(idx('truths-title'));
+  expect(idx('sky-sports-title'), 'How we protect you (Sky Sports advert) follows Home truths').toBeGreaterThan(idx('truths-title'));
+  expect(idx('buy-band-title'), 'buy band removed from the homepage').toBe(-1);
   await expect(page.locator('#why-watchdog')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   await expect(page.locator('section[aria-labelledby="truths-title"]')).toContainText('64%');
   await expect(page.locator('section[aria-labelledby="truths-title"]').getByRole('link', { name: 'Learn more' })).toHaveAttribute('href', '/home-truths');
   await expect(page.getByRole('heading', { name: 'The toughest test ever.' })).toBeVisible();
+  await page.locator('section[aria-labelledby="sky-sports-title"]').scrollIntoViewIfNeeded();
+  await expect(page.locator('section[aria-labelledby="sky-sports-title"] iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/z7YV2BYb5Ps/);
   await expect(page.locator('footer [aria-label="Social media"] a')).toHaveCount(2);
   await expect(page.locator('a[href="/guarantee"]').first()).toBeAttached();
 });
