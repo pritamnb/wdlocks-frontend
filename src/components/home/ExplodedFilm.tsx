@@ -7,11 +7,11 @@ import { usePrefersReducedMotion } from '@/hooks/useInViewPlayback';
 import { cn } from '@/lib/cn';
 
 /**
- * The exploded-lock animation beside the Protection headline. One rule: as the banner reaches the centre of the screen
- * the lock explodes; as the banner moves away, up or down, it closes again. The frame is tied to the banner's
- * position (seeked, never "played"), so it works at any scroll speed and identically in every browser; the clip is
- * all-keyframe so seeking is smooth. Reduced motion shows the exploded frame as a still. White background
- * multiply-blends away on the grey panel.
+ * The exploded-lock animation beside the Protection headline. As the banner reaches the centre of the screen the lock
+ * explodes and then keeps looping back and forth (explode, hold, close, hold…) for as long as the banner stays there;
+ * as the banner moves away, up or down, it closes. Frames are seeked from the banner's position, never "played", so
+ * it works at any scroll speed and identically in every browser; the clip is all-keyframe so seeking is smooth.
+ * Reduced motion shows the exploded frame as a still. White background multiply-blends away on the grey panel.
  */
 export function ExplodedFilm({ className }: { className?: string }) {
   const wrapRef = React.useRef<HTMLDivElement>(null);
@@ -44,34 +44,44 @@ export function ExplodedFilm({ className }: { className?: string }) {
     loader.observe(section);
 
     /**
-     * The film is driven by where the banner is: fully closed while it is far from the centre, opening as it
-     * approaches, fully exploded at the centre, closing again as it moves away. The frame follows a target with a
-     * capped speed (a full open or close takes about 1.2 s), so arriving at the centre and stopping still plays the
-     * explosion through, and leaving plays it backwards — at any scroll speed, in every browser (seeks, not playback).
+     * Position-driven while the banner approaches or leaves (closed far away, opening on the way in, closing on the
+     * way out). While the banner is AT the centre the film loops back and forth: explode, hold, close, hold, explode…
+     * Frames are seeked (never "played"), so it works at any scroll speed and identically in every browser.
      */
-    const CENTRE = 0.12; // within ±12 % of the viewport height of the centre: fully exploded
+    const CENTRE = 0.14; // within ±14 % of the viewport height of the centre: looping
     const FAR = 0.45; // beyond ±45 %: fully closed
-    const TRAVERSE_MS = 1200;
+    const TRAVERSE_MS = 1300; // one explode or one close
+    const HOLD_MS = 500; // pause at each end of the loop
     let current = 0; // 0 = closed … 1 = exploded
     let target = 0;
+    let centred = false;
+    let dir = 1; // loop direction while centred
+    let holdUntil = 0;
     let frame = 0;
     let last = 0;
     const duration = () => (Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 2);
-    const targetFor = () => {
-      const r = wrap.getBoundingClientRect();
-      const vh = window.innerHeight || 1;
-      const offset = Math.abs(r.top + r.height / 2 - vh / 2) / vh;
-      if (offset <= CENTRE) return 1;
-      if (offset >= FAR) return 0;
-      return 1 - (offset - CENTRE) / (FAR - CENTRE);
+    const seek = () => {
+      video.currentTime = Math.min(current * duration(), duration() - 0.02);
     };
     const tick = (now: number) => {
       const dt = last ? Math.min(now - last, 64) : 16;
       last = now;
-      const maxStep = dt / TRAVERSE_MS;
+      const step = dt / TRAVERSE_MS;
+      if (centred) {
+        if (now >= holdUntil) {
+          current = Math.max(0, Math.min(1, current + dir * step));
+          seek();
+          if (current >= 1 || current <= 0) {
+            dir = current >= 1 ? -1 : 1;
+            holdUntil = now + HOLD_MS;
+          }
+        }
+        frame = requestAnimationFrame(tick); // keep looping while centred
+        return;
+      }
       const delta = target - current;
-      current += Math.max(-maxStep, Math.min(maxStep, delta));
-      video.currentTime = Math.min(current * duration(), duration() - 0.02);
+      current += Math.max(-step, Math.min(step, delta));
+      seek();
       if (Math.abs(target - current) > 0.0005) frame = requestAnimationFrame(tick);
       else {
         frame = 0;
@@ -79,8 +89,17 @@ export function ExplodedFilm({ className }: { className?: string }) {
       }
     };
     const update = () => {
-      target = targetFor();
-      if (!frame && Math.abs(target - current) > 0.0005) frame = requestAnimationFrame(tick);
+      const r = wrap.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      const offset = Math.abs(r.top + r.height / 2 - vh / 2) / vh;
+      const wasCentred = centred;
+      centred = offset <= CENTRE;
+      if (centred && !wasCentred) {
+        dir = 1; // arriving: explode first
+        holdUntil = 0;
+      }
+      target = offset >= FAR ? 0 : offset <= CENTRE ? 1 : 1 - (offset - CENTRE) / (FAR - CENTRE);
+      if (!frame && (centred || Math.abs(target - current) > 0.0005)) frame = requestAnimationFrame(tick);
     };
     let ticking = false;
     const onScroll = () => {
