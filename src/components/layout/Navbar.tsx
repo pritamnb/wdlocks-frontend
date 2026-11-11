@@ -68,10 +68,11 @@ export function Navbar({ products }: { products: WooProduct[] }) {
         if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpenGroup(null);
       }}
     >
-      <div className="container-wd flex h-16 items-center justify-between gap-3 sm:h-[72px]">
+      {/* Full-width row with 40 px side padding on desktop, like Ultion, so the logo, six links, CTA and basket all fit. */}
+      <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between gap-3 px-4 sm:h-[72px] sm:px-6 lg:h-[84px] wide:px-10">
         <button
           type="button"
-          className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-md text-near-black transition-colors duration-300 hover:text-red lg:hidden"
+          className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-md text-near-black transition-colors duration-300 hover:text-red xl:hidden"
           aria-label="Open menu"
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen(true)}
@@ -81,10 +82,10 @@ export function Navbar({ products }: { products: WooProduct[] }) {
           </svg>
         </button>
 
-        <Logo priority className="lg:mr-4" />
+        <Logo priority className="lg:mr-5" />
 
-        <nav className="hidden flex-1 lg:block" aria-label="Primary">
-          <ul className="flex h-16 items-center gap-2.5 sm:h-[72px] lg:h-[84px]">
+        <nav className="hidden flex-1 xl:block" aria-label="Primary">
+          <ul className="flex h-16 items-center gap-2 sm:h-[72px] lg:h-[84px] wide:gap-2.5">
             {NAV_LINKS.map((link) =>
               link.menu ? (
                 <li
@@ -95,7 +96,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                   <button
                     type="button"
                     className={cn(
-                      'nav-item inline-flex h-full items-center gap-1.5 whitespace-nowrap px-[15px] text-[17px] font-semibold leading-[1.15] tracking-normal transition-colors duration-300 ease-out hover:text-red min-[1480px]:px-5 min-[1480px]:text-[19px]',
+                      'nav-item inline-flex h-full items-center gap-1.5 whitespace-nowrap px-3 text-[16px] font-semibold leading-[1.15] tracking-normal transition-colors duration-300 ease-out hover:text-red wide:px-[15px] wide:text-[17px] ultra:px-5 ultra:text-[19px]',
                       openGroup === link.menu ? 'nav-item-active text-red' : 'text-near-black',
                     )}
                     aria-expanded={openGroup === link.menu}
@@ -118,7 +119,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                 </li>
               ) : (
                 <li key={link.label}>
-                  <Link href={link.href} className="nav-item inline-flex h-full items-center whitespace-nowrap px-[15px] text-[17px] font-semibold leading-[1.15] tracking-normal text-near-black transition-colors duration-300 ease-out hover:text-red min-[1480px]:px-5 min-[1480px]:text-[19px]">
+                  <Link href={link.href} className="nav-item inline-flex h-full items-center whitespace-nowrap px-3 text-[16px] font-semibold leading-[1.15] tracking-normal text-near-black transition-colors duration-300 ease-out hover:text-red wide:px-[15px] wide:text-[17px] ultra:px-5 ultra:text-[19px]">
                     {link.label}
                   </Link>
                 </li>
@@ -130,14 +131,14 @@ export function Navbar({ products }: { products: WooProduct[] }) {
         <div className="flex items-center gap-1.5 lg:gap-4">
           <a
             href={GUARANTEE.href}
-            className="hidden h-10 items-center whitespace-nowrap rounded-md border border-red px-[13px] text-[16px] font-semibold tracking-[-0.02em] text-red transition-colors duration-300 hover:bg-red hover:text-white md:inline-flex min-[1480px]:text-[18px]"
+            className="hidden h-10 shrink-0 items-center whitespace-nowrap rounded-md border border-red px-[13px] text-[16px] font-semibold tracking-[-0.02em] text-red transition-colors duration-300 hover:bg-red hover:text-white md:inline-flex ultra:text-[18px]"
           >
-            Activate {GUARANTEE.amountLabel} guarantee
+            Activate guarantee
           </a>
           <button
             type="button"
             onClick={openCart}
-            className="relative -mr-2 inline-flex h-10 items-center gap-2 rounded-md px-3 text-near-black transition-colors duration-300 hover:text-red"
+            className="relative -mr-2 inline-flex h-10 shrink-0 items-center gap-2 rounded-md px-3 text-near-black transition-colors duration-300 hover:text-red"
             aria-label={`Open basket, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
             aria-haspopup="dialog"
           >
@@ -145,7 +146,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
               <path d="M6 7h12l1 13H5L6 7Z" />
               <path d="M9 7a3 3 0 0 1 6 0" />
             </svg>
-            <span className="hidden text-[15px] font-semibold sm:inline">Basket</span>
+            <span className="hidden text-[15px] font-semibold sm:inline xl:hidden ultra:inline">Basket</span>
             <span
               className={cn(
                 'absolute left-5 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1 text-[11px] font-semibold text-white ring-2 ring-white transition-transform duration-150',
@@ -159,7 +160,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
         </div>
       </div>
 
-      <div onMouseEnter={cancelClose} onMouseLeave={scheduleClose} className="hidden lg:block">
+      <div onMouseEnter={cancelClose} onMouseLeave={scheduleClose} className="hidden xl:block">
         <MegaMenu id={MEGA_ID} group={openGroup} products={products} onNavigate={() => setOpenGroup(null)} />
       </div>
       <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} products={products} />

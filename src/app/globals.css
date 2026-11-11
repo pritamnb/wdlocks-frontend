@@ -55,6 +55,10 @@
   --shadow-card-hover: var(--shadow-card-hover);
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Header steps (Ultion measures its nav at 1440 and 1920): wide = Ultion's reference width, ultra = 1920-class. */
+  --breakpoint-wide: 90rem; /* 1440px */
+  --breakpoint-ultra: 105rem; /* 1680px */
 }
 
 @layer base {
@@ -197,8 +201,8 @@
 .nav-item::after {
   content: '';
   position: absolute;
-  left: 15px;
-  right: 15px;
+  left: 12px;
+  right: 12px;
   bottom: -0.45rem; /* just under the label; the item is text-height, not header-height */
   height: 2px;
   background: var(--red);
@@ -210,6 +214,12 @@
 .nav-item:focus-visible::after,
 .nav-item-active::after {
   transform: scaleX(1);
+}
+@media (min-width: 1440px) {
+  .nav-item::after { left: 15px; right: 15px; }
+}
+@media (min-width: 1680px) {
+  .nav-item::after { left: 20px; right: 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .nav-item::after { transition: none; }

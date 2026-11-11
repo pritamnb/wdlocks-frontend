@@ -173,13 +173,20 @@ test('header and headings use Outfit; nav links are 17px semibold with Ultion sp
       return { font: cs.fontFamily, size: cs.fontSize, weight: cs.fontWeight, left: r.left, right: r.right };
     }),
   );
+  // 1280–1439: 16px with 12px padding and 8px gaps; from 1440 (Ultion's reference width): 17px, 15px padding, 10px gaps.
+  const wide = page.viewportSize()!.width >= 1440;
   for (const it of items) {
     expect(it.font).toMatch(/Outfit/);
-    expect(it.size).toBe('17px');
+    expect(it.size).toBe(wide ? '17px' : '16px');
     expect(Number(it.weight)).toBeGreaterThanOrEqual(600);
   }
-  // 15px padding each side + 10px gap = 40px text-to-text, like Ultion at 1440.
-  for (let i = 1; i < items.length; i++) expect(Math.round(items[i].left - items[i - 1].right)).toBe(10);
+  for (let i = 1; i < items.length; i++) expect(Math.round(items[i].left - items[i - 1].right)).toBe(wide ? 10 : 8);
+  // Nothing in the header may be squeezed: the logo keeps its aspect ratio and the row never overflows the viewport.
+  const logo = await page.locator('header img').first().evaluate((img) => ({ w: img.getBoundingClientRect().width, h: img.getBoundingClientRect().height }));
+  expect(logo.w / logo.h, 'logo squeezed (source is 7.75:1)').toBeGreaterThan(7);
+  expect(logo.h).toBeGreaterThanOrEqual(32);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+  expect(overflow).toBe(false);
 });
 
 test('product cards are equal: same height, title/price/button rows aligned across each row', async ({ page }) => {
