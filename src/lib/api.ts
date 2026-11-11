@@ -12,13 +12,35 @@ const ssrInit: RequestInit & { next: { revalidate: number } } = {
   next: { revalidate: REVALIDATE_SECONDS },
 };
 
-/** All 9 catalogue products for the homepage/products listing. Never throws: returns [] on upstream failure. */
+/**
+ * Last catalogue that came back healthy from the Store API, per server instance. Shared hosting hiccups during an
+ * ISR regeneration used to cache an EMPTY grid ("Products are temporarily unavailable") for a minute; now a failed
+ * refresh serves the previous catalogue instead.
+ */
+let lastGoodCatalogue: WooProduct[] | null = null;
+
+async function withRetry<T>(fn: () => Promise<T>, attempts = 2): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (err instanceof StoreApiError && err.status >= 400 && err.status < 500) break; // not transient
+    }
+  }
+  throw lastErr;
+}
+
+/** All 9 catalogue products for the homepage/products listing. Never throws: falls back to the last good list, then []. */
 export async function getProductsSSR(): Promise<WooProduct[]> {
   try {
-    return await getCatalogueProducts(ssrInit);
+    const products = await withRetry(() => getCatalogueProducts(ssrInit));
+    if (products.length > 0) lastGoodCatalogue = products;
+    return products.length > 0 ? products : (lastGoodCatalogue ?? products);
   } catch (err) {
     console.error('[api] getProductsSSR failed', err);
-    return [];
+    return lastGoodCatalogue ?? [];
   }
 }
 

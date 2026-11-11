@@ -25,6 +25,8 @@ import { STORE_API, PURCHASABLE_IDS, MAX_CART_QUANTITY } from '@/lib/constants';
 import type { WooCart, WooStoreError } from '@/types';
 
 export const WD_CART_COOKIE = 'wd_cart_token';
+/** Readable marker set beside the httpOnly token so the client knows a basket session exists (skips the mount fetch otherwise). */
+export const WD_CART_MARKER_COOKIE = 'wd_cart';
 /** Upstream cookies we're willing to persist on our domain. */
 const FORWARDED_COOKIE_PREFIXES = ['wp_woocommerce_session_', 'woocommerce_items_in_cart', 'woocommerce_cart_hash'];
 const CART_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 2; // Store API tokens expire after 48h
@@ -168,6 +170,13 @@ export function toProxyResponse(req: Request, result: ProxyResult): NextResponse
   if (result.cartToken) {
     res.cookies.set(WD_CART_COOKIE, result.cartToken, {
       httpOnly: true,
+      sameSite: 'lax',
+      secure: isSecureRequest(req),
+      path: '/',
+      maxAge: CART_TOKEN_TTL_SECONDS,
+    });
+    res.cookies.set(WD_CART_MARKER_COOKIE, '1', {
+      httpOnly: false,
       sameSite: 'lax',
       secure: isSecureRequest(req),
       path: '/',

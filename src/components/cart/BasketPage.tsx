@@ -8,6 +8,7 @@ import { Button, ButtonLink } from '@/components/ui/Button';
 import { CartLineItem } from '@/components/cart/CartLineItem';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useCart } from '@/hooks/useCart';
+import { previewFromProduct } from '@/lib/cart-optimistic';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { canCheckout } from '@/lib/checkout';
 import { CATALOGUE_BY_ID, SHIPPING_OPTIONS, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
@@ -82,7 +83,7 @@ export function BasketPage({ products = [] }: { products?: WooProduct[] }) {
                             <p className="truncate text-sm font-medium text-near-black">{entry?.shortName ?? decodeEntities(p.name)}</p>
                             <p className="text-xs text-charcoal/75">{entry?.blurb}</p>
                           </div>
-                          <Button size="sm" variant="dark" loading={isAdding} onClick={() => void addToCart({ id: p.id, quantity: 1, name: entry?.shortName ?? p.name, openDrawer: false })}>
+                          <Button size="sm" variant="dark" loading={isAdding} onClick={() => void addToCart({ id: p.id, quantity: 1, name: entry?.shortName ?? p.name, openDrawer: false, preview: previewFromProduct(p, 1, entry?.shortName ?? p.name) })}>
                             {formatPrice(p.prices.price)} · Add
                           </Button>
                         </li>

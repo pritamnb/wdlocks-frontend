@@ -3,6 +3,7 @@
 import * as React from 'react';
 import type { WooCart, WooCartItem } from '@/types';
 import { fetchCart, addItem, updateItem, removeItem, clearCart as clearCartRequest, friendlyCartError } from '@/lib/cart-client';
+import { emptyCart, isOptimisticKey, optimisticLine, type CartLinePreview } from '@/lib/cart-optimistic';
 import { sumPence } from '@/lib/wdlocks-api';
 import { useToast } from '@/components/ui/Toast';
 
@@ -17,6 +18,11 @@ export interface AddToCartInput {
   name?: string;
   /** If false, the drawer won't auto-open after adding. */
   openDrawer?: boolean;
+  /**
+   * What the line will look like, so the drawer can open instantly with a provisional line while the Store API
+   * round trip (1–3 s on shared hosting) completes. Without it the drawer waits for the server.
+   */
+  preview?: Omit<CartLinePreview, 'id' | 'quantity'>;
 }
 
 export interface CartContextValue {
@@ -35,6 +41,11 @@ export interface CartContextValue {
   closeCart: () => void;
   /** Re-fetches the basket, showing the loading state. */
   refresh: () => Promise<void>;
+  /**
+   * Establishes the Store API session in the background (sets the cart cookie) so the first add needs one
+   * upstream call instead of two. Safe to call often; only the first call does anything.
+   */
+  warmSession: () => void;
   addToCart: (input: AddToCartInput) => Promise<boolean>;
   updateCartItem: (key: string, quantity: number) => Promise<boolean>;
   removeCartItem: (key: string) => Promise<boolean>;
@@ -48,6 +59,14 @@ export function useCart(): CartContextValue {
   const ctx = React.useContext(CartContext);
   if (!ctx) throw new Error('useCart must be used within <CartProvider>');
   return ctx;
+}
+
+/** Set by the proxy next to the httpOnly token so the client can tell whether a basket session exists at all. */
+export const CART_MARKER_COOKIE = 'wd_cart';
+
+function hasCartSession(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.cookie.split(';').some((c) => c.trim().startsWith(`${CART_MARKER_COOKIE}=`));
 }
 
 /** Recomputes the cheap derived fields after an optimistic item change so the UI stays coherent. */
@@ -75,6 +94,8 @@ function scaleLine(item: WooCartItem, quantity: number): WooCartItem {
 }
 
 const REFOCUS_REFRESH_MS = 5 * 60_000;
+/** Warm the session shortly after load when the page is idle, so the first click is fast even without a hover. */
+const IDLE_WARM_MS = 4_000;
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
@@ -112,25 +133,56 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await load();
   }, [load]);
 
-  // Fetch once on mount, and again when the tab becomes visible after a long absence.
-  React.useEffect(() => {
-    let active = true;
+  // One session bootstrap at most. The GET is the same call as a refresh, so it also fills the cart.
+  const warmed = React.useRef(false);
+  const warmSession = React.useCallback(() => {
+    if (warmed.current || hasCartSession()) return;
+    warmed.current = true;
     fetchCart()
       .then((next) => {
-        if (!active) return;
+        // Never clobber a basket the shopper has started building optimistically in the meantime.
+        if (cartRef.current && cartRef.current.items.some((i) => isOptimisticKey(i.key))) return;
         setCart(next);
         setError(null);
         setStatus('ready');
       })
-      .catch((err: unknown) => {
-        if (!active) return;
-        setError(friendlyCartError(err));
-        setStatus('error');
+      .catch(() => {
+        warmed.current = false; // allow a later retry
       });
+  }, []);
+
+  // On mount: shoppers with a basket session get it fetched; everyone else starts with an empty basket and no
+  // network call on the critical path (the session is warmed when idle or on the first hover over a buy button).
+  React.useEffect(() => {
+    let active = true;
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    if (hasCartSession()) {
+      warmed.current = true;
+      fetchCart()
+        .then((next) => {
+          if (!active) return;
+          setCart(next);
+          setError(null);
+          setStatus('ready');
+        })
+        .catch((err: unknown) => {
+          if (!active) return;
+          setError(friendlyCartError(err));
+          setStatus('error');
+        });
+    } else {
+      // No session cookie → the basket is empty; settle without a network call (deferred past the effect body).
+      queueMicrotask(() => {
+        if (!active) return;
+        setCart((c) => c ?? emptyCart());
+        setStatus('ready');
+      });
+      idleTimer = setTimeout(warmSession, IDLE_WARM_MS);
+    }
 
     let last = Date.now();
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && Date.now() - last > REFOCUS_REFRESH_MS) {
+      if (document.visibilityState === 'visible' && Date.now() - last > REFOCUS_REFRESH_MS && hasCartSession()) {
         last = Date.now();
         void load();
       }
@@ -138,9 +190,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       active = false;
+      if (idleTimer) clearTimeout(idleTimer);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [load]);
+  }, [load, warmSession]);
 
   const markPending = React.useCallback((key: string, on: boolean) => {
     setPendingKeys((prev) => {
@@ -152,10 +205,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addToCart = React.useCallback(
-    async ({ id, quantity = 1, variation, name, openDrawer = true }: AddToCartInput) => {
+    async ({ id, quantity = 1, variation, name, openDrawer = true, preview }: AddToCartInput) => {
       setIsAdding(true);
+      warmed.current = true;
+      // Optimistic: show the line and open the drawer immediately; the server cart replaces it when it arrives.
+      const snapshot = cartRef.current;
+      let tempKey: string | null = null;
+      if (preview) {
+        const base = snapshot ?? emptyCart();
+        const line = optimisticLine({ ...preview, id, quantity });
+        tempKey = line.key;
+        const next = withOptimisticItems(base, [...base.items, line]);
+        cartRef.current = next;
+        setCart(next);
+        setStatus('ready');
+        setError(null);
+        markPending(tempKey, true);
+        if (openDrawer) setIsOpen(true);
+      }
       try {
         const next = await addItem({ id, quantity, variation });
+        cartRef.current = next;
         setCart(next);
         setStatus('ready');
         setError(null);
@@ -167,13 +237,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (openDrawer) setIsOpen(true);
         return true;
       } catch (err) {
+        if (tempKey) {
+          // Roll the provisional line back (keep anything else that landed meanwhile).
+          const current = cartRef.current;
+          if (current) {
+            const rolled = withOptimisticItems(current, current.items.filter((i) => i.key !== tempKey));
+            cartRef.current = rolled;
+            setCart(rolled);
+          }
+        }
         toast({ type: 'error', message: friendlyCartError(err) });
         return false;
       } finally {
+        if (tempKey) markPending(tempKey, false);
         setIsAdding(false);
       }
     },
-    [toast, openCart],
+    [toast, openCart, markPending],
   );
 
   const removeCartItem = React.useCallback(
@@ -265,12 +345,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       openCart,
       closeCart,
       refresh,
+      warmSession,
       addToCart,
       updateCartItem,
       removeCartItem,
       clearCart,
     }),
-    [cart, status, error, itemCount, subtotalPence, pendingKeys, isAdding, isOpen, openCart, closeCart, refresh, addToCart, updateCartItem, removeCartItem, clearCart],
+    [cart, status, error, itemCount, subtotalPence, pendingKeys, isAdding, isOpen, openCart, closeCart, refresh, warmSession, addToCart, updateCartItem, removeCartItem, clearCart],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

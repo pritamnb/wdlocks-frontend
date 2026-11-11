@@ -9,10 +9,14 @@ import { useCart } from '@/hooks/useCart';
 import { decodeEntities, formatPrice } from '@/lib/wdlocks-api';
 import { isExternalOnly } from '@/lib/product-helpers';
 import { DeliveryPromise } from '@/components/product/DeliveryPromise';
+import { previewFromProduct } from '@/lib/cart-optimistic';
 
 /** Product-page purchase box: inline size/finish picker for variable products, qty + add for simple ones. */
 export function AddToCart({ product }: { product: WooProduct }) {
-  const { addToCart, isAdding } = useCart();
+  const { addToCart, isAdding, warmSession } = useCart();
+  React.useEffect(() => {
+    warmSession();
+  }, [warmSession]);
   const [quantity, setQuantity] = React.useState(1);
   const name = decodeEntities(product.name);
 
@@ -54,7 +58,7 @@ export function AddToCart({ product }: { product: WooProduct }) {
         className="flex-1"
         loading={isAdding}
         disabled={!product.is_in_stock || !product.is_purchasable}
-        onClick={() => void addToCart({ id: product.id, quantity, name })}
+        onClick={() => void addToCart({ id: product.id, quantity, name, preview: previewFromProduct(product, quantity, name) })}
       >
         {product.is_in_stock ? (
           <>

@@ -13,6 +13,7 @@ import { useCart } from '@/hooks/useCart';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { canCheckout } from '@/lib/checkout';
 import { CATALOGUE_BY_ID, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
+import { previewFromProduct } from '@/lib/cart-optimistic';
 
 export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
   const { cart, status, error, isOpen, closeCart, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, addToCart, isAdding } = useCart();
@@ -98,7 +99,7 @@ export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
                       <p className="truncate text-sm font-medium text-near-black">{entry?.shortName ?? decodeEntities(p.name)}</p>
                       <p className="text-xs text-charcoal/75">{entry?.blurb}</p>
                     </div>
-                    <Button size="sm" variant="dark" loading={isAdding} onClick={() => void addToCart({ id: p.id, quantity: 1, name: entry?.shortName ?? p.name, openDrawer: false })}>
+                    <Button size="sm" variant="dark" loading={isAdding} onClick={() => void addToCart({ id: p.id, quantity: 1, name: entry?.shortName ?? p.name, openDrawer: false, preview: previewFromProduct(p, 1, entry?.shortName ?? p.name) })}>
                       {formatPrice(p.prices.price)} · Add
                     </Button>
                   </li>

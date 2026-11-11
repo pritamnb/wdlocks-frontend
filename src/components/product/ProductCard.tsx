@@ -11,6 +11,7 @@ import { productPriceLabel, decodeEntities } from '@/lib/wdlocks-api';
 import { primaryImage, ctaLabel, isExternalOnly } from '@/lib/product-helpers';
 import { BRAND_VIDEO, CARD_HOVER_CLIPS, CATALOGUE_BY_ID } from '@/lib/constants';
 import { HoverPreview } from '@/components/media/HoverPreview';
+import { previewFromProduct } from '@/lib/cart-optimistic';
 import { cn } from '@/lib/cn';
 
 interface Props {
@@ -21,7 +22,7 @@ interface Props {
 }
 
 export function ProductCard({ product, onChooseOptions, priority = false }: Props) {
-  const { addToCart } = useCart();
+  const { addToCart, warmSession } = useCart();
   const [busy, setBusy] = React.useState(false);
   const image = primaryImage(product);
   const name = decodeEntities(product.name);
@@ -37,7 +38,8 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
       return;
     }
     setBusy(true);
-    await addToCart({ id: product.id, quantity: 1, name });
+    // The drawer opens instantly with a provisional line (see useCart); the server cart replaces it.
+    await addToCart({ id: product.id, quantity: 1, name, preview: previewFromProduct(product, 1, entry?.shortName ?? name) });
     setBusy(false);
   };
 
@@ -97,6 +99,8 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
               variant="primary"
               className="mx-auto h-12 w-full max-w-[220px] rounded-lg text-base"
               onClick={(e) => void onCta(e)}
+              onPointerEnter={warmSession}
+              onFocus={warmSession}
               loading={busy}
               disabled={!product.is_in_stock || !product.is_purchasable}
               aria-label={`${ctaLabel(product)}: ${name}`}

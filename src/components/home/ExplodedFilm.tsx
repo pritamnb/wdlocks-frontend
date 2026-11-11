@@ -59,6 +59,17 @@ export function ExplodedFilm({ className }: { className?: string }) {
       };
       reverseFrame = requestAnimationFrame(step);
     };
+    // The clip is 1.3 MB; fetch it only once the block is within a screen of the viewport (not on page load).
+    const loader = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        video.preload = 'auto';
+        video.load();
+        loader.disconnect();
+      },
+      { root: null, rootMargin: '100% 0px 100% 0px', threshold: 0 },
+    );
+    loader.observe(section);
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -78,6 +89,7 @@ export function ExplodedFilm({ className }: { className?: string }) {
     document.addEventListener('visibilitychange', onVis);
     return () => {
       io.disconnect();
+      loader.disconnect();
       stopReverse();
       video.removeEventListener('loadeddata', onReady);
       document.removeEventListener('visibilitychange', onVis);
@@ -96,7 +108,7 @@ export function ExplodedFilm({ className }: { className?: string }) {
             poster={clip.poster}
             muted
             playsInline
-            preload="auto"
+            preload="none"
             aria-label={clip.alt}
             className={cn('aspect-video w-full mix-blend-multiply transition-opacity duration-300', ready ? 'opacity-100' : 'opacity-0')}
           />

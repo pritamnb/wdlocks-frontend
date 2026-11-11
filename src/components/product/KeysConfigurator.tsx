@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
+import { previewFromProduct } from '@/lib/cart-optimistic';
 import { decodeEntities, formatPrice } from '@/lib/wdlocks-api';
 import { BRAND_RENDERS, PRODUCT_IDS } from '@/lib/constants';
 import { cn } from '@/lib/cn';
@@ -58,7 +59,7 @@ export function KeysConfigurator({ product }: { product: WooProduct }) {
     setPriced(true);
   };
 
-  const addNative = async (openDrawer: boolean) => addToCart({ id: product.id, quantity: qty, name, openDrawer });
+  const addNative = async (openDrawer: boolean) => addToCart({ id: product.id, quantity: qty, name, openDrawer, preview: previewFromProduct(product, qty, name) });
 
   const checkoutNow = async () => {
     setCheckingOut(true);

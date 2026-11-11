@@ -63,7 +63,7 @@ function Chevron() {
 
 export function VariationSelector({ product, onAdded, headingId, className, showUpsells = false }: Props) {
   const model = React.useMemo(() => getVariationModel(product), [product]);
-  const { addToCart, isAdding } = useCart();
+  const { addToCart, isAdding, warmSession } = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selected, setSelected] = React.useState<VariationOption | null>(() => {
@@ -106,6 +106,11 @@ export function VariationSelector({ product, onAdded, headingId, className, show
     }
   }, [product.id]);
 
+  // A shopper looking at a configurator is likely to add, so establish the basket session now (one call, idempotent).
+  React.useEffect(() => {
+    warmSession();
+  }, [warmSession]);
+
   // Sticky total bar appears once the configurator has scrolled out of view (Ultion pattern).
   React.useEffect(() => {
     if (!showUpsells) return;
@@ -144,12 +149,19 @@ export function VariationSelector({ product, onAdded, headingId, className, show
   const add = async (openDrawer: boolean) => {
     setTouched(true);
     if (!selected) return false;
+    const image = product.images[0];
     const ok = await addToCart({
       id: selected.variationId,
       quantity,
       variation: [{ attribute: selected.attribute, value: selected.termSlug }],
       name: `${name} (${selected.label})`,
       openDrawer: openDrawer && !keyedAlike,
+      preview: {
+        name,
+        pricePence: unitPence,
+        image: image ? { src: image.src, thumbnail: image.thumbnail, alt: image.alt } : null,
+        variation: [{ attribute: model.kind === 'size' ? 'Size' : model.kind === 'colour' ? 'Finish' : 'Option', value: selected.label }],
+      },
     });
     if (ok && keyedAlike) {
       await addToCart({ id: PRODUCT_IDS.KEYED_ALIKE, quantity: 1, name: 'Keyed-alike service', openDrawer });

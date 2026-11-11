@@ -57,12 +57,17 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [360, 640, 768, 1024, 1280, 1536],
     imageSizes: [64, 80, 128, 256],
-    minimumCacheTTL: 60 * 60 * 24,
+    // Product photos change rarely; keep optimised variants for 31 days so they are not re-transformed daily
+    // (every fresh transformation costs ~0.4 s and a Vercel transformation credit). One quality = fewer variants.
+    minimumCacheTTL: 60 * 60 * 24 * 31,
+    qualities: [75],
   },
   async headers() {
     return [
       { source: '/(.*)', headers: securityHeaders },
       { source: '/api/(.*)', headers: [{ key: 'Cache-Control', value: 'no-store, private' }] },
+      // Brand films/renders are static and large: let browsers keep them for a week instead of revalidating every visit.
+      { source: '/brand/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }] },
     ];
   },
   async redirects() {
