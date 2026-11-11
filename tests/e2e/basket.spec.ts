@@ -25,7 +25,8 @@ test('add a cylinder, review it, remove it', async ({ page }) => {
 
   await expect(page).toHaveURL(/\/checkout$/);
   await expect(page.locator('h1')).toHaveText('Checkout');
-  await expect(page.getByRole('button', { name: 'Continue to secure payment' })).toBeEnabled();
+  // Hand-off mode shows "Continue to secure payment"; demo/Stripe mode shows the on-site pay button.
+  await expect(page.getByRole('button', { name: /Continue to secure payment|^Pay £|Place order/ })).toBeVisible();
 
   // Wait for the server to confirm the removal before leaving the page, otherwise the navigation aborts it.
   await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/remove')), page.getByRole('button', { name: /Remove .* from basket/ }).click()]);
@@ -35,19 +36,27 @@ test('add a cylinder, review it, remove it', async ({ page }) => {
   await expect(page.getByText('Your basket is currently empty')).toBeVisible();
 });
 
-test('buy now builds a direct wdlocks.co.uk checkout URL (not followed)', async ({ page }) => {
+test('buy now: direct wdlocks.co.uk checkout URL in hand-off mode, or our own checkout when payment is on-site', async ({ page }) => {
   await page.goto('/products/3-star-alps-cylinder-door-lock');
   await page.waitForLoadState('networkidle');
-  // Intercept the navigation instead of leaving the site.
+  // Intercept the hand-off navigation instead of leaving the site.
   await page.route('https://wdlocks.co.uk/**', (route) => route.fulfill({ status: 200, body: 'intercepted' }));
-  const [request] = await Promise.all([
-    page.waitForRequest((r) => r.url().startsWith('https://wdlocks.co.uk/checkout/')),
-    page.getByRole('button', { name: /Buy now/ }).first().click(),
-  ]);
-  const url = new URL(request.url());
-  expect(url.searchParams.get('add-to-cart')).toMatch(/^\d+$/);
-  expect(url.searchParams.get('quantity')).toBe('1');
-  expect(url.searchParams.get('utm_source')).toBe('headless');
+  const handoff = page.waitForRequest((r) => r.url().startsWith('https://wdlocks.co.uk/checkout/'), { timeout: 20_000 }).then((r) => ({ kind: 'handoff' as const, url: r.url() })).catch(() => null);
+  const onsite = page.waitForURL(/\/checkout$/, { timeout: 20_000 }).then(() => ({ kind: 'onsite' as const })).catch(() => null);
+  await page.getByRole('button', { name: /Buy now/ }).first().click();
+  const result = await Promise.race([handoff, onsite].map((p) => p.then((v) => v ?? new Promise<never>(() => undefined))));
+  if (result.kind === 'handoff') {
+    const url = new URL(result.url);
+    expect(url.searchParams.get('add-to-cart')).toMatch(/^\d+$/);
+    expect(url.searchParams.get('quantity')).toBe('1');
+    expect(url.searchParams.get('utm_source')).toBe('headless');
+  } else {
+    // On-site checkout: the lock was added and the shopper lands on /checkout with it in the summary.
+    await expect(page.locator('h1')).toHaveText('Checkout');
+    await expect(page.getByText('35 Inside / 35 Outside').first()).toBeVisible();
+    await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/remove')), page.getByRole('button', { name: /Remove .* from basket/ }).first().click()]);
+    await expect(page.getByText('Nothing to check out yet')).toBeVisible();
+  }
 });
 
 test('basket drawer opens instantly with a provisional line, then settles to the server cart', async ({ page }) => {
