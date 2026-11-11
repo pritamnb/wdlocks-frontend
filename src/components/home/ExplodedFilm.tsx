@@ -54,7 +54,7 @@ export function ExplodedFilm({ className }: { className?: string }) {
       video.pause();
       const from = video.currentTime;
       if (from <= 0.02) return;
-      const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 1.4;
+      const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 1.0;
       const total = (from / duration) * REVERSE_SECONDS * 1000; // proportional: a half-exploded lock closes faster
       const started = performance.now();
       const step = (now: number) => {
@@ -109,7 +109,7 @@ export function ExplodedFilm({ className }: { className?: string }) {
             playsInline
             preload="none"
             aria-label={clip.alt}
-            className={cn('aspect-[832/800] w-full mix-blend-multiply transition-opacity duration-300', ready ? 'opacity-100' : 'opacity-0')}
+            className={cn('aspect-[776/800] w-full mix-blend-multiply transition-opacity duration-300', ready ? 'opacity-100' : 'opacity-0')}
           />
           {!ready && <Image src={clip.poster} alt="" aria-hidden="true" width={clip.width} height={clip.height} sizes="(min-width: 1024px) 760px, 100vw" className="absolute inset-0 w-full mix-blend-multiply" />}
         </>

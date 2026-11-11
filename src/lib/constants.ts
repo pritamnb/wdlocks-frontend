@@ -191,16 +191,16 @@ export const BRAND_VIDEO = {
     alt: 'Inside a Watchdog cylinder: the hardened steel anti-drill pin beside the red cam, the anti-pick pins and the springs',
   },
   /**
-   * Exploded view of the cylinder, 1.4 s, all-intra so it can be stepped backwards. A brand-free crop of the client's
-   * home-lock-exploded.mp4: the left 54 % of the frame from 0.6 s on (brass plug, Sold Secure housing, red cam carrier,
-   * pins and springs) — the right-hand housing, engraved ULTION, is never in frame. Background lifted to white so it
+   * Exploded view of the cylinder, 1.0 s, all-intra so it can be stepped backwards. A brand-free crop of the client's
+   * home-lock-exploded.mp4: x 120–1090 of the frame from 1.0 s on (brass plug, Sold Secure housing, the whole red cam
+   * carrier, pins and springs) — the right-hand housing, engraved ULTION, is never in frame. Background lifted to white so it
    * multiply-blends onto the grey panel.
    */
   explodedCrop: {
     mp4: '/brand/video/exploded-crop.mp4',
     poster: '/brand/video/exploded-crop-poster.jpg',
     endPoster: '/brand/video/exploded-crop-end.jpg',
-    width: 832,
+    width: 776,
     height: 800,
     alt: 'Exploded view of the cylinder: brass plug, cam carrier, anti-drill pins and springs separating',
   },
