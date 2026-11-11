@@ -5,13 +5,15 @@ import { BRAND_VIDEO } from '@/lib/constants';
 import { usePrefersReducedMotion } from '@/hooks/useInViewPlayback';
 import { cn } from '@/lib/cn';
 
-/** Dark-background films that work behind white text. Each plays for up to SLOT seconds, then crossfades to the next. */
+/**
+ * 16:9 films only (client, 11 Nov): the 5:4 cuts needed a blurred fill behind them and looked cropped, so they are out.
+ * Each film fills the hero edge to edge (object-cover) and plays for up to SLOT seconds before crossfading to the next.
+ */
 const FILMS = [
-  // 5:4 films are shown whole (contain) over a blurred fill, so nothing important is cropped away on a wide hero.
-  { src: BRAND_VIDEO.heroLoop.mp4, poster: BRAND_VIDEO.heroLoop.poster, label: 'Inside the lock', fit: 'contain' },
-  { src: BRAND_VIDEO.turntable.mp4, poster: BRAND_VIDEO.turntable.poster, label: 'The cylinder', fit: 'cover' },
-  { src: BRAND_VIDEO.insideFilm.mp4, poster: BRAND_VIDEO.insideFilm.poster, label: 'How it defends', fit: 'contain' },
-  { src: BRAND_VIDEO.clips.keyTurntable.mp4, poster: BRAND_VIDEO.clips.keyTurntable.poster, label: 'The key', fit: 'cover' },
+  // The explainer films are shot on white with their own captions; `dim` darkens them so the white headline stays readable.
+  { src: BRAND_VIDEO.explainerInline.mp4, poster: BRAND_VIDEO.explainerInline.poster, label: 'How a Watchdog lock works', dim: true },
+  { src: BRAND_VIDEO.turntable.mp4, poster: BRAND_VIDEO.turntable.poster, label: 'The cylinder', dim: false },
+  { src: BRAND_VIDEO.film.mp4, poster: BRAND_VIDEO.film.poster, label: 'The Watchdog film', dim: true },
 ] as const;
 
 const SLOT_SECONDS = 12;
@@ -81,15 +83,16 @@ export function HeroBackdrop() {
     <div ref={wrapRef} className="absolute inset-0" aria-hidden="true">
       {FILMS.map((f, i) => (
         <React.Fragment key={f.src}>
-          {f.fit === 'contain' && (
+          {i === 0 && (
+            // The first poster is the hero's LCP: fetch it first so the headline has its backdrop before the film plays.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={f.poster} alt="" fetchPriority={i === 0 ? 'high' : 'auto'} loading={i === 0 ? 'eager' : 'lazy'} decoding="async" className={cn('absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl transition-opacity ease-in-out', i === active ? 'opacity-60' : 'opacity-0')} style={{ transitionDuration: `${FADE_MS}ms` }} />
+            <img src={f.poster} alt="" fetchPriority="high" loading="eager" decoding="async" className={cn('absolute inset-0 h-full w-full object-cover', f.dim && 'brightness-[.55] contrast-[1.05]')} />
           )}
         <video
           ref={(el) => {
             refs.current[i] = el;
           }}
-          className={cn('absolute inset-0 h-full w-full transition-opacity ease-in-out', f.fit === 'contain' ? 'object-contain' : 'object-cover', i === active ? 'opacity-90' : 'opacity-0')}
+          className={cn('absolute inset-0 h-full w-full object-cover transition-opacity ease-in-out', f.dim && 'brightness-[.55] contrast-[1.05]', i === active ? 'opacity-100' : 'opacity-0')}
           style={{ transitionDuration: `${FADE_MS}ms` }}
           muted
           playsInline

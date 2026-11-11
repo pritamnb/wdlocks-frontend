@@ -3,19 +3,19 @@ import Image from 'next/image';
 /** Copy from the client's own accreditation panels on wdlocks.co.uk (10 Nov 2026). */
 const items = [
   {
-    src: '/brand/sold-secure-diamond.png',
+    src: '/brand/accreditations/sold-secure-diamond-mark.png',
     eyebrow: 'The Sold Secure Diamond Standard 2024',
     title: 'The toughest test ever.',
     body: 'The Watchdog lock passes even the most robust security standard, the Sold Secure Diamond Standard 2024. The trusted anti-snap and anti-bump lock that keeps your property secure.',
   },
   {
-    src: '/brand/bsi-kitemark.webp',
+    src: '/brand/accreditations/bsi-kitemark-clear.png',
     eyebrow: 'BSI Kitemark',
     title: 'British Standards.',
     body: 'The BSI Kitemark is one of the most recognised symbols of quality and safety in the UK, and is acknowledged around the world too. Watchdog holds the highest 3 Star TS 007 rating, licence KM597142.',
   },
   {
-    src: '/brand/secured-by-design.png',
+    src: '/brand/accreditations/secured-by-design-mark.png',
     eyebrow: 'Secured by Design (SBD) locks',
     title: 'Secured by Design.',
     body: 'Secured by Design operates an accreditation scheme on behalf of the UK police for products or services that have met recognised security standards: the Police Preferred Specification.',
@@ -35,7 +35,8 @@ export function Accreditations() {
           {items.map((i, idx) => (
             <li key={i.title} className={`grid items-center gap-10 lg:grid-cols-12 ${idx % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
               <div className="relative mx-auto flex h-56 w-56 items-center justify-center rounded-full bg-cream sm:h-64 sm:w-64 lg:col-span-5 lg:h-72 lg:w-72">
-                <Image src={i.src} alt="" width={240} height={240} sizes="(min-width: 1024px) 220px, 180px" className="h-[62%] w-[62%] object-contain" />
+                {/* Marks are trimmed to their visible bounds (public/brand/accreditations) so each fills the same share of the circle. */}
+                <Image src={i.src} alt="" width={240} height={240} sizes="(min-width: 1024px) 250px, 200px" className="h-[84%] w-[84%] object-contain" />
               </div>
               <div className="text-center lg:col-span-7 lg:text-left">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-red">{i.eyebrow}</p>

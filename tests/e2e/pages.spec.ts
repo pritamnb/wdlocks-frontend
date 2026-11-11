@@ -66,7 +66,7 @@ test('header is white with the expected links, in order', async ({ page, isMobil
 
 test('homepage: hero film, section order, white Why Watchdog, 63% truth, large accreditations, footer socials', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('section video').first()).toHaveAttribute('poster', /hero-inside-poster/);
+  await expect(page.locator('section video').first()).toHaveAttribute('poster', /explainer-inline-poster/);
   const order = await page.evaluate(() => Array.from(document.querySelectorAll('main section')).map((s) => s.id || s.getAttribute('aria-labelledby') || s.getAttribute('aria-label') || ''));
   const idx = (k: string) => order.findIndex((o) => o === k);
   expect(idx('why-watchdog')).toBeGreaterThan(idx('protection'));
@@ -173,11 +173,11 @@ test('header and headings use Outfit; nav links are 17px semibold with Ultion sp
       return { font: cs.fontFamily, size: cs.fontSize, weight: cs.fontWeight, left: r.left, right: r.right };
     }),
   );
-  // 1280–1439: 16px with 12px padding and 8px gaps; from 1440 (Ultion's reference width): 17px, 15px padding, 10px gaps.
+  // 1280–1439: 17px with 12px padding and 8px gaps; from 1440 (Ultion's reference width): 18px, 15px padding, 10px gaps.
   const wide = page.viewportSize()!.width >= 1440;
   for (const it of items) {
     expect(it.font).toMatch(/Outfit/);
-    expect(it.size).toBe(wide ? '17px' : '16px');
+    expect(it.size).toBe(wide ? '18px' : '17px');
     expect(Number(it.weight)).toBeGreaterThanOrEqual(600);
   }
   for (let i = 1; i < items.length; i++) expect(Math.round(items[i].left - items[i - 1].right)).toBe(wide ? 10 : 8);

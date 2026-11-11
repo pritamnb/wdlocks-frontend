@@ -189,14 +189,6 @@ export const BRAND_VIDEO = {
     poster: '/brand/video/hero-inside-poster.jpg',
     alt: 'Inside a Watchdog cylinder: the hardened steel anti-drill pin beside the red cam, the anti-pick pins and the springs',
   },
-  /** 2 s exploded-view animation of the cylinder (client file home-lock-exploded.mp4, 10 Nov). All-intra encode so it can be scrubbed by scroll; background lifted to white for multiply blending. */
-  exploded: {
-    mp4: '/brand/video/exploded.mp4',
-    poster: '/brand/video/exploded-poster.jpg',
-    endPoster: '/brand/video/exploded-end.jpg',
-    duration: 2,
-    alt: 'The Watchdog 3 Star cylinder flying apart into its housing, plug, eleven pins, springs, anti-drill inserts and the red ALPS cam',
-  },
   turntable: {
     mp4: '/brand/video/turntable.mp4',
     poster: '/brand/video/turntable-poster.jpg',

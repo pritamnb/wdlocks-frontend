@@ -584,6 +584,17 @@ performance audit, media hosting, Stripe/live-checkout scan, card UI) and their 
 - **Tests.** 52/52 e2e on production before and after; new checks for card alignment, the instant drawer, the
   Outfit header and the checkout preview.
 
+### Pass 30 — 11 Nov 2026, hero films, 100 px header, accreditation marks, and an Ultion film removed
+Pritam: the first hero film's blurred backdrop looked wrong and the 5:4 cuts looked cropped. The carousel is now three
+16:9 films edge to edge (the inline explainer he asked for, the cylinder turntable, the full Watchdog film); the two
+white-background explainer films are dimmed so the white headline stays readable. Header is 100 px with 17/18/20 px
+links by width, logo and links on the left. The three "Tested, not claimed" marks are trimmed to their visible bounds
+so each fills its circle like Secured by Design (the BSI mark's off-white box is keyed out). The "gap" in the
+Protection panel was the small, bottom-aligned lock in a 680 px void; the film now fills the panel and the headline
+is centred. **Enlarging it exposed that the "exploded lock" clip was Ultion's own film (engraved ULTION ★★★ PLUS)**:
+removed from the repo and the asset register, replaced by the brand-free Watchdog ALPS cut-away (plays while the block
+is centred, pauses off screen).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

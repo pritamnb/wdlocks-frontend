@@ -26,7 +26,7 @@ Locations: `~/Downloads/WD/` (raw downloads) · `~/Documents/wdlocks/client-asse
 | Cylinder with vapour effect `watchdog-cylinder-May-2025.jpg` (3898×2775) | Paramjit email, 6 Nov | client-assets/email-2026-11-06-brochure | No |
 | 13 renders: angled, detail, front, engraved keys, £5,000 key tag, rim JPEGs, KeysOnRing | Allegion via Paramjit, 10 Nov ("watchdog lock images required") | client-assets (processed into public/brand/product) | 5 live |
 | Cylinder turntable, black bg (10 s) + explainer film 16:9 (40 s) | Allegion WeTransfer, 10 Nov | client-assets/wetransfer-2026-11-10 | Both live |
-| Exploded-view animation `home-lock-exploded.mp4` (2 s, 1080p, grey bg) | Pritam, 10 Nov (Downloads/WD/videos) | public/brand/video/exploded.mp4 (720p all-intra, bg lifted to white) + posters | Live: homepage Protection section, scrubbed by scroll |
+| ~~Exploded-view animation `home-lock-exploded.mp4`~~ | Pritam, 10 Nov (Downloads/WD/videos) | **Removed 11 Nov** — it is Ultion's film: the cylinder is engraved ULTION ★★★ PLUS / TS007 2014 (legible once enlarged). Files deleted from public/brand/video. | Replaced by the Watchdog ALPS cut-away clip in the Protection section |
 | Hero loop: 15 s cut (16–31 s) of the inside-the-lock film | Vijay, 6 Nov (Downloads/WD/Images/3d) | public/brand/video/hero-inside.mp4 (960×768, silent, re-encoded 11 Nov at ~1.05 Mbit/s = 2.0 MB, was 3.4 MB) + poster at 19 s | Live: homepage hero background (client's pick, 10 Nov) |
 | Old-site product photos (300×300) + logo | Downloads/WD/Images, LOGO1 | — | Logo rebuilt; photos come from the Store API |
 
@@ -36,6 +36,7 @@ Locations: `~/Downloads/WD/` (raw downloads) · `~/Documents/wdlocks/client-asse
 |---|---|
 | `3-starPLUS.8.png` dark cylinder, `3Star-Explode-Image.6.png` exploded view, `Key.6.png` / `Key.6-alpha.png` keys, `5K-half_card-light_background.png` tag, `KeyedAlike.Version3.mp4` | Allegion WeTransfer "WATCHDOG", 10 Nov — client-assets/wetransfer-2026-11-10b |
 | `Watchdog 1-Star_PLUS.png` (actually Ultion 1-Star PLUS) | Allegion email, 10 Nov |
+| `home-lock-exploded.mp4` exploded-view film (engraved ULTION ★★★ PLUS) | Pritam, 10 Nov — was live in the Protection section until 11 Nov |
 | Vimeo "Ultion 3 star plus" https://vimeo.com/692195871 | Pritam, 10 Nov |
 
 The brand-free crop of the Ultion exploded view was used briefly on 10 Nov and has been replaced by the Watchdog X-ray render.
