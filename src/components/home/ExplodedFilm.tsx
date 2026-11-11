@@ -7,11 +7,11 @@ import { usePrefersReducedMotion } from '@/hooks/useInViewPlayback';
 import { cn } from '@/lib/cn';
 
 /**
- * The exploded-lock animation behind the Protection headline (brand-free crop, see BRAND_VIDEO.explodedCrop). It plays
- * once when the block reaches the middle of the screen, holds on the exploded frame, and reassembles in reverse when
- * the block leaves so it plays again next time (browsers cannot play video backwards; the all-keyframe encode makes
- * frame-by-frame seeking smooth). Reduced motion shows the exploded frame as a still. The white background
- * multiply-blends away on the grey panel.
+ * The exploded-lock animation beside the Protection headline. While the block sits in the middle of the screen it plays
+ * back and forth: forward to the exploded frame, a short hold, then frame-stepped backwards to the closed lock, and
+ * again. When the block leaves the middle it closes back up and waits. Browsers cannot play video backwards, so the
+ * reverse pass seeks frame by frame (the clip is all-keyframe, which keeps that smooth). Reduced motion shows the
+ * exploded frame as a still. The white background multiply-blends away on the grey panel.
  */
 export function ExplodedFilm({ className }: { className?: string }) {
   const wrapRef = React.useRef<HTMLDivElement>(null);
@@ -31,7 +31,6 @@ export function ExplodedFilm({ className }: { className?: string }) {
     if (video.readyState >= 2) onReady();
 
     const section = (wrap.closest('section') ?? wrap) as HTMLElement;
-    // Fetch the clip (0.6 MB) well before the block arrives, so it is ready to play the moment it is centred.
     const loader = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
@@ -43,53 +42,74 @@ export function ExplodedFilm({ className }: { className?: string }) {
     );
     loader.observe(section);
 
-    const REVERSE_SECONDS = 1.0;
-    let reverseFrame = 0;
-    const stopReverse = () => {
-      if (reverseFrame) cancelAnimationFrame(reverseFrame);
-      reverseFrame = 0;
+    const REVERSE_SECONDS = 1.6; // full-length reverse pass
+    const HOLD_MS = 700; // pause on the exploded frame before closing, and on the closed lock before exploding again
+    let centred = false;
+    let frame = 0;
+    let holdTimer: ReturnType<typeof setTimeout> | undefined;
+    const clearTimers = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      if (holdTimer) clearTimeout(holdTimer);
+      holdTimer = undefined;
     };
-    const reverse = () => {
-      stopReverse();
+    const duration = () => (Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 2);
+
+    const playForward = () => {
+      clearTimers();
+      void video.play().catch(() => {});
+    };
+    /** Steps backwards from the current frame to 0, then (if still centred) explodes again. */
+    const reverse = (thenReplay: boolean) => {
+      clearTimers();
       video.pause();
       const from = video.currentTime;
-      if (from <= 0.02) return;
-      const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 1.0;
-      const total = (from / duration) * REVERSE_SECONDS * 1000; // proportional: a half-exploded lock closes faster
+      if (from <= 0.02) {
+        if (thenReplay && centred) holdTimer = setTimeout(playForward, HOLD_MS);
+        return;
+      }
+      const total = (from / duration()) * REVERSE_SECONDS * 1000;
       const started = performance.now();
       const step = (now: number) => {
         const k = Math.min(1, (now - started) / total);
-        const eased = 1 - Math.pow(1 - k, 2);
+        const eased = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; // ease in-out
         video.currentTime = from * (1 - eased);
-        if (k < 1) reverseFrame = requestAnimationFrame(step);
+        if (k < 1) frame = requestAnimationFrame(step);
         else {
-          reverseFrame = 0;
+          frame = 0;
           video.currentTime = 0;
+          if (thenReplay && centred) holdTimer = setTimeout(playForward, HOLD_MS);
         }
       };
-      reverseFrame = requestAnimationFrame(step);
+      frame = requestAnimationFrame(step);
     };
+    const onEnded = () => {
+      if (centred) holdTimer = setTimeout(() => reverse(true), HOLD_MS);
+    };
+    video.addEventListener('ended', onEnded);
+
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          stopReverse();
-          void video.play().catch(() => {});
-        } else {
-          reverse();
-        }
+        centred = entry.isIntersecting;
+        if (centred) playForward();
+        else reverse(false);
       },
       // Fires when any part of the section overlaps the middle 20 % of the viewport.
       { root: null, rootMargin: '-40% 0px -40% 0px', threshold: 0 },
     );
     io.observe(section);
     const onVis = () => {
-      if (document.hidden) video.pause();
+      if (document.hidden) {
+        clearTimers();
+        video.pause();
+      } else if (centred) playForward();
     };
     document.addEventListener('visibilitychange', onVis);
     return () => {
       io.disconnect();
       loader.disconnect();
-      stopReverse();
+      clearTimers();
+      video.removeEventListener('ended', onEnded);
       video.removeEventListener('loadeddata', onReady);
       document.removeEventListener('visibilitychange', onVis);
     };
@@ -109,7 +129,7 @@ export function ExplodedFilm({ className }: { className?: string }) {
             playsInline
             preload="metadata"
             aria-label={clip.alt}
-            className={cn('aspect-[776/592] w-full mix-blend-multiply transition-opacity duration-300', ready ? 'opacity-100' : 'opacity-0')}
+            className={cn('aspect-[1200/800] w-full mix-blend-multiply transition-opacity duration-300', ready ? 'opacity-100' : 'opacity-0')}
           />
           {!ready && <Image src={clip.poster} alt="" aria-hidden="true" width={clip.width} height={clip.height} sizes="(min-width: 1024px) 760px, 100vw" className="absolute inset-0 w-full mix-blend-multiply" />}
         </>

@@ -3,8 +3,8 @@ import { ExplodedFilm } from '@/components/home/ExplodedFilm';
 
 /**
  * Ultion's `section-home-protection` (680 px, #f0f0f0): title + "Learn more" on the left, the exploded-lock film on the
- * right. Client, 11 Nov: the film is its own column, shown whole and aligned to the right edge of the content, never
- * cropped by the layout; on phones it stacks under the title.
+ * right. Client, 11 Nov: the full film in its own column, whole and right-aligned, playing back and forth while the
+ * block is centred; on phones it stacks under the title.
  */
 export function Protection() {
   return (
@@ -22,10 +22,8 @@ export function Protection() {
             Learn more
           </Link>
         </div>
-        <div className="relative lg:col-span-7">
-          <ExplodedFilm className="ml-auto w-full max-w-[640px] lg:max-w-[700px]" />
-          {/* The crop's right edge cuts a coupling piece; fade it into the panel (an overlay keeps the film's multiply blend intact). */}
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#f0f0f0] to-transparent sm:w-24" aria-hidden="true" />
+        <div className="lg:col-span-7">
+          <ExplodedFilm className="ml-auto w-full max-w-[760px] lg:max-w-[820px]" />
         </div>
       </div>
     </section>
