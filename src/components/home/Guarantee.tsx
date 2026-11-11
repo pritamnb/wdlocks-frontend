@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { BRAND_RENDERS, GUARANTEE } from '@/lib/constants';
 
-/** Ultion's "Register your £5,000 guarantee" on a dark panel with the key tag. */
+/** Ultion's "Register your £5,000 guarantee" on a dark panel with the key tag (the client's red straight-edge render, 11 Nov). */
 export function Guarantee() {
   return (
     <section className="relative overflow-hidden bg-near-black text-white" aria-labelledby="guarantee-title" id="guarantee">
@@ -17,13 +17,14 @@ export function Guarantee() {
           </a>
         </div>
         <div className="relative lg:col-span-5">
+          {/* The render is already tilted, so no CSS rotation; the drop shadow lifts it off the panel. */}
           <Image
             src={BRAND_RENDERS.guaranteeKeytag.src}
             alt={BRAND_RENDERS.guaranteeKeytag.alt}
             width={BRAND_RENDERS.guaranteeKeytag.width}
             height={BRAND_RENDERS.guaranteeKeytag.height}
-            sizes="(max-width: 1024px) 60vw, 360px"
-            className="mx-auto h-auto w-[260px] -rotate-6 drop-shadow-[0_40px_60px_rgb(0_0_0/0.6)] sm:w-[320px] lg:w-[360px]"
+            sizes="(max-width: 1024px) 60vw, 380px"
+            className="mx-auto h-auto w-[250px] drop-shadow-[0_40px_60px_rgb(0_0_0/0.7)] sm:w-[300px] lg:w-[380px]"
           />
         </div>
       </div>

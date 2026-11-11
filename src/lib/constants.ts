@@ -178,8 +178,8 @@ export const BRAND_RENDERS = {
   cylinderSide: { src: '/brand/product/cylinder-side.png', width: 1200, height: 535, alt: 'Watchdog 3 Star ALPS cylinder seen side-on, showing the red cam and engraved markings' },
   /** Single Watchdog key, "Watchdog Stays Locked" bow. */
   keySingle: { src: '/brand/product/key-single.png', width: 734, height: 1000, alt: 'A single Watchdog dimple key with the Watchdog Stays Locked bow' },
-  /** Key tag: Stays Locked, £5000 guarantee, activate at wdlocks.co.uk. */
-  guaranteeKeytag: { src: '/brand/product/guarantee-keytag.png', width: 754, height: 900, alt: 'Watchdog key tag: if a burglar snaps your lock and breaks in, £5,000 guarantee, activate for free at wdlocks.co.uk' },
+  /** Key tag: Stays Locked, £5000 guarantee, activate at wdlocks.co.uk. Red straight-edge render from the client (Watchdog_Red_Straight_Edge.pdf, 11 Nov), cut out of its white page. */
+  guaranteeKeytag: { src: '/brand/product/guarantee-keytag-red.png', width: 900, height: 1321, alt: 'Watchdog key tag: if a burglar snaps your lock and breaks in, £5,000 guarantee, activate for free at wdlocks.co.uk' },
 } as const;
 
 /** Manufacturer turntable animation (10 s, silent, black background). Encoded from client-assets/wetransfer-2026-11-10. */
@@ -270,7 +270,10 @@ export interface VideoBarEntry {
   title: string;
   durationLabel: string;
   poster: string;
-  mp4: string;
+  /** Self-hosted silent film. */
+  mp4?: string;
+  /** YouTube id instead of a file (the client's own uploads); shown as an embedded player. */
+  youtube?: string;
   aspect: '16/9' | '5/4';
   blurb: string;
 }
@@ -278,9 +281,9 @@ export interface VideoBarEntry {
 /** The 40 s manufacturer explainer, opened by the hero's "Watch full video" button. */
 export const EXPLAINER_FILM: VideoBarEntry = { id: 'explainer', title: 'How a Watchdog lock works', durationLabel: '00:40', poster: BRAND_VIDEO.film.poster, mp4: BRAND_VIDEO.film.mp4, aspect: '16/9', blurb: 'Manufacturer film. ' + BRAND_VIDEO.film.chapters };
 
-/** "See Watchdog in action" cards, in display order: the same four films as the hero carousel (client choice, 10 Nov). */
+/** "See Watchdog in action", in display order. The 15 s drill cut was a repeat of the inside-the-lock film; the client replaced it with his YouTube fitting guide (Paramjit, 11 Nov): "clients get to understand it is simple to do". */
 export const VIDEO_BAR: ReadonlyArray<VideoBarEntry> = [
-  { id: 'drill', title: 'Hardened steel drill protection', durationLabel: '00:15', poster: BRAND_VIDEO.heroLoop.poster, mp4: BRAND_VIDEO.heroLoop.mp4, aspect: '5/4', blurb: 'Silent cut from the inside-the-lock film: SnapStop, hardened steel drill protection, pick protection and the springs.' },
+  { id: 'fitting', title: 'How to fit a Watchdog lock yourself', durationLabel: '02:18', poster: '/brand/video/fitting-poster.jpg', youtube: 'rqd_6g9LcFI', aspect: '16/9', blurb: 'Step by step: fitting the Watchdog 3 Star ALPS euro cylinder yourself. Measure to the face of the door furniture; cylinders come in 5 mm steps for a flush fit.' },
   { id: 'inside', title: 'Inside the lock', durationLabel: '00:38', poster: BRAND_VIDEO.insideFilm.poster, mp4: BRAND_VIDEO.insideFilm.mp4, aspect: '5/4', blurb: 'Manufacturer film. ' + BRAND_VIDEO.insideFilm.chapters },
   { id: 'turntable', title: 'Every angle, every mark', durationLabel: '00:10', poster: BRAND_VIDEO.turntable.poster, mp4: BRAND_VIDEO.turntable.mp4, aspect: '16/9', blurb: 'Silent 3D turntable of the 3 Star ALPS cylinder showing the engraved Kitemark, TS 007 and Sold Secure marks.' },
   { id: 'key', title: 'The Watchdog key', durationLabel: '00:10', poster: BRAND_VIDEO.clips.keyTurntable.poster, mp4: BRAND_VIDEO.clips.keyTurntable.mp4, aspect: '16/9', blurb: 'Silent 3D turntable of the Watchdog Stays Locked key: dimple cuts and snake groove.' },
@@ -423,7 +426,7 @@ export const PRODUCT_FEATURES: Readonly<Partial<Record<number, ReadonlyArray<Pro
   ],
   [PRODUCT_IDS.LUBRICANT]: [
     { eyebrow: 'Simple and effective', title: 'Stops key jamming.', body: 'A dry graphite formula made for precision pin cylinders. No more stuck keys or stiff turns on a cold morning.' },
-    { eyebrow: 'Extra protection', title: 'Protects your guarantee.', body: 'A lubricated Watchdog is a lock in warranty. Apply every six months and the mechanical guarantee stays intact.', image: '/brand/product/guarantee-keytag.png' },
+    { eyebrow: 'Extra protection', title: 'Protects your guarantee.', body: 'A lubricated Watchdog is a lock in warranty. Apply every six months and the mechanical guarantee stays intact.', image: '/brand/product/guarantee-keytag-red.png' },
     { eyebrow: 'Tip-top condition', title: 'Smooth operator.', body: 'Spray into the keyway, work the key in and out a few times, and the eleven pins glide again. Never oil, never WD-40.', image: '/brand/product/cylinder-xray.jpg' },
   ],
   [PRODUCT_IDS.BRUNO_TEDDY]: [

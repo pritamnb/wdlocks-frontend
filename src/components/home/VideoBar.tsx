@@ -21,11 +21,18 @@ export function VideoBar() {
   const refs = React.useRef<Array<HTMLVideoElement | null>>([]);
   const [active, setActive] = React.useState(0);
   const [inView, setInView] = React.useState(false);
+  // Auto-advance stops once the visitor picks a film; a chosen film (or the fitting guide) is not taken away after 20 s.
+  const [auto, setAuto] = React.useState(true);
 
   React.useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting && e.intersectionRatio >= 0.35), { threshold: [0, 0.35, 0.6] });
+    // Hysteresis: playback starts once a third of the stage is on screen and only stops when it has fully left, so a
+    // small scroll does not restart the film (or reload the YouTube player).
+    const io = new IntersectionObserver(
+      ([e]) => setInView((prev) => (prev ? e.intersectionRatio > 0 : e.isIntersecting && e.intersectionRatio >= 0.35)),
+      { threshold: [0, 0.35, 0.6] },
+    );
     io.observe(el);
     const onVis = () => {
       if (document.hidden) setInView(false);
@@ -44,20 +51,26 @@ export function VideoBar() {
     refs.current.forEach((v, i) => {
       if (v && i !== active) v.pause();
     });
-    if (!inView || !current) return;
-    current.currentTime = 0;
-    void current.play().catch(() => {});
+    if (!inView) return;
+    // The YouTube slot has no <video>; its player autoplays (muted) on its own and the 20 s auto-advance still applies.
+    if (current) {
+      current.currentTime = 0;
+      void current.play().catch(() => {});
+    }
     if (next) next.preload = 'auto';
     const advance = () => setActive((a) => (a + 1) % VIDEO_BAR.length);
-    const timer = setTimeout(advance, MAX_SLOT_SECONDS * 1000);
-    current.addEventListener('ended', advance);
+    const timer = auto ? setTimeout(advance, MAX_SLOT_SECONDS * 1000) : undefined;
+    current?.addEventListener('ended', advance);
     return () => {
-      clearTimeout(timer);
-      current.removeEventListener('ended', advance);
+      if (timer) clearTimeout(timer);
+      current?.removeEventListener('ended', advance);
     };
-  }, [active, inView, reduced]);
+  }, [active, inView, reduced, auto]);
 
-  const go = (i: number) => setActive(((i % VIDEO_BAR.length) + VIDEO_BAR.length) % VIDEO_BAR.length);
+  const go = (i: number) => {
+    setAuto(false);
+    setActive(((i % VIDEO_BAR.length) + VIDEO_BAR.length) % VIDEO_BAR.length);
+  };
   const film = VIDEO_BAR[active];
 
   return (
@@ -69,31 +82,57 @@ export function VideoBar() {
 
         <div ref={wrapRef} className="relative mt-10 overflow-hidden rounded-2xl bg-near-black shadow-card" role="region" aria-roledescription="carousel" aria-label="Watchdog films">
           <div className="relative aspect-video w-full">
-            {VIDEO_BAR.map((v, i) => (
-              <video
-                key={v.id}
-                ref={(el) => {
-                  refs.current[i] = el;
-                }}
-                className={cn('absolute inset-0 h-full w-full object-contain transition-opacity ease-in-out', i === active ? 'opacity-100' : 'opacity-0')}
-                style={{ transitionDuration: `${FADE_MS}ms` }}
-                muted
-                playsInline
-                preload={i === 0 ? 'metadata' : 'none'}
-                poster={v.poster}
-                aria-hidden={i !== active}
-                aria-label={v.title}
-                tabIndex={-1}
-              >
-                {!reduced && <source src={v.mp4} type="video/mp4" />}
-              </video>
-            ))}
-            {reduced && <Image src={film.poster} alt={film.title} fill sizes="(min-width: 1280px) 1216px, 100vw" className="object-contain" />}
+            {VIDEO_BAR.map((v, i) =>
+              v.youtube ? (
+                // The client's YouTube fitting guide: the embedded player (privacy domain, muted autoplay, own controls)
+                // is only mounted while this slot is active on screen; otherwise its poster holds the frame.
+                <div
+                  key={v.id}
+                  className={cn('absolute inset-0 transition-opacity ease-in-out', i === active ? 'opacity-100' : 'pointer-events-none opacity-0')}
+                  style={{ transitionDuration: `${FADE_MS}ms` }}
+                  aria-hidden={i !== active}
+                >
+                  {i === active && inView && !reduced ? (
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${v.youtube}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&modestbranding=1`}
+                      title={v.title}
+                      className="absolute inset-0 h-full w-full"
+                      allow="autoplay; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  ) : (
+                    <Image src={v.poster} alt={v.title} fill sizes="(min-width: 1280px) 1216px, 100vw" className="object-cover" />
+                  )}
+                </div>
+              ) : (
+                <video
+                  key={v.id}
+                  ref={(el) => {
+                    refs.current[i] = el;
+                  }}
+                  className={cn('absolute inset-0 h-full w-full object-contain transition-opacity ease-in-out', i === active ? 'opacity-100' : 'opacity-0')}
+                  style={{ transitionDuration: `${FADE_MS}ms` }}
+                  muted
+                  playsInline
+                  preload={i === 0 ? 'metadata' : 'none'}
+                  poster={v.poster}
+                  aria-hidden={i !== active}
+                  aria-label={v.title}
+                  tabIndex={-1}
+                >
+                  {!reduced && <source src={v.mp4} type="video/mp4" />}
+                </video>
+              ),
+            )}
+            {reduced && !film.youtube && <Image src={film.poster} alt={film.title} fill sizes="(min-width: 1280px) 1216px, 100vw" className="object-contain" />}
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-near-black/80 to-transparent px-4 pb-3 pt-10 text-white sm:px-7 sm:pb-4 sm:pt-16" aria-live="polite">
-              <p className="text-[15px] font-semibold sm:text-lg">{film.title}</p>
-              <p className="mt-0.5 hidden line-clamp-2 max-w-2xl text-xs text-white/70 sm:block sm:text-sm">{film.blurb}</p>
-            </div>
+            {!film.youtube && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-near-black/80 to-transparent px-4 pb-3 pt-10 text-white sm:px-7 sm:pb-4 sm:pt-16" aria-live="polite">
+                <p className="text-[15px] font-semibold sm:text-lg">{film.title}</p>
+                <p className="mt-0.5 hidden line-clamp-2 max-w-2xl text-xs text-white/70 sm:block sm:text-sm">{film.blurb}</p>
+              </div>
+            )}
 
             <button type="button" onClick={() => go(active - 1)} aria-label="Previous film" className="absolute left-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-red sm:left-5">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>

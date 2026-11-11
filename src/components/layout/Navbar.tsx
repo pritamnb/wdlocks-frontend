@@ -96,7 +96,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                   <button
                     type="button"
                     className={cn(
-                      'nav-item inline-flex h-full items-center gap-1.5 whitespace-nowrap px-2.5 text-[16px] font-semibold leading-[1.15] tracking-normal transition-colors duration-300 ease-out hover:text-red wide:px-[13px] wide:text-[18px] ultra:px-5 ultra:text-[20px]',
+                      'nav-item inline-flex h-full items-center gap-1.5 whitespace-nowrap px-2.5 text-[16px] font-semibold leading-[1.15] tracking-normal transition-colors duration-300 ease-out hover:text-red wide:px-[13px] wide:text-[18px] ultra:px-4 ultra:text-[20px]',
                       openGroup === link.menu ? 'nav-item-active text-red' : 'text-near-black',
                     )}
                     aria-expanded={openGroup === link.menu}
@@ -119,7 +119,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                 </li>
               ) : (
                 <li key={link.label}>
-                  <Link href={link.href} className="nav-item inline-flex h-full items-center whitespace-nowrap px-2.5 text-[16px] font-semibold leading-[1.15] tracking-normal text-near-black transition-colors duration-300 ease-out hover:text-red wide:px-[13px] wide:text-[18px] ultra:px-5 ultra:text-[20px]">
+                  <Link href={link.href} className="nav-item inline-flex h-full items-center whitespace-nowrap px-2.5 text-[16px] font-semibold leading-[1.15] tracking-normal text-near-black transition-colors duration-300 ease-out hover:text-red wide:px-[13px] wide:text-[18px] ultra:px-4 ultra:text-[20px]">
                     {link.label}
                   </Link>
                 </li>
@@ -146,7 +146,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
               <path d="M6 7h12l1 13H5L6 7Z" />
               <path d="M9 7a3 3 0 0 1 6 0" />
             </svg>
-            <span className="hidden text-[15px] font-semibold sm:inline xl:hidden ultra:inline">Basket</span>
+            <span className="hidden text-[15px] font-semibold sm:inline xl:hidden">Basket</span>
             <span
               className={cn(
                 'absolute left-5 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1 text-[11px] font-semibold text-white ring-2 ring-white transition-transform duration-150',

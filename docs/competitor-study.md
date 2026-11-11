@@ -595,6 +595,28 @@ is centred. **Enlarging it exposed that the "exploded lock" clip was Ultion's ow
 removed from the repo and the asset register, replaced by the brand-free Watchdog ALPS cut-away (plays while the block
 is centred, pauses off screen).
 
+### Pass 31 — 11 Nov 2026, evening: Paramjit's WhatsApp batch and a header overflow
+Paramjit (18:54–19:28): use the YouTube fitting guide https://youtu.be/rqd_6g9LcFI ("How to fit a door lock?", 2:18,
+Watchdog Locksmiths channel) on the main page in place of a film that "is repeated twice", so customers see it is simple
+to fit themselves; a bigger Sky Sports logo "as per this" photo (the photo did not reach us — still open); and the red
+straight-edge key tag render (Watchdog_Red_Straight_Edge(1).pdf) "as it's more realistic". Pritam: the burglar photo goes
+behind the 64 % Home truths figure.
+- **"See Watchdog in action."** The 15 s drill cut was a repeat of the inside-the-lock film; it is replaced by the fitting
+  guide as an embedded YouTube player (privacy domain, muted autoplay, YouTube's own controls) that is mounted only while
+  its slot is active on screen. Auto-advance now stops once the visitor picks a film, and playback only stops when the
+  stage has fully left the screen (hysteresis), so a small scroll no longer restarts a film.
+- **Key tag.** The PDF's 2700 × 1418 render was cut out of its white page (flood fill from the corners at tolerance 20,
+  body eroded 5 px to drop the opaque shadow rim, punched hole made transparent) to `guarantee-keytag-red.png`
+  (900 × 1321); the old yellow Brisant tag is gone from the Guarantee panel and the Home truths "Behind Watchdog" block.
+  New file name because the image optimiser caches by URL.
+- **Home truths.** The burglar photo (client, 11 Nov) sits behind the figure: right 55 % faded in from the left on
+  desktop, full-bleed at 35 % on phones with a soft shadow under the headline.
+- **Header overflow (Pritam, 21:05: "a horizontal bar appeared, basket isn't in the right place").** At 1680–1750 px
+  the `ultra` step (20 px links, 20 px padding) and the "Basket" label appeared together and the header ran 42 px past the
+  window, giving a horizontal scrollbar with the basket off screen. Links keep 20 px type with 16 px padding at `ultra`
+  and the label stays icon-only from `xl`; no overflow at 360–1920 px on production.
+- 52/52 page tests on production; local screenshots and a width sweep (360–1920) before the deploy.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
