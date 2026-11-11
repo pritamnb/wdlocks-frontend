@@ -95,6 +95,12 @@ function scaleLine(item: WooCartItem, quantity: number): WooCartItem {
   };
 }
 
+/** Monotonic counter kept in a closure (not a ref) so hook callbacks may bump it without mutating hook arguments. */
+function createSequence() {
+  let n = 0;
+  return { get: () => n, bump: () => { n += 1; } };
+}
+
 const REFOCUS_REFRESH_MS = 5 * 60_000;
 /** Warm the session shortly after load when the page is idle, so the first click is fast even without a hover. */
 const IDLE_WARM_MS = 4_000;
@@ -107,6 +113,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isAdding, setIsAdding] = React.useState(false);
   const [pendingKeys, setPendingKeys] = React.useState<ReadonlySet<string>>(new Set());
+  // Every mutation bumps this; a GET that started before a mutation must not overwrite the mutation's result
+  // (a shopper who clicks "Add" while the session is still being fetched would otherwise see an empty basket).
+  const [mutationSeq] = React.useState(createSequence);
 
   // Latest cart for optimistic snapshots without stale closures.
   const cartRef = React.useRef<WooCart | null>(null);
@@ -116,11 +125,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const openCart = React.useCallback(() => setIsOpen(true), []);
   const replaceCart = React.useCallback((next: WooCart) => {
+    mutationSeq.bump();
     cartRef.current = next;
     setCart(next);
     setStatus('ready');
     setError(null);
-  }, []);
+  }, [mutationSeq]);
   const closeCart = React.useCallback(() => setIsOpen(false), []);
 
   /** Fetches the basket; all state updates happen after the await (never synchronously in an effect). */
@@ -141,23 +151,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await load();
   }, [load]);
 
-  // One session bootstrap at most. The GET is the same call as a refresh, so it also fills the cart.
+  const applyFetched = React.useCallback((seqAtStart: number, next: WooCart) => {
+    if (seqAtStart !== mutationSeq.get()) return;
+    if (cartRef.current && cartRef.current.items.some((i) => isOptimisticKey(i.key))) return;
+    cartRef.current = next;
+    setCart(next);
+    setError(null);
+    setStatus('ready');
+  }, [mutationSeq]);
+
+  // One session bootstrap at most. The GET is the same call as a refresh, so it also fills the cart. Mutations wait
+  // for an in-flight warm-up so the add reuses that session instead of racing it for the cookie.
   const warmed = React.useRef(false);
+  const warmPromise = React.useRef<Promise<void> | null>(null);
   const warmSession = React.useCallback(() => {
     if (warmed.current || hasCartSession()) return;
     warmed.current = true;
-    fetchCart()
-      .then((next) => {
-        // Never clobber a basket the shopper has started building optimistically in the meantime.
-        if (cartRef.current && cartRef.current.items.some((i) => isOptimisticKey(i.key))) return;
-        setCart(next);
-        setError(null);
-        setStatus('ready');
-      })
+    const seq = mutationSeq.get();
+    warmPromise.current = fetchCart()
+      .then((next) => applyFetched(seq, next))
       .catch(() => {
         warmed.current = false; // allow a later retry
+      })
+      .finally(() => {
+        warmPromise.current = null;
       });
-  }, []);
+  }, [applyFetched, mutationSeq]);
 
   // On mount: shoppers with a basket session get it fetched; everyone else starts with an empty basket and no
   // network call on the critical path (the session is warmed when idle or on the first hover over a buy button).
@@ -166,17 +185,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
     if (hasCartSession()) {
       warmed.current = true;
-      fetchCart()
+      const seq = mutationSeq.get();
+      warmPromise.current = fetchCart()
         .then((next) => {
           if (!active) return;
-          setCart(next);
-          setError(null);
-          setStatus('ready');
+          applyFetched(seq, next);
         })
         .catch((err: unknown) => {
           if (!active) return;
           setError(friendlyCartError(err));
           setStatus('error');
+        })
+        .finally(() => {
+          warmPromise.current = null;
         });
     } else {
       // No session cookie → the basket is empty; settle without a network call (deferred past the effect body).
@@ -201,7 +222,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (idleTimer) clearTimeout(idleTimer);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [load, warmSession]);
+  }, [load, warmSession, applyFetched, mutationSeq]);
 
   const markPending = React.useCallback((key: string, on: boolean) => {
     setPendingKeys((prev) => {
@@ -216,6 +237,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     async ({ id, quantity = 1, variation, name, openDrawer = true, preview }: AddToCartInput) => {
       setIsAdding(true);
       warmed.current = true;
+      mutationSeq.bump();
       // Optimistic: show the line and open the drawer immediately; the server cart replaces it when it arrives.
       const snapshot = cartRef.current;
       let tempKey: string | null = null;
@@ -232,6 +254,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (openDrawer) setIsOpen(true);
       }
       try {
+        // Let an in-flight session fetch finish first so the add joins that session (one cookie, one basket).
+        if (warmPromise.current) await warmPromise.current.catch(() => undefined);
         const next = await addItem({ id, quantity, variation });
         cartRef.current = next;
         setCart(next);
@@ -261,7 +285,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsAdding(false);
       }
     },
-    [toast, openCart, markPending],
+    [toast, openCart, markPending, mutationSeq],
   );
 
   const removeCartItem = React.useCallback(
@@ -269,6 +293,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const snapshot = cartRef.current;
       if (!snapshot) return false;
       const item = snapshot.items.find((i) => i.key === key);
+      mutationSeq.bump();
       // Optimistic removal
       setCart(withOptimisticItems(snapshot, snapshot.items.filter((i) => i.key !== key)));
       markPending(key, true);
@@ -296,7 +321,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         markPending(key, false);
       }
     },
-    [toast, markPending, load],
+    [toast, markPending, load, mutationSeq],
   );
 
   const clearCart = React.useCallback(async () => {
@@ -318,6 +343,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (!item) return false;
       if (quantity <= 0) return removeCartItem(key);
 
+      mutationSeq.bump();
       // Optimistic update
       setCart(withOptimisticItems(snapshot, snapshot.items.map((i) => (i.key === key ? scaleLine(i, quantity) : i))));
       markPending(key, true);
@@ -334,7 +360,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         markPending(key, false);
       }
     },
-    [toast, markPending, removeCartItem, load],
+    [toast, markPending, removeCartItem, load, mutationSeq],
   );
 
   const itemCount = cart?.items_count ?? 0;
