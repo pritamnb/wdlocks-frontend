@@ -12,6 +12,14 @@ export const SITE_URL =
 /** true once backend/wd-cart-handoff.php is installed on WordPress — enables multi-line checkout handoff. */
 export const HANDOFF_PLUGIN_INSTALLED = process.env.NEXT_PUBLIC_CART_HANDOFF_PLUGIN === 'true';
 
+/**
+ * Where payment is taken. 'stripe' = on this domain with Stripe (needs the client's publishable key, see
+ * docs/stripe-checkout-plan.md); 'handoff' = review here, pay on wdlocks.co.uk (today's default). The new checkout
+ * page can be previewed without keys at /checkout?preview=1.
+ */
+export const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
+export const CHECKOUT_MODE: 'stripe' | 'handoff' = STRIPE_PUBLISHABLE_KEY ? 'stripe' : 'handoff';
+
 export const PRODUCT_IDS = {
   CYLINDER_LOCK: 5141,
   RIM_CYLINDER: 5112,

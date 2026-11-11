@@ -49,3 +49,50 @@ test('buy now builds a direct wdlocks.co.uk checkout URL (not followed)', async 
   expect(url.searchParams.get('quantity')).toBe('1');
   expect(url.searchParams.get('utm_source')).toBe('headless');
 });
+
+test('basket drawer opens instantly with a provisional line, then settles to the server cart', async ({ page }) => {
+  await page.goto('/products/bruno-teddy-protection-car-key-signal-blocker');
+  await page.waitForLoadState('networkidle');
+  const t0 = Date.now();
+  await page.getByRole('button', { name: 'Add to basket' }).click();
+  const drawer = page.getByRole('dialog');
+  await expect(drawer).toBeVisible();
+  const opened = Date.now() - t0;
+  expect(opened, 'drawer opened before the Store API answered').toBeLessThan(700);
+  await expect(drawer.locator('li[aria-busy="true"]')).toHaveCount(1);
+  await page.waitForResponse((r) => r.url().includes('/api/cart/add'));
+  await expect(drawer.locator('li[aria-busy="true"]')).toHaveCount(0);
+  await expect(drawer.locator('ul.divide-y > li')).toHaveCount(1);
+  await expect(drawer).toContainText('Bruno');
+  await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/remove')), drawer.getByRole('button', { name: /Remove .* from basket/ }).click()]);
+  await expect(drawer.getByText('Your basket is empty')).toBeVisible();
+});
+
+test('on-site checkout preview: address saves to the basket, delivery rates and coupon errors come from the Store API', async ({ page }) => {
+  await page.goto('/products/bruno-teddy-protection-car-key-signal-blocker');
+  await page.waitForLoadState('networkidle');
+  await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/add')), page.getByRole('button', { name: 'Add to basket' }).click()]);
+  await page.goto('/checkout?preview=1');
+  await expect(page.locator('h1')).toHaveText('Checkout');
+  await expect(page.getByRole('radiogroup', { name: 'Delivery method' })).toBeVisible();
+  await page.getByLabel('Email').fill('test@example.com');
+  await page.getByLabel('Phone').fill('02038574718');
+  await page.getByLabel('First name').fill('Test');
+  await page.getByLabel('Last name').fill('Shopper');
+  await page.getByLabel('Address line 1').fill('397 Greenford Road');
+  await page.getByLabel('Town / city').fill('Greenford');
+  const saved = page.waitForResponse((r) => r.url().includes('/api/cart/customer') && r.status() === 200);
+  await page.getByLabel('Postcode').fill('UB6 8RF');
+  await saved;
+  const rates = page.getByRole('radiogroup', { name: 'Delivery method' }).getByRole('radio');
+  expect(await rates.count()).toBeGreaterThanOrEqual(2);
+  await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/shipping') && r.status() === 200), rates.nth(1).check()]);
+  await expect(rates.nth(1)).toBeChecked();
+  await page.getByRole('button', { name: 'Got a coupon?' }).click();
+  await page.getByLabel('Coupon code').fill('NOTACODE1');
+  await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/coupon')), page.getByRole('button', { name: 'Apply' }).click()]);
+  await expect(page.getByText(/coupon code is not valid|not valid|does not exist/i).first()).toBeVisible();
+  // "Continue to secure payment" is never clicked. Leave the basket empty.
+  await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/remove')), page.getByRole('button', { name: /Remove .* from basket/ }).click()]);
+  await expect(page.getByText('Nothing to check out yet')).toBeVisible();
+});

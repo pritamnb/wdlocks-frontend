@@ -552,6 +552,38 @@ The reset after the block leaves was an abrupt snap; the lock now closes back up
 in reverse natively, and the all-keyframe encode makes reverse seeking smooth). Re-entering while it is closing
 resumes the explosion from where it is.
 
+### Pass 29 — 11 Nov 2026, overnight: speed, Ultion font and nav, equal cards, on-site checkout
+Pritam asked for an end-to-end test, Ultion's font and nav spacing, a fix for the slow first load and slow
+add-to-basket, research on where media should live, an on-site Stripe checkout with the same options as
+wdlocks.co.uk/checkout, and equal product cards. Five research agents ran in parallel (typography/nav measurement,
+performance audit, media hosting, Stripe/live-checkout scan, card UI) and their reports are in docs/:
+`ultion-typography-nav-spec.md`, `performance-audit-2026-11-11.md`, `media-hosting-research.md`,
+`stripe-checkout-plan.md`, `ui-rendering-notes.md`.
+- **Speed.** The audit measured the basket drawer appearing 2.3–2.8 s after a click because the UI waited for the
+  Store API round trip (WordPress on shared hosting answers in ~1.05 s at best, ~2 s through the Vercel function).
+  The drawer now opens in ~80 ms with a provisional line while the request completes (optimistic add with rollback),
+  the session is warmed on idle/hover so the first add needs one upstream call, visitors without a basket skip the
+  mount-time cart fetch entirely, a Store API hiccup during an ISR refresh no longer caches an empty grid (retry +
+  last good catalogue), the hero film is 2.0 MB instead of 3.4 MB, the exploded clip loads only when near, phones
+  and data-saver get posters instead of films, the layout's product payload is trimmed, media gets week-long cache
+  headers, and `Server-Timing: upstream` on every cart response shows how much of a call was WordPress.
+- **Typography.** Ultion sets everything in Sofia Pro (Adobe Fonts, paid, domain-locked). Outfit measured within 2 %
+  of its x-height/cap-height/widths with the same letter shapes, so Outfit now replaces Inter and Playfair
+  everywhere; headings track −0.035em like Ultion's. Nav links are 17 px/600 with 15 px padding and 10 px between
+  items (Ultion: 18 px/700, same spacing), the header is 84 px on desktop and the guarantee CTA is Ultion's outline
+  button.
+- **Cards.** Titles, blurbs, prices and buttons sit on five shared subgrid rows, so every card in a row is identical
+  (664 px at 1440) with reserved heights for browsers without subgrid; 3 × 3 grid, quieter hover, "Order keys".
+- **Checkout.** The live wdlocks.co.uk checkout is the classic WooCommerce form with PayPal, PayPal card fields,
+  Google Pay (via PayPal) and Trustly; the Stripe plugin is not installed and no standalone Stripe account is known,
+  so a Stripe build needs the client's keys. Built anyway, fully env-gated: an Ultion-style one-page checkout
+  (contact, UK address, live delivery rates and coupons from the Store API, order notes, Stripe Payment Element +
+  Express Checkout for Apple/Google Pay, Klarna, Clearpay, PayPal), the WooCommerce order + PaymentIntent + webhook
+  routes, and a return/thank-you page. Without keys the shop keeps the hand-off; the new page is at
+  `/checkout?preview=1` (address, delivery and coupons work for real there).
+- **Tests.** 52/52 e2e on production before and after; new checks for card alignment, the instant drawer, the
+  Outfit header and the checkout preview.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

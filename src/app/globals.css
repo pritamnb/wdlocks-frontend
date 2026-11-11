@@ -17,9 +17,11 @@
   --blue-grey: #DDE6ED;
   --near-black: #0A0806;
 
-  /* next/font injects --font-inter / --font-playfair on <html>; fall back to the brief's stacks. */
-  --font-body: var(--font-inter, 'Inter'), 'Inter', sans-serif;
-  --font-serif: var(--font-playfair, 'Playfair Display'), 'Playfair Display', Georgia, serif;
+  /* 11 Nov 2026: one face everywhere, like Ultion (Sofia Pro there; Outfit is the closest open match, see
+     docs/ultion-typography-nav-spec.md). next/font injects --font-outfit on <html>. The old token names stay so every
+     font-playfair / font-sans utility keeps working. */
+  --font-body: var(--font-outfit, 'Outfit'), 'Outfit', system-ui, sans-serif;
+  --font-serif: var(--font-body);
 
   --background: var(--cream);
   --foreground: var(--charcoal);
@@ -64,7 +66,7 @@
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-body);
-    font-feature-settings: 'cv11', 'ss01';
+    font-synthesis: none; /* Outfit has no italics; don't fake them */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     position: relative;
@@ -107,8 +109,12 @@
   .container-wd {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
+  /* Ultion tracks every heading -0.03 to -0.04em and uses 600/700 weights. */
   .heading-display {
-    @apply font-playfair font-semibold tracking-tight text-near-black;
+    @apply font-sans font-semibold tracking-[-0.035em] text-near-black;
+  }
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
   }
   .link-underline {
     @apply relative transition-colors duration-150;
@@ -191,8 +197,8 @@
 .nav-item::after {
   content: '';
   position: absolute;
-  left: 0.75rem;
-  right: 0.75rem;
+  left: 15px;
+  right: 15px;
   bottom: -0.45rem; /* just under the label; the item is text-height, not header-height */
   height: 2px;
   background: var(--red);

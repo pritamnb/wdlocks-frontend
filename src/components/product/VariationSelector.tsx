@@ -9,7 +9,7 @@ import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
 import { getVariationModel, type VariationOption } from '@/lib/product-helpers';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
-import { CHECKOUT_URL, DEFAULT_VARIATION_ID, PRODUCT_IDS, CATALOGUE_BY_ID } from '@/lib/constants';
+import { CHECKOUT_MODE, CHECKOUT_URL, DEFAULT_VARIATION_ID, PRODUCT_IDS, CATALOGUE_BY_ID } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -180,7 +180,7 @@ export function VariationSelector({ product, onAdded, headingId, className, show
     if (!selected) return;
     setCheckingOut(true);
     try {
-      if (keyedAlike) {
+      if (keyedAlike || CHECKOUT_MODE === 'stripe') {
         const ok = await add(false);
         if (!ok) return;
         router.push('/checkout');

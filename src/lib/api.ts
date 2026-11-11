@@ -44,6 +44,25 @@ export async function getProductsSSR(): Promise<WooProduct[]> {
   }
 }
 
+/**
+ * Trimmed products for the site chrome (menus, basket upsells). The layout and the page both serialise their product
+ * props into the RSC payload; the full objects (descriptions, 17 variations each) made the home HTML ~226 KB of JSON
+ * twice over. Keep only what Navbar/MegaMenu/MobileMenu/CartDrawer read.
+ */
+export async function getMenuProductsSSR(): Promise<WooProduct[]> {
+  const products = await getProductsSSR();
+  return products.map((p) => ({
+    ...p,
+    description: '',
+    short_description: '',
+    price_html: '',
+    variations: [],
+    attributes: [],
+    images: p.images.slice(0, 1).map((img) => ({ ...img, srcset: '', sizes: '' })),
+    extensions: {},
+  }));
+}
+
 /** Single product by numeric ID. Returns null on 404; rethrows other errors so the page can error out. */
 export async function getProductSSR(id: number): Promise<WooProduct | null> {
   try {

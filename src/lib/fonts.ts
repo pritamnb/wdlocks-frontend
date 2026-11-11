@@ -1,14 +1,12 @@
-import { Inter, Playfair_Display } from 'next/font/google';
+import { Outfit } from 'next/font/google';
 
-export const inter = Inter({
+/**
+ * Ultion sets everything in Sofia Pro (Adobe Fonts, paid, domain-locked — not copyable). Outfit is the closest open
+ * face: measured x-height 98 %, cap-height 99 % and widths 101–103 % of Sofia Pro, same letter model (double-storey a,
+ * single-storey g). See docs/ultion-typography-nav-spec.md. One variable file covers 300–900, replacing Inter + Playfair.
+ */
+export const outfit = Outfit({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-inter',
-});
-
-export const playfair = Playfair_Display({
-  subsets: ['latin'],
-  display: 'swap',
-  weight: ['500', '600', '700'],
-  variable: '--font-playfair',
+  variable: '--font-outfit',
 });

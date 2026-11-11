@@ -17,12 +17,12 @@
  *   When a Cart-Token is supplied the Store API does not require a nonce.
  *
  * SSRF
- *   The upstream host is fixed from server config and the path is one of four literals.
+ *   The upstream host is fixed from server config and the path is one of a few literals (CartPath).
  *   Nothing from the request body ever reaches the URL.
  */
 import { NextResponse } from 'next/server';
 import { STORE_API, PURCHASABLE_IDS, MAX_CART_QUANTITY } from '@/lib/constants';
-import type { WooCart, WooStoreError } from '@/types';
+import type { WooCart, WooStoreError, CheckoutAddressInput } from '@/types';
 
 export const WD_CART_COOKIE = 'wd_cart_token';
 /** Readable marker set beside the httpOnly token so the client knows a basket session exists (skips the mount fetch otherwise). */
@@ -32,13 +32,25 @@ const FORWARDED_COOKIE_PREFIXES = ['wp_woocommerce_session_', 'woocommerce_items
 const CART_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 2; // Store API tokens expire after 48h
 const UPSTREAM_TIMEOUT_MS = 10_000;
 
-type CartPath = '/cart' | '/cart/items' | '/cart/add-item' | '/cart/update-item' | '/cart/remove-item';
+export type CartPath =
+  | '/cart'
+  | '/cart/items'
+  | '/cart/add-item'
+  | '/cart/update-item'
+  | '/cart/remove-item'
+  | '/cart/update-customer'
+  | '/cart/select-shipping-rate'
+  | '/cart/apply-coupon'
+  | '/cart/remove-coupon';
 
 export interface ProxyResult {
   status: number;
   body: WooCart | WooStoreError;
   cartToken: string | null;
   setCookies: string[];
+  /** Milliseconds spent waiting on wdlocks.co.uk (bootstrap GET + the call itself), surfaced as Server-Timing. */
+  upstreamMs?: number;
+  bootstrapMs?: number;
 }
 
 function parseCookieHeader(header: string | null): Record<string, string> {
@@ -77,7 +89,7 @@ function rewriteSetCookie(raw: string, secure: boolean): string | null {
   return parts.join('; ');
 }
 
-function isSecureRequest(req: Request): boolean {
+export function isSecureRequest(req: Request): boolean {
   const proto = req.headers.get('x-forwarded-proto');
   if (proto) return proto.split(',')[0].trim() === 'https';
   return new URL(req.url).protocol === 'https:';
@@ -98,8 +110,11 @@ export async function proxyCartRequest(
   // A mutation without a token would be rejected upstream (401 missing nonce). This happens when the
   // shopper clicks "Add" before the mount-time GET /cart has set our cookie, or has cookies blocked.
   // Bootstrap a session first so the very first click succeeds.
+  let bootstrapMs = 0;
   if (!incomingToken && init.method !== 'GET') {
+    const t0 = performance.now();
     const bootstrap = await proxyCartRequest(req, '/cart', { method: 'GET' });
+    bootstrapMs = Math.round(performance.now() - t0);
     incomingToken = bootstrap.cartToken ?? undefined;
   }
 
@@ -115,6 +130,7 @@ export async function proxyCartRequest(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
   let res: Response;
+  const started = performance.now();
   try {
     res = await fetch(`${STORE_API}${path}`, {
       method: init.method,
@@ -156,7 +172,7 @@ export async function proxyCartRequest(
     .map((c) => rewriteSetCookie(c, secure))
     .filter((c): c is string => Boolean(c));
 
-  return { status: res.status, body, cartToken, setCookies };
+  return { status: res.status, body, cartToken, setCookies, upstreamMs: Math.round(performance.now() - started), bootstrapMs };
 }
 
 /** Maps a ProxyResult into the NextResponse we hand to the browser, attaching cookies. */
@@ -164,7 +180,11 @@ export function toProxyResponse(req: Request, result: ProxyResult): NextResponse
   const status = mapStatus(result.status, result.body);
   const res = NextResponse.json(result.body, {
     status,
-    headers: { 'Cache-Control': 'no-store, private' },
+    headers: {
+      'Cache-Control': 'no-store, private',
+      // Visible in DevTools → Timing and via curl: how much of the call was WordPress.
+      'Server-Timing': `upstream;dur=${result.upstreamMs ?? 0}${result.bootstrapMs ? `, bootstrap;dur=${result.bootstrapMs}` : ''}`,
+    },
   });
 
   if (result.cartToken) {
@@ -255,4 +275,84 @@ export function parseVariation(value: unknown): Array<{ attribute: string; value
     out.push({ attribute, value: v });
   }
   return out;
+}
+
+/* ---------------------------------------------------------------------------
+ * Checkout input validation (addresses, shipping rates, coupons)
+ * ------------------------------------------------------------------------- */
+
+const ADDRESS_FIELD_MAX = 100;
+const POSTCODE_MAX = 12;
+const PHONE_MAX = 30;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Returns a trimmed single-line string (CR/LF collapsed) or null when the value is not a string / too long. */
+function cleanString(value: unknown, max: number): string | null {
+  if (typeof value !== 'string') return null;
+  const v = value.replace(/[\r\n\t]+/g, ' ').trim();
+  return v.length > max ? null : v;
+}
+
+/**
+ * Validates a checkout address (billing or shipping). Strings only, trimmed, bounded.
+ * Required: first_name, last_name, address_1, city, postcode, country (ISO 3166-1 alpha-2, upper-cased).
+ * Optional keys are omitted from the result when empty; any present-but-invalid value makes the whole address invalid.
+ */
+export function parseAddress(value: unknown): CheckoutAddressInput | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+
+  const required = (key: keyof CheckoutAddressInput, max = ADDRESS_FIELD_MAX): string | null => {
+    const v = cleanString(raw[key], max);
+    return v ? v : null;
+  };
+  const optional = (key: keyof CheckoutAddressInput, max = ADDRESS_FIELD_MAX): string | undefined | false => {
+    if (raw[key] === undefined || raw[key] === null) return undefined;
+    const v = cleanString(raw[key], max);
+    if (v === null) return false;
+    return v === '' ? undefined : v;
+  };
+
+  const first_name = required('first_name');
+  const last_name = required('last_name');
+  const address_1 = required('address_1');
+  const city = required('city');
+  const postcode = required('postcode', POSTCODE_MAX);
+  const countryRaw = required('country', 2);
+  if (!first_name || !last_name || !address_1 || !city || !postcode || !countryRaw) return null;
+  const country = countryRaw.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(country)) return null;
+
+  const company = optional('company');
+  const address_2 = optional('address_2');
+  const state = optional('state');
+  const phone = optional('phone', PHONE_MAX);
+  const email = optional('email');
+  if (company === false || address_2 === false || state === false || phone === false || email === false) return null;
+  if (email !== undefined && !EMAIL_RE.test(email)) return null;
+
+  const out: CheckoutAddressInput = { first_name, last_name, address_1, city, postcode, country };
+  if (company !== undefined) out.company = company;
+  if (address_2 !== undefined) out.address_2 = address_2;
+  if (state !== undefined) out.state = state;
+  if (phone !== undefined) out.phone = phone;
+  if (email !== undefined) out.email = email;
+  return out;
+}
+
+/** Store API shipping rate ids look like "flat_rate:2" / "free_shipping:1" / "local_pickup:3". */
+export function parseRateId(value: unknown): string | null {
+  return typeof value === 'string' && /^[a-z_]+:\d+$/.test(value) ? value : null;
+}
+
+/** Coupon codes: 1–32 chars of letters, digits, underscore or hyphen (WooCommerce lower-cases them itself). */
+export function parseCouponCode(value: unknown): string | null {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(value) ? value : null;
+}
+
+/** Shipping package ids are small non-negative integers (0 for the default package). */
+export function parsePackageId(value: unknown): number | null {
+  const n = typeof value === 'string' ? Number(value) : value;
+  if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || n > 99) return null;
+  return n;
 }

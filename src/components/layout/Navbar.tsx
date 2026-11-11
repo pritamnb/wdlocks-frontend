@@ -84,7 +84,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
         <Logo priority className="lg:mr-4" />
 
         <nav className="hidden flex-1 lg:block" aria-label="Primary">
-          <ul className="flex h-16 items-center gap-1 sm:h-[72px]">
+          <ul className="flex h-16 items-center gap-2.5 sm:h-[72px] lg:h-[84px]">
             {NAV_LINKS.map((link) =>
               link.menu ? (
                 <li
@@ -95,7 +95,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                   <button
                     type="button"
                     className={cn(
-                      'nav-item inline-flex h-full items-center gap-1 whitespace-nowrap px-3 text-sm font-medium transition-colors duration-300 ease-out hover:text-red',
+                      'nav-item inline-flex h-full items-center gap-1.5 whitespace-nowrap px-[15px] text-[17px] font-semibold leading-[1.15] tracking-normal transition-colors duration-300 ease-out hover:text-red min-[1480px]:px-5 min-[1480px]:text-[19px]',
                       openGroup === link.menu ? 'nav-item-active text-red' : 'text-near-black',
                     )}
                     aria-expanded={openGroup === link.menu}
@@ -118,7 +118,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                 </li>
               ) : (
                 <li key={link.label}>
-                  <Link href={link.href} className="nav-item inline-flex h-full items-center whitespace-nowrap px-3 text-sm font-medium text-near-black transition-colors duration-300 ease-out hover:text-red">
+                  <Link href={link.href} className="nav-item inline-flex h-full items-center whitespace-nowrap px-[15px] text-[17px] font-semibold leading-[1.15] tracking-normal text-near-black transition-colors duration-300 ease-out hover:text-red min-[1480px]:px-5 min-[1480px]:text-[19px]">
                     {link.label}
                   </Link>
                 </li>
@@ -127,10 +127,10 @@ export function Navbar({ products }: { products: WooProduct[] }) {
           </ul>
         </nav>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 lg:gap-4">
           <a
             href={GUARANTEE.href}
-            className="hidden h-10 items-center whitespace-nowrap rounded-full bg-red px-4 text-sm font-semibold text-white transition-colors duration-300 hover:bg-red-deep md:inline-flex"
+            className="hidden h-10 items-center whitespace-nowrap rounded-md border border-red px-[13px] text-[16px] font-semibold tracking-[-0.02em] text-red transition-colors duration-300 hover:bg-red hover:text-white md:inline-flex min-[1480px]:text-[18px]"
           >
             Activate {GUARANTEE.amountLabel} guarantee
           </a>
@@ -145,7 +145,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
               <path d="M6 7h12l1 13H5L6 7Z" />
               <path d="M9 7a3 3 0 0 1 6 0" />
             </svg>
-            <span className="hidden text-sm font-medium sm:inline">Basket</span>
+            <span className="hidden text-[15px] font-semibold sm:inline">Basket</span>
             <span
               className={cn(
                 'absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1 text-[11px] font-semibold text-white ring-2 ring-white transition-transform duration-150',

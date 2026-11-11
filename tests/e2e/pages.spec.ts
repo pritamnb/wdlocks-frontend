@@ -160,3 +160,43 @@ test('404 page has its own title', async ({ page }) => {
   expect(res?.status()).toBe(404);
   await expect(page).toHaveTitle(/Page not found/);
 });
+
+test('header and headings use Outfit; nav links are 17px semibold with Ultion spacing', async ({ page, isMobile }) => {
+  await page.goto('/');
+  const h1 = await page.locator('h1:visible').first().evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(h1, 'heading font').toMatch(/Outfit/);
+  if (isMobile) return;
+  const items = await page.locator('header nav[aria-label="Primary"] > ul > li > *').evaluateAll((els) =>
+    els.map((el) => {
+      const cs = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      return { font: cs.fontFamily, size: cs.fontSize, weight: cs.fontWeight, left: r.left, right: r.right };
+    }),
+  );
+  for (const it of items) {
+    expect(it.font).toMatch(/Outfit/);
+    expect(it.size).toBe('17px');
+    expect(Number(it.weight)).toBeGreaterThanOrEqual(600);
+  }
+  // 15px padding each side + 10px gap = 40px text-to-text, like Ultion at 1440.
+  for (let i = 1; i < items.length; i++) expect(Math.round(items[i].left - items[i - 1].right)).toBe(10);
+});
+
+test('product cards are equal: same height, title/price/button rows aligned across each row', async ({ page }) => {
+  await page.goto('/');
+  const cards = await page.locator('#products article').evaluateAll((els) =>
+    els.map((el) => {
+      const top = (sel: string) => Math.round(el.querySelector(sel)?.getBoundingClientRect().top ?? -1);
+      return { height: Math.round(el.getBoundingClientRect().height), row: Math.round(el.getBoundingClientRect().top), title: top('h3'), cta: top('a.flex, button') };
+    }),
+  );
+  expect(cards.length).toBe(9);
+  const heights = new Set(cards.map((c) => c.height));
+  expect(heights.size, `card heights ${[...heights].join(',')}`).toBe(1);
+  const byRow = new Map<number, typeof cards>();
+  for (const c of cards) byRow.set(c.row, [...(byRow.get(c.row) ?? []), c]);
+  for (const [, row] of byRow) {
+    expect(new Set(row.map((c) => c.title)).size, 'title rows aligned').toBe(1);
+    expect(new Set(row.map((c) => c.cta)).size, 'button rows aligned').toBe(1);
+  }
+});

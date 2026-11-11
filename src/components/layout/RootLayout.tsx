@@ -5,7 +5,7 @@ import { AnnouncementBar } from '@/components/layout/AnnouncementBar';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
-import { getProductsSSR } from '@/lib/api';
+import { getMenuProductsSSR } from '@/lib/api';
 
 /**
  * Site chrome: providers + announcement bar + navbar + page + footer + cart drawer.
@@ -13,7 +13,7 @@ import { getProductsSSR } from '@/lib/api';
  * can show live images and prices without a client fetch.
  */
 export async function RootLayout({ children }: { children: ReactNode }) {
-  const products = await getProductsSSR();
+  const products = await getMenuProductsSSR();
   return (
     <ToastProvider>
       <CartProvider>

@@ -304,3 +304,71 @@ export interface UpdateCartItemRequest {
 export interface RemoveCartItemRequest {
   key: string;
 }
+
+/* ---------------------------------------------------------------------------
+ * Checkout on our domain (Stripe + WooCommerce REST order). See docs/stripe-checkout-plan.md.
+ * ------------------------------------------------------------------------- */
+
+/** Address fields accepted by POST /api/cart/customer (Store API `update-customer`). */
+export interface CheckoutAddressInput {
+  first_name: string;
+  last_name: string;
+  company?: string;
+  address_1: string;
+  address_2?: string;
+  city: string;
+  state?: string;
+  postcode: string;
+  country: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface UpdateCustomerRequest {
+  billing_address: CheckoutAddressInput;
+  /** Omit to ship to the billing address. */
+  shipping_address?: CheckoutAddressInput;
+}
+
+export interface SelectShippingRateRequest {
+  package_id: number;
+  rate_id: string;
+}
+
+export interface CouponRequest {
+  code: string;
+}
+
+/** POST /api/checkout/intent — creates the WooCommerce order (pending) and a Stripe PaymentIntent for the current basket. */
+export interface CreatePaymentIntentRequest {
+  billing_address: CheckoutAddressInput;
+  shipping_address?: CheckoutAddressInput;
+  customer_note?: string;
+  /** Minor-unit total the shopper saw; the server refuses with 409 `total_mismatch` if the basket changed. */
+  expected_total: string;
+  /** Idempotency: the same cart hash + total reuse the same order/intent. */
+  cart_hash?: string;
+}
+
+export interface CreatePaymentIntentResponse {
+  clientSecret: string;
+  paymentIntentId: string;
+  orderId: number;
+  orderKey: string;
+  /** Minor units. */
+  amount: number;
+  currency: 'gbp';
+}
+
+export type CheckoutOrderStatus = 'pending' | 'processing' | 'on-hold' | 'completed' | 'failed' | 'cancelled' | 'refunded' | 'unknown';
+
+/** GET /api/checkout/status?order=<id>&key=<order_key> */
+export interface CheckoutStatusResponse {
+  orderId: number;
+  orderNumber: string;
+  status: CheckoutOrderStatus;
+  paid: boolean;
+  total: string;
+  currency: string;
+  email?: string;
+}

@@ -22,8 +22,23 @@ const FADE_MS = 900;
  * seconds (or when a short film ends) the next crossfades in. Pauses while the hero is off screen or the tab is
  * hidden. Reduced motion shows the first poster only.
  */
+const noop = () => () => {};
+/** Phones and data-saver connections get the posters only: the films are 0.5–2 MB each and the hero is the LCP. */
+function useFilmsAllowed() {
+  return React.useSyncExternalStore(
+    noop,
+    () => {
+      const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
+      return window.matchMedia('(min-width: 768px)').matches && !nav.connection?.saveData;
+    },
+    () => true,
+  );
+}
+
 export function HeroBackdrop() {
-  const reduced = usePrefersReducedMotion();
+  const prefersReduced = usePrefersReducedMotion();
+  const filmsAllowed = useFilmsAllowed();
+  const reduced = prefersReduced || !filmsAllowed;
   const wrapRef = React.useRef<HTMLDivElement>(null);
   const refs = React.useRef<Array<HTMLVideoElement | null>>([]);
   const [active, setActive] = React.useState(0);
@@ -68,7 +83,7 @@ export function HeroBackdrop() {
         <React.Fragment key={f.src}>
           {f.fit === 'contain' && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={f.poster} alt="" className={cn('absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl transition-opacity ease-in-out', i === active ? 'opacity-60' : 'opacity-0')} style={{ transitionDuration: `${FADE_MS}ms` }} />
+            <img src={f.poster} alt="" fetchPriority={i === 0 ? 'high' : 'auto'} loading={i === 0 ? 'eager' : 'lazy'} decoding="async" className={cn('absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl transition-opacity ease-in-out', i === active ? 'opacity-60' : 'opacity-0')} style={{ transitionDuration: `${FADE_MS}ms` }} />
           )}
         <video
           ref={(el) => {

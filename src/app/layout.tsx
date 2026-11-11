@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { inter, playfair } from '@/lib/fonts';
+import { outfit } from '@/lib/fonts';
 import { RootLayout as SiteChrome } from '@/components/layout/RootLayout';
 import { SITE, SITE_URL } from '@/lib/constants';
 import './globals.css';
@@ -40,7 +40,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
+    <html lang="en-GB" className={`${outfit.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-cream text-charcoal">
         <SiteChrome>{children}</SiteChrome>
       </body>

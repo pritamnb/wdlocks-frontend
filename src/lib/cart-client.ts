@@ -12,6 +12,12 @@ import type {
   AddToCartRequest,
   UpdateCartItemRequest,
   RemoveCartItemRequest,
+  UpdateCustomerRequest,
+  SelectShippingRateRequest,
+  CouponRequest,
+  CreatePaymentIntentRequest,
+  CreatePaymentIntentResponse,
+  CheckoutStatusResponse,
 } from '@/types';
 
 export class CartClientError extends Error {
@@ -37,6 +43,11 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
   unknown_product: 'That product is no longer available.',
   upstream_unavailable: 'Our store is temporarily unavailable. Please try again in a moment.',
   invalid_request: 'Something was wrong with that request.',
+  woocommerce_rest_cart_coupon_error: 'That coupon code is not valid.',
+  woocommerce_rest_invalid_address: 'Please check the address details.',
+  woocommerce_rest_cart_shipping_rate_error: 'That delivery option is not available.',
+  total_mismatch: 'Your basket changed while you were checking out. Please review it and try again.',
+  'not-configured': 'Card payment on this site is not switched on yet.',
 };
 
 export function friendlyCartError(err: unknown): string {
@@ -94,4 +105,61 @@ export function removeItem(body: RemoveCartItemRequest): Promise<WooCart> {
 /** Empties the headless basket (used when handing off to the WooCommerce checkout). */
 export function clearCart(): Promise<WooCart> {
   return request<WooCart>('/clear', { method: 'DELETE' });
+}
+
+/* ---------------------------------------------------------------------------
+ * Checkout on our domain. Cart calls go through /api/cart/* (Store API); the order + payment calls go
+ * through /api/checkout/* (WooCommerce REST + Stripe). All of these are implemented server-side in
+ * src/app/api/cart/{customer,shipping,coupon}/route.ts and src/app/api/checkout/{intent,status}/route.ts.
+ * ------------------------------------------------------------------------- */
+
+/** Saves billing/shipping addresses on the basket; the returned cart carries recalculated shipping rates and totals. */
+export function updateCustomer(body: UpdateCustomerRequest): Promise<WooCart> {
+  return request<WooCart>('/customer', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export function selectShippingRate(body: SelectShippingRateRequest): Promise<WooCart> {
+  return request<WooCart>('/shipping', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export function applyCoupon(body: CouponRequest): Promise<WooCart> {
+  return request<WooCart>('/coupon', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export function removeCoupon(body: CouponRequest): Promise<WooCart> {
+  return request<WooCart>('/coupon', { method: 'DELETE', body: JSON.stringify(body) });
+}
+
+async function checkoutRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`/api/checkout${path}`, {
+      ...init,
+      credentials: 'include',
+      headers: { Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...(init.headers ?? {}) },
+      cache: 'no-store',
+    });
+  } catch {
+    throw new CartClientError(0, 'network_error', 'Network error — check your connection.');
+  }
+  if (!res.ok) {
+    let body: Partial<WooStoreError> = {};
+    try {
+      body = (await res.json()) as WooStoreError;
+    } catch {
+      /* ignore */
+    }
+    throw new CartClientError(res.status, body.code ?? 'unknown_error', body.message ?? res.statusText);
+  }
+  return (await res.json()) as T;
+}
+
+/** Creates the pending WooCommerce order and the Stripe PaymentIntent. 503 `not-configured` when Stripe keys are missing. */
+export function createPaymentIntent(body: CreatePaymentIntentRequest): Promise<CreatePaymentIntentResponse> {
+  return checkoutRequest<CreatePaymentIntentResponse>('/intent', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export function getCheckoutStatus(orderId: number, orderKey: string): Promise<CheckoutStatusResponse> {
+  const q = new URLSearchParams({ order: String(orderId), key: orderKey });
+  return checkoutRequest<CheckoutStatusResponse>(`/status?${q.toString()}`, { method: 'GET' });
 }

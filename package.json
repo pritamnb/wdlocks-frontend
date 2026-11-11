@@ -13,12 +13,14 @@
     "pw:shots": "npm run pw -- scripts/pw/responsive-screenshots.js"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^7.0.1",
     "@stripe/stripe-js": "^10.2.1",
     "clsx": "^2.1.1",
     "framer-motion": "^14.11.1",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "stripe": "^23.1.0",
     "swr": "^2.5.1"
   },
   "devDependencies": {

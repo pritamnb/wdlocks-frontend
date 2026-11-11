@@ -51,6 +51,8 @@ export interface CartContextValue {
   removeCartItem: (key: string) => Promise<boolean>;
   /** Empties the basket (after handing it to the WooCommerce checkout). Never throws. */
   clearCart: () => Promise<boolean>;
+  /** Replaces the basket with a cart returned by another proxy call (address, delivery rate, coupon). */
+  replaceCart: (cart: WooCart) => void;
 }
 
 const CartContext = React.createContext<CartContextValue | null>(null);
@@ -113,6 +115,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [cart]);
 
   const openCart = React.useCallback(() => setIsOpen(true), []);
+  const replaceCart = React.useCallback((next: WooCart) => {
+    cartRef.current = next;
+    setCart(next);
+    setStatus('ready');
+    setError(null);
+  }, []);
   const closeCart = React.useCallback(() => setIsOpen(false), []);
 
   /** Fetches the basket; all state updates happen after the await (never synchronously in an effect). */
@@ -350,8 +358,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       updateCartItem,
       removeCartItem,
       clearCart,
+      replaceCart,
     }),
-    [cart, status, error, itemCount, subtotalPence, pendingKeys, isAdding, isOpen, openCart, closeCart, refresh, warmSession, addToCart, updateCartItem, removeCartItem, clearCart],
+    [cart, status, error, itemCount, subtotalPence, pendingKeys, isAdding, isOpen, openCart, closeCart, refresh, warmSession, addToCart, updateCartItem, removeCartItem, clearCart, replaceCart],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
