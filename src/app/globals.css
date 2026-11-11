@@ -66,6 +66,7 @@
     font-family: var(--font-body);
     font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     position: relative;
   }
   /* Creamy paper grain: a fixed, non-interactive noise layer over the cream canvas. */

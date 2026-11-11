@@ -130,7 +130,7 @@ export function isExternalOnly(product: WooProduct): boolean {
 
 export function ctaLabel(product: WooProduct): string {
   if (!product.is_in_stock) return 'Out of stock';
-  if (isExternalOnly(product)) return 'Order with key number';
+  if (isExternalOnly(product)) return 'Order keys';
   if (product.type !== 'variable') return 'Buy now';
   if (product.id === PRODUCT_IDS.RIM_CYLINDER) return 'Buy now';
   return 'Buy now';

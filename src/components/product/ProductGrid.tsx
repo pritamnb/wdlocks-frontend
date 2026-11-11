@@ -33,13 +33,13 @@ export function ProductGrid({ products, loading = false, limit, skeletonCount = 
 
   return (
     <>
-      <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-busy={loading}>
+      <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy={loading}>
         {loading
           ? Array.from({ length: skeletonCount }).map((_, i) => (
-              <li key={i}><ProductCardSkeleton /></li>
+              <li key={i} className="grid grid-rows-subgrid row-span-5 gap-y-0"><ProductCardSkeleton /></li>
             ))
           : visible.map((p, i) => (
-              <li key={p.id}>
+              <li key={p.id} className="grid grid-rows-subgrid row-span-5 gap-y-0">
                 <ProductCard
                   product={p}
                   priority={i < 4}

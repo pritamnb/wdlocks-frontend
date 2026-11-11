@@ -4,7 +4,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { WooProduct } from '@/types';
-import { Button } from '@/components/ui/Button';
+import { Spinner } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useCart } from '@/hooks/useCart';
 import { productPriceLabel, decodeEntities } from '@/lib/wdlocks-api';
@@ -43,21 +43,28 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
     setBusy(false);
   };
 
+  const cta = cn(
+    'mx-auto flex h-12 w-full max-w-[220px] items-center justify-center whitespace-nowrap rounded-lg px-6 text-base font-semibold text-white',
+    'bg-red transition-colors duration-300 hover:bg-red-deep disabled:cursor-not-allowed disabled:opacity-60',
+  );
+
+  // Five shared rows (image, title, blurb, price, CTA) adopted from the grid via subgrid so every row lines up across the
+  // whole grid row; each zone also reserves its own height, so browsers without subgrid still align.
   return (
     <article
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-[10px] bg-[#f0f0f0]',
-        'transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-20px_rgb(0_0_0/0.35)]',
+        'group relative grid h-full grid-rows-subgrid row-span-5 gap-y-0 overflow-hidden rounded-[20px] bg-[#f0f0f0]',
+        'transition-transform duration-300 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0',
       )}
     >
-      <Link href={href} className="relative block aspect-[4/3] overflow-hidden bg-[#f0f0f0] sm:aspect-square" aria-label={name} tabIndex={-1}>
+      <Link href={href} className="relative block aspect-square overflow-hidden" aria-label={name} tabIndex={-1}>
         {image ? (
           hoverClip ? (
             <HoverPreview src={BRAND_VIDEO.clips[hoverClip].mp4} className="absolute inset-0">
-              <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="object-contain p-8 transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
+              <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
             </HoverPreview>
           ) : (
-            <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" className="object-contain p-8 transition-transform duration-500 ease-out group-hover:scale-[1.04]" />
+            <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
           )
         ) : (
           <div className="flex h-full items-center justify-center text-charcoal/40">No image</div>
@@ -73,42 +80,39 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
         )}
       </Link>
 
-      <div className="flex flex-1 flex-col items-center px-6 pb-7 pt-2 text-center">
-        <h3 className="text-[22px] font-medium leading-snug text-near-black sm:text-2xl">
-          <Link href={href} className="transition-colors duration-150 hover:text-red focus-visible:text-red">
-            {entry?.shortName ?? name}
+      {/* Title: always two lines tall, clamped and balanced. */}
+      <h3 className="line-clamp-2 min-h-[calc(2lh+1.5rem)] px-5 pt-6 text-center text-[26px] font-medium leading-[1.15] tracking-[-0.02em] text-balance text-near-black sm:text-[28px]">
+        <Link href={href} className="transition-colors duration-150 hover:text-red focus-visible:text-red">
+          {entry?.shortName ?? name}
+        </Link>
+      </h3>
+      {/* Blurb: two lines reserved even when short or empty. */}
+      <p className="mx-auto line-clamp-2 min-h-[calc(2lh+0.5rem)] max-w-[30ch] px-5 pt-2 text-center text-[15px] leading-6 text-pretty text-[#353535]/80">{entry?.blurb}</p>
+      {/* Price: one fixed line. */}
+      <p className="h-[calc(1.5rem+0.75rem)] px-5 pt-3 text-center text-base font-semibold leading-6 tabular-nums text-near-black">
+        {isVariable && product.prices.price_range && <span className="mr-1 font-sans text-xs font-normal text-charcoal/75">From</span>}
+        {productPriceLabel(product)}
+      </p>
+      <div className="px-5 pb-6 pt-5">
+        {externalOnly ? (
+          <Link href={`/products/${CATALOGUE_BY_ID[product.id]?.slug ?? product.slug}`} className={cta} aria-label={`${ctaLabel(product)}: ${name}`}>
+            {ctaLabel(product)}
           </Link>
-        </h3>
-        {entry?.blurb && <p className="mt-2 max-w-[28ch] text-[15px] leading-relaxed text-[#353535]/80">{entry.blurb}</p>}
-        <p className="mt-3 text-base font-semibold tabular-nums text-near-black">
-          {isVariable && product.prices.price_range && <span className="mr-1 font-sans text-xs font-normal text-charcoal/75">From</span>}
-          {productPriceLabel(product)}
-        </p>
-        <div className="mt-auto w-full pt-5">
-          {externalOnly ? (
-            <Link
-              href={`/products/${CATALOGUE_BY_ID[product.id]?.slug ?? product.slug}`}
-              className="mx-auto inline-flex h-12 w-full max-w-[220px] items-center justify-center rounded-lg bg-red px-6 text-base font-semibold text-white transition-colors duration-300 hover:bg-red-deep"
-              aria-label={`${ctaLabel(product)}: ${name}`}
-            >
-              {ctaLabel(product)}
-            </Link>
-          ) : (
-            <Button
-              size="md"
-              variant="primary"
-              className="mx-auto h-12 w-full max-w-[220px] rounded-lg text-base"
-              onClick={(e) => void onCta(e)}
-              onPointerEnter={warmSession}
-              onFocus={warmSession}
-              loading={busy}
-              disabled={!product.is_in_stock || !product.is_purchasable}
-              aria-label={`${ctaLabel(product)}: ${name}`}
-            >
-              {ctaLabel(product)}
-            </Button>
-          )}
-        </div>
+        ) : (
+          <button
+            type="button"
+            className={cta}
+            onClick={(e) => void onCta(e)}
+            onPointerEnter={warmSession}
+            onFocus={warmSession}
+            disabled={!product.is_in_stock || !product.is_purchasable || busy}
+            aria-busy={busy || undefined}
+            aria-label={`${ctaLabel(product)}: ${name}`}
+          >
+            {busy && <Spinner className="mr-2" />}
+            {ctaLabel(product)}
+          </button>
+        )}
       </div>
     </article>
   );
@@ -116,17 +120,12 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
 
 export function ProductCardSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-[10px] bg-[#f0f0f0]" aria-hidden="true">
+    <div className="grid h-full grid-rows-subgrid row-span-5 gap-y-0 overflow-hidden rounded-[20px] bg-[#f0f0f0]" aria-hidden="true">
       <Skeleton className="aspect-square w-full rounded-none bg-[#e6e6e6]" />
-      <div className="space-y-2 p-4 sm:p-5">
-        <Skeleton className="h-3 w-1/3" />
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-1/2" />
-        <div className="flex items-end justify-between pt-4">
-          <Skeleton className="h-6 w-16" />
-          <Skeleton className="h-9 w-28 rounded-full" />
-        </div>
-      </div>
+      <Skeleton className="mx-auto mt-6 h-7 w-3/4" />
+      <Skeleton className="mx-auto mt-2 h-4 w-1/2" />
+      <Skeleton className="mx-auto mt-3 h-5 w-16" />
+      <div className="px-5 pb-6 pt-5"><Skeleton className="mx-auto h-12 w-full max-w-[220px] rounded-lg" /></div>
     </div>
   );
 }
