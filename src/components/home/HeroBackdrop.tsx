@@ -41,9 +41,11 @@ export function HeroBackdrop() {
   const prefersReduced = usePrefersReducedMotion();
   const filmsAllowed = useFilmsAllowed();
   const reduced = prefersReduced || !filmsAllowed;
+  const [active, setActive] = React.useState(0);
+  // Posters-only (phones, data saver, reduced motion): show the cylinder turntable, which is dark and has no captions.
+  const shown = reduced ? 1 : active;
   const wrapRef = React.useRef<HTMLDivElement>(null);
   const refs = React.useRef<Array<HTMLVideoElement | null>>([]);
-  const [active, setActive] = React.useState(0);
   const [inView, setInView] = React.useState(true);
 
   React.useEffect(() => {
@@ -83,10 +85,10 @@ export function HeroBackdrop() {
     <div ref={wrapRef} className="absolute inset-0" aria-hidden="true">
       {FILMS.map((f, i) => (
         <React.Fragment key={f.src}>
-          {i === 0 && (
+          {(i === 0 || (reduced && i === shown)) && (
             // The first poster is the hero's LCP: fetch it first so the headline has its backdrop before the film plays.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={f.poster} alt="" fetchPriority="high" loading="eager" decoding="async" className={cn('absolute inset-0 h-full w-full object-cover', f.dim && 'brightness-[.55] contrast-[1.05]')} />
+            <img src={f.poster} alt="" fetchPriority="high" loading="eager" decoding="async" className={cn('absolute inset-0 h-full w-full object-cover transition-opacity duration-300', f.dim && 'brightness-[.55] contrast-[1.05]', reduced && i !== shown && 'opacity-0')} />
           )}
         <video
           ref={(el) => {

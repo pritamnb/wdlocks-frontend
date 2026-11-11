@@ -90,15 +90,15 @@ export function VideoBar() {
             ))}
             {reduced && <Image src={film.poster} alt={film.title} fill sizes="(min-width: 1280px) 1216px, 100vw" className="object-contain" />}
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-near-black/80 to-transparent px-5 pb-4 pt-16 text-white sm:px-7" aria-live="polite">
-              <p className="text-base font-semibold sm:text-lg">{film.title}</p>
-              <p className="mt-0.5 line-clamp-2 max-w-2xl text-xs text-white/70 sm:text-sm">{film.blurb}</p>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-near-black/80 to-transparent px-4 pb-3 pt-10 text-white sm:px-7 sm:pb-4 sm:pt-16" aria-live="polite">
+              <p className="text-[15px] font-semibold sm:text-lg">{film.title}</p>
+              <p className="mt-0.5 hidden line-clamp-2 max-w-2xl text-xs text-white/70 sm:block sm:text-sm">{film.blurb}</p>
             </div>
 
-            <button type="button" onClick={() => go(active - 1)} aria-label="Previous film" className="absolute left-3 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-red sm:left-5">
+            <button type="button" onClick={() => go(active - 1)} aria-label="Previous film" className="absolute left-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-red sm:left-5">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
             </button>
-            <button type="button" onClick={() => go(active + 1)} aria-label="Next film" className="absolute right-3 top-1/2 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-red sm:right-5">
+            <button type="button" onClick={() => go(active + 1)} aria-label="Next film" className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-red sm:right-5">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
             </button>
           </div>

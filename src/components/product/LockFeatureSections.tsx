@@ -26,10 +26,11 @@ export function LockFeatureSections() {
             <p className="mt-4 text-white/75">
               The Always Locked Protection System is the heart of every Watchdog. Snap the outside and the sacrificial section breaks away while the cam stays locked. The door stays shut, and the eleven-pin stack behind it keeps picking and bumping out.
             </p>
-            <dl className="mt-8 grid grid-cols-3 gap-4 border-t border-white/10 pt-6 text-sm">
-              <div><dt className="text-white/60">Pins</dt><dd className="font-playfair text-2xl font-semibold text-white">11</dd></div>
-              <div><dt className="text-white/60">Key combinations</dt><dd className="font-playfair text-2xl font-semibold text-white">800,000+</dd></div>
-              <div><dt className="text-white/60">Seconds exposed</dt><dd className="font-playfair text-2xl font-semibold text-white">0</dd></div>
+            {/* Each stat is its own block (label over value) so the three never run into each other on narrow screens. */}
+            <dl className="mt-8 grid grid-cols-3 gap-x-3 gap-y-5 border-t border-white/10 pt-6 text-sm">
+              <div className="flex flex-col"><dt className="text-xs leading-snug text-white/60 sm:text-sm">Pins</dt><dd className="mt-auto pt-1 font-playfair text-xl font-semibold tabular-nums text-white sm:text-2xl">11</dd></div>
+              <div className="flex flex-col"><dt className="text-xs leading-snug text-white/60 sm:text-sm">Key combinations</dt><dd className="mt-auto pt-1 font-playfair text-xl font-semibold tabular-nums text-white sm:text-2xl">800,000+</dd></div>
+              <div className="flex flex-col"><dt className="text-xs leading-snug text-white/60 sm:text-sm">Seconds exposed</dt><dd className="mt-auto pt-1 font-playfair text-xl font-semibold tabular-nums text-white sm:text-2xl">0</dd></div>
             </dl>
           </div>
           <div className="lg:col-span-6">

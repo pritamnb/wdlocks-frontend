@@ -54,7 +54,7 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
         'relative grid h-full grid-rows-subgrid row-span-5 gap-y-0 overflow-hidden rounded-[20px] bg-[#f0f0f0]',
       )}
     >
-      <Link href={href} className="relative block aspect-square overflow-hidden" aria-label={name} tabIndex={-1}>
+      <Link href={href} className="relative block aspect-[4/3] overflow-hidden sm:aspect-square" aria-label={name} tabIndex={-1}>
         {image ? (
           <Image src={image.src} alt={image.alt || name} fill priority={priority} quality={85} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 mix-blend-multiply" />
         ) : (
@@ -112,7 +112,7 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
 export function ProductCardSkeleton() {
   return (
     <div className="grid h-full grid-rows-subgrid row-span-5 gap-y-0 overflow-hidden rounded-[20px] bg-[#f0f0f0]" aria-hidden="true">
-      <Skeleton className="aspect-square w-full rounded-none bg-[#e6e6e6]" />
+      <Skeleton className="aspect-[4/3] w-full rounded-none bg-[#e6e6e6] sm:aspect-square" />
       <Skeleton className="mx-auto mt-6 h-7 w-3/4" />
       <Skeleton className="mx-auto mt-2 h-4 w-1/2" />
       <Skeleton className="mx-auto mt-3 h-5 w-16" />
