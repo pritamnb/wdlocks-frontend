@@ -44,6 +44,15 @@ test('header is white with the expected links, in order', async ({ page, isMobil
   await page.goto('/');
   const bg = await page.locator('header').evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(bg, 'white header').toBe('rgb(255, 255, 255)');
+  // Announcement strip: next-day promise + the extra-keys link on every non-product page; yellow delivery line on products.
+  const bar = page.getByRole('region', { name: 'Store announcements' });
+  await expect(bar).toContainText('In a rush? Order by 2pm');
+  await expect(bar.getByRole('link', { name: 'Click here' })).toHaveAttribute('href', '/products/watchdog-3-star-alps-extra-keys');
+  await page.goto('/products/3-star-alps-cylinder-door-lock');
+  const promise = page.getByRole('region', { name: 'Delivery promise' });
+  await expect(promise).toContainText(/Order today, delivers (tomorrow|\w+ \d+ \w+)/);
+  await expect(promise).toHaveCSS('background-color', 'rgb(254, 203, 62)');
+  await page.goto('/');
   if (isMobile) {
     await page.getByRole('button', { name: 'Open menu' }).click();
     const dialog = page.getByRole('dialog');

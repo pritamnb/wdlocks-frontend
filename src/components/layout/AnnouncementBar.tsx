@@ -4,35 +4,18 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SITE } from '@/lib/constants';
-import { estimateDelivery, formatCountdown } from '@/lib/delivery';
-
-const STORAGE_KEY = 'wd:announcement-dismissed:v2';
-const EVENT = 'wd:announcement-change';
-
-function readDismissed(): boolean {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-function subscribe(callback: () => void) {
-  window.addEventListener('storage', callback);
-  window.addEventListener(EVENT, callback);
-  return () => {
-    window.removeEventListener('storage', callback);
-    window.removeEventListener(EVENT, callback);
-  };
-}
+import { estimateDelivery, formatDeliveryDate } from '@/lib/delivery';
 
 /**
- * Contextual utility strip (Ultion pattern): product pages get the dispatch/delivery promise,
- * everything else nudges existing owners towards extra keys and the guarantee.
+ * Utility strip under the header (Ultion pattern, 11 Nov wording from the client):
+ * - every page: "In a rush? Order by 2pm for guaranteed Next Day Delivery" and "Looking to buy extra keys? Click here";
+ * - product pages: Ultion's yellow "Order today, delivers tomorrow" line instead (the date comes from the live
+ *   dispatch estimate, so after the cut-off or at weekends it names the actual day).
+ * Not dismissible: the client wants these links in front of every visitor, like Ultion's bar.
  */
 export function AnnouncementBar() {
   const pathname = usePathname();
-  const dismissed = React.useSyncExternalStore(subscribe, readDismissed, () => false);
-  // Countdown is client-only; render the static version on the server to avoid hydration mismatch.
+  // The estimate depends on the clock; render the generic wording on the server and refine on the client.
   const [est, setEst] = React.useState<ReturnType<typeof estimateDelivery> | null>(null);
   React.useEffect(() => {
     const tick = () => setEst(estimateDelivery());
@@ -41,48 +24,38 @@ export function AnnouncementBar() {
     return () => clearInterval(id);
   }, []);
 
-  if (dismissed) return null;
   const onProduct = pathname.startsWith('/products/');
 
-  const dismiss = () => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, '1');
-    } catch {
-      /* ignore */
-    }
-    window.dispatchEvent(new Event(EVENT));
-  };
+  if (onProduct) {
+    const delivers = !est ? 'tomorrow' : est.shipsToday ? 'tomorrow' : formatDeliveryDate(est.expressDate);
+    return (
+      <div className="bg-[#fecb3e] text-near-black" role="region" aria-label="Delivery promise">
+        <p className="container-wd m-0 flex min-h-9 items-center justify-center py-1 text-center text-[14px] font-semibold leading-snug tracking-[-0.01em] sm:text-[16px]">
+          <span aria-hidden="true" className="mr-2">📦</span>
+          Order today, delivers {delivers}
+          <span className="hidden font-medium sm:inline">
+            <span aria-hidden="true" className="mx-2 opacity-60">·</span>order by {SITE.dispatchCutoff} for next-day delivery
+          </span>
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className={onProduct ? 'relative bg-near-black text-white' : 'relative bg-red text-white'} role="region" aria-label="Store announcements">
-      <div className="container-wd flex min-h-8 items-center justify-center py-1 pr-10 text-center text-[13px] font-semibold leading-snug sm:text-[15px]">
-        {onProduct ? (
-          <p className="m-0">
-            <span className="font-semibold uppercase tracking-[0.12em] text-cream-dark">Order today, dispatched {est?.shipsToday ? 'today' : 'next working day'}</span>
-            {est?.shipsToday && est.minutesToCutoff > 0 && (
-              <span className="hidden sm:inline"> · order within <strong>{formatCountdown(est.minutesToCutoff)}</strong> for same-day dispatch</span>
-            )}
-          </p>
-        ) : (
-          <p className="m-0">
-            Looking to buy extra keys?{' '}
-            <Link href="/products/watchdog-3-star-alps-extra-keys" className="underline decoration-white/70 underline-offset-2 hover:decoration-white">Click here</Link>
-            <span className="hidden font-medium sm:inline">
-              <span aria-hidden="true" className="mx-2 opacity-70">·</span>Order before {SITE.dispatchCutoff} for same-day dispatch
-            </span>
-          </p>
-        )}
+    <div className="bg-red text-white" role="region" aria-label="Store announcements">
+      <div className="container-wd flex min-h-9 flex-col items-center justify-center gap-0.5 py-1.5 text-center text-[13px] font-semibold leading-snug sm:flex-row sm:gap-0 sm:text-[15px]">
+        <p className="m-0">
+          <span aria-hidden="true" className="mr-1.5">📦</span>
+          In a rush? Order by {SITE.dispatchCutoff} for guaranteed Next Day Delivery.
+        </p>
+        <span aria-hidden="true" className="mx-3 hidden opacity-70 sm:inline">·</span>
+        <p className="m-0">
+          Looking to buy extra keys?{' '}
+          <Link href="/products/watchdog-3-star-alps-extra-keys" className="underline decoration-white/70 underline-offset-2 hover:decoration-white">
+            Click here
+          </Link>
+        </p>
       </div>
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label="Dismiss announcement"
-        className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white/90 transition-colors duration-150 hover:bg-white/15 hover:text-white sm:right-4"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-          <path d="M18 6 6 18M6 6l12 12" />
-        </svg>
-      </button>
     </div>
   );
 }
