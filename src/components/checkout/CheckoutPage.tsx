@@ -253,8 +253,9 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
         </p>
       )}
 
-      <form className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-12" onSubmit={(e) => e.preventDefault()} noValidate>
-        <div className="space-y-8 lg:col-span-7">
+      <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-12">
+        {/* The summary's coupon form must not nest inside this form (browsers drop nested forms). */}
+        <form className="space-y-8 lg:col-span-7" onSubmit={(e) => e.preventDefault()} noValidate>
           {/* 1 Contact */}
           <section aria-labelledby="co-contact">
             <h2 id="co-contact" className="flex items-center gap-3 text-lg font-semibold text-near-black">
@@ -373,7 +374,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
               </p>
             </div>
           </section>
-        </div>
+        </form>
 
         <aside className="lg:col-span-5">
           <div className="lg:sticky lg:top-28">
@@ -385,7 +386,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
             </ul>
           </div>
         </aside>
-      </form>
+      </div>
     </div>
   );
 }

@@ -112,6 +112,44 @@ shopper cannot re-send it). Two modes:
 auto-activates, and makes the handoff idempotent for any basket. Longer term, replace the redirect with a
 native checkout (Store API `/checkout` + Stripe; `@stripe/stripe-js` is already installed).
 
+## Checkout on our domain (Stripe)
+
+Server side of `docs/stripe-checkout-plan.md` approach (b): the basket stays in the Store API, the order is
+created through the WooCommerce REST API, and the card/wallet payment is a Stripe PaymentIntent confirmed on
+this domain. Without the env vars below every checkout route answers `503 { code: 'not-configured' }` and the
+UI falls back to the handoff above. Implementation notes: `docs/stripe-checkout-server-notes.md`.
+
+| Env var | Where | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | browser | `loadStripe()` for Elements (pk_test_/pk_live_) |
+| `STRIPE_SECRET_KEY` | server | PaymentIntents (sk_test_/sk_live_, the client's own account, never WooPayments) |
+| `STRIPE_WEBHOOK_SECRET` | server | `whsec_` for the endpoint below (one per environment and mode) |
+| `WC_CONSUMER_KEY` / `WC_CONSUMER_SECRET` | server | WooCommerce REST Read/Write key used to create and update orders |
+
+All server secrets are read in `src/lib/server-env.ts` only.
+
+Routes (all `force-dynamic`, Node runtime, `no-store`):
+
+| Route | Upstream | Notes |
+|---|---|---|
+| `POST /api/cart/customer` | Store API `cart/update-customer` | billing (+ optional shipping) address → cart with shipping rates / VAT |
+| `POST /api/cart/shipping` | Store API `cart/select-shipping-rate` | `{ package_id, rate_id }` |
+| `POST` / `DELETE /api/cart/coupon` | Store API `cart/apply-coupon` / `remove-coupon` | `{ code }` |
+| `POST /api/checkout/intent` | WC REST `orders` + Stripe | re-reads the basket, creates/reuses a `pending` order, returns `clientSecret`; `409 total_mismatch` if the total moved; 10 req/min per IP |
+| `GET /api/checkout/status?order=&key=` | WC REST `orders/{id}` | status/paid for the return page; the order key is the secret |
+| `POST /api/stripe/webhook` | Stripe → WC REST | marks orders paid / failed / on-hold, notes refunds |
+
+Webhook: URL `https://<site>/api/stripe/webhook`, events `payment_intent.succeeded`,
+`payment_intent.payment_failed`, `payment_intent.processing`, `charge.refunded`. Locally:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook   # prints the whsec_ to put in .env.local
+stripe trigger payment_intent.succeeded
+```
+
+Test cards: `4242 4242 4242 4242` (success), `4000 0025 0000 3155` (3DS), `4000 0000 0000 9995` (declined).
+Test orders land in WooCommerce as `pending` → `processing` with meta `_headless_site = wdlocks-frontend`.
+
 ## Deployment (Vercel)
 
 1. Import the GitHub repo, framework preset *Next.js*.
@@ -133,6 +171,7 @@ are kept outside the repo at `../client-assets/wetransfer-2026-11-10/`, and the 
 - Install the mu-plugin above and set `NEXT_PUBLIC_CART_HANDOFF_PLUGIN=true` before launch.
 - Extra Keys (4266) orders go to wdlocks.co.uk until a key-number field is added to the headless flow.
 - Rate-limit `/api/cart/*` (Vercel WAF or `@upstash/ratelimit`); it is an open proxy to wdlocks.co.uk.
+  `/api/checkout/intent` has an in-memory 10/min/IP limit only (per serverless instance).
 - Replace the regex HTML sanitiser with `sanitize-html`/DOMPurify, or move to a nonce-based CSP.
 - `script-src 'unsafe-inline'` in the CSP is required by static generation; move to nonces if routes go dynamic.
 - **PENDING — Reviews (parked 2026-11-10):** the reviews section links out via `TRUSTPILOT_URL` and asserts no rating.

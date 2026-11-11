@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import type { WooShippingPackage, WooShippingRate } from '@/types';
 import { formatPrice, sumPence } from '@/lib/wdlocks-api';
 import { estimateDelivery, formatDeliveryDate } from '@/lib/delivery';
@@ -25,6 +26,15 @@ function arrivalFor(rate: WooShippingRate, now: Date | null): string | null {
 /** Radio list of the live WooCommerce shipping rates for the basket (one package for this shop). */
 export function ShippingOptions({ packages, pending, onSelect, now }: Props) {
   const pkg = packages[0];
+  const serverSelected = pkg?.shipping_rates.find((r) => r.selected)?.rate_id ?? null;
+  // The radio moves immediately; the Store API confirms (~2 s) and the server's choice wins when it arrives.
+  const [optimistic, setOptimistic] = React.useState<string | null>(null);
+  const lastServer = React.useRef(serverSelected);
+  if (lastServer.current !== serverSelected) {
+    lastServer.current = serverSelected;
+    if (optimistic !== null) setOptimistic(null);
+  }
+  const selectedId = optimistic ?? serverSelected;
   if (!pkg || pkg.shipping_rates.length === 0) {
     return <p className="text-sm text-charcoal/75">Enter your postcode above to see delivery options.</p>;
   }
@@ -38,16 +48,19 @@ export function ShippingOptions({ packages, pending, onSelect, now }: Props) {
             key={rate.rate_id}
             className={cn(
               'flex cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 transition-colors duration-150',
-              rate.selected ? 'border-near-black bg-white ring-1 ring-near-black' : 'border-black/10 bg-white hover:border-black/30',
+              rate.rate_id === selectedId ? 'border-near-black bg-white ring-1 ring-near-black' : 'border-black/10 bg-white hover:border-black/30',
             )}
           >
             <input
               type="radio"
               name="shipping_rate"
               value={rate.rate_id}
-              checked={rate.selected}
+              checked={rate.rate_id === selectedId}
               disabled={pending}
-              onChange={() => onSelect(pkg.package_id, rate.rate_id)}
+              onChange={() => {
+                setOptimistic(rate.rate_id);
+                onSelect(pkg.package_id, rate.rate_id);
+              }}
               className="mt-1 h-4 w-4 accent-red"
             />
             <span className="min-w-0 flex-1">

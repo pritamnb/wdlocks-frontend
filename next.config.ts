@@ -11,16 +11,19 @@ const isDev = process.env.NODE_ENV === 'development';
  * - style-src 'unsafe-inline' is required by framer-motion (inline style attributes) and next/font.
  * - img-src / connect-src allow the WooCommerce host for product images and client-side product reads.
  * - form-action allows the checkout handoff to wdlocks.co.uk.
+ * - Stripe (checkout on our domain, docs/stripe-checkout-plan.md §3d): js.stripe.com + *.js.stripe.com load
+ *   Stripe.js / Elements, m.stripe.network is its fraud-signal frame, api/q/r.stripe.com are its XHR targets,
+ *   hooks.stripe.com + checkout.stripe.com host 3DS / redirect frames, *.stripe.com serves wallet brand images.
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://js.stripe.com https://*.js.stripe.com https://m.stripe.network`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://${WC_HOST}`,
+  `img-src 'self' data: blob: https://${WC_HOST} https://*.stripe.com`,
   "font-src 'self' data:",
-  `connect-src 'self' https://${WC_HOST}${isDev ? ' ws: wss:' : ''}`,
+  `connect-src 'self' https://${WC_HOST} https://api.stripe.com https://m.stripe.network https://q.stripe.com https://r.stripe.com${isDev ? ' ws: wss:' : ''}`,
   // The Home Truths crime checker embeds an OpenStreetMap frame centred on the searched postcode.
-  "frame-src https://www.openstreetmap.org",
+  'frame-src https://www.openstreetmap.org https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://checkout.stripe.com',
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
@@ -33,7 +36,8 @@ const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self), payment=()' }, // geolocation: crime checker "Use my location"
+  // geolocation: crime checker "Use my location"; payment: Apple Pay / Google Pay through Stripe's frame.
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self), payment=(self "https://js.stripe.com")' },
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
 ];
