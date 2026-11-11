@@ -9,7 +9,7 @@ import { estimateDelivery, formatDeliveryDate } from '@/lib/delivery';
 /**
  * Utility strip under the header (Ultion pattern, 11 Nov wording from the client):
  * - every page: "Looking to buy extra keys? Click here" (the next-day promise lives in the products mega menu);
- * - product pages: Ultion's yellow "Order today, delivers tomorrow" line instead (the date comes from the live
+ * - product pages: Ultion's "Order today, delivers tomorrow" line instead, in the same red (the date comes from the live
  *   dispatch estimate, so after the cut-off or at weekends it names the actual day).
  * Not dismissible: the client wants these links in front of every visitor, like Ultion's bar.
  */
@@ -29,12 +29,14 @@ export function AnnouncementBar() {
   if (onProduct) {
     const delivers = !est ? 'tomorrow' : est.shipsToday ? 'tomorrow' : formatDeliveryDate(est.expressDate);
     return (
-      <div className="bg-[#fecb3e] text-near-black" role="region" aria-label="Delivery promise">
-        <p className="container-wd m-0 flex min-h-9 items-center justify-center py-1 text-center text-[14px] font-semibold leading-snug tracking-[-0.01em] sm:text-[16px]">
-          <span aria-hidden="true" className="mr-2">📦</span>
-          Order today, delivers {delivers}
-          <span className="hidden font-medium sm:inline">
-            <span aria-hidden="true" className="mx-2 opacity-60">·</span>order by {SITE.dispatchCutoff} for next-day delivery
+      <div className="bg-red text-white" role="region" aria-label="Delivery promise">
+        <p className="container-wd m-0 flex min-h-9 items-center justify-center gap-2 py-1.5 text-center text-[14px] font-semibold leading-snug sm:text-[15px]">
+          <span aria-hidden="true">📦</span>
+          <span>
+            Order today, delivers {delivers}
+            <span className="hidden font-medium sm:inline">
+              <span aria-hidden="true" className="mx-2 opacity-70">·</span>order by {SITE.dispatchCutoff} for next-day delivery
+            </span>
           </span>
         </p>
       </div>

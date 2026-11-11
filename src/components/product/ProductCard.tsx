@@ -60,7 +60,9 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
       <Link href={href} className="relative block aspect-square overflow-hidden" aria-label={name} tabIndex={-1}>
         {image ? (
           hoverClip ? (
-            <HoverPreview src={BRAND_VIDEO.clips[hoverClip].mp4} className="absolute inset-0">
+            // Safari cannot blend <video>, so the card plays a variant of the clip whose white background is pre-tinted to the
+            // tile grey (#f0f0f0, see public/brand/video/*-grey.mp4) and no blend mode is needed.
+            <HoverPreview src={BRAND_VIDEO.clips[hoverClip].mp4.replace(/\.mp4$/, '-grey.mp4')} blend="plain" className="absolute inset-0 bg-[#f0f0f0]">
               <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
             </HoverPreview>
           ) : (

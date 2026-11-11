@@ -125,7 +125,7 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
             </div>
           </div>
           {/* Delivery promise strip (client, 11 Nov): lives here rather than in the bar under the header. */}
-          <p className="m-0 border-t border-white/10 bg-[#141316] py-2.5 text-center text-[14px] font-semibold text-cream">
+          <p className="m-0 bg-red py-2.5 text-center text-[14px] font-semibold text-white">
             <span aria-hidden="true" className="mr-1.5">📦</span>In a rush? Order by {SITE.dispatchCutoff} for guaranteed Next Day Delivery.
           </p>
         </motion.div>

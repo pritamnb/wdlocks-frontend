@@ -10,10 +10,10 @@ export function Protection() {
   return (
     <section className="relative overflow-hidden bg-[#f0f0f0]" aria-labelledby="protection-title" id="protection">
       {/* Film layer: full-bleed on desktop, a normal block on phones so the title never sits on top of it. */}
-      {/* The clip is scaled up on desktop so the cut-away fills the panel like Ultion's film (otherwise the panel reads as
-          an empty grey void with a small lock in it). */}
+      {/* The cut-away fills the panel edge to edge like Ultion's film (no extra zoom: the 960×540 clip is already upscaled
+          to the 680 px panel, and more would blur it). */}
       <div className="relative lg:absolute lg:inset-0 lg:w-full lg:max-w-none lg:overflow-hidden">
-        <ExplodedFilm className="lg:h-full lg:max-w-none [&>video]:lg:h-full [&>video]:lg:w-full [&>video]:lg:scale-[1.35] [&>video]:lg:object-cover [&>video]:lg:[object-position:70%_50%] [&_img]:lg:h-full [&_img]:lg:w-full [&_img]:lg:scale-[1.35] [&_img]:lg:object-cover [&_img]:lg:[object-position:70%_50%]" />
+        <ExplodedFilm className="lg:h-full lg:max-w-none [&>video]:lg:h-full [&>video]:lg:w-full [&>video]:lg:object-cover [&>video]:lg:[object-position:70%_50%] [&_img]:lg:h-full [&_img]:lg:w-full [&_img]:lg:object-cover [&_img]:lg:[object-position:70%_50%]" />
       </div>
       <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-[#f0f0f0] via-[#f0f0f0]/75 to-transparent lg:block lg:w-[58%]" aria-hidden="true" />
       <div className="container-wd relative flex min-h-0 flex-col justify-end pb-16 pt-6 lg:min-h-[680px] lg:justify-center lg:py-20">

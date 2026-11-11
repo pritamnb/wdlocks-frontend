@@ -51,7 +51,7 @@ test('header is white with the expected links, in order', async ({ page, isMobil
   await page.goto('/products/3-star-alps-cylinder-door-lock');
   const promise = page.getByRole('region', { name: 'Delivery promise' });
   await expect(promise).toContainText(/Order today, delivers (tomorrow|\w+ \d+ \w+)/);
-  await expect(promise).toHaveCSS('background-color', 'rgb(254, 203, 62)');
+  await expect(promise).toHaveCSS('background-color', 'rgb(218, 21, 25)');
   await page.goto('/');
   if (isMobile) {
     await page.getByRole('button', { name: 'Open menu' }).click();

@@ -53,8 +53,9 @@ export function Hero() {
         </div>
 
         <div className="lg:col-span-4 lg:justify-self-end">
-          <div className="w-full max-w-xs rounded-2xl bg-white p-6 text-near-black shadow-2xl">
-            <p className="font-playfair text-2xl font-semibold leading-tight">Get your {GUARANTEE.amountLabel} guarantee</p>
+          {/* Full width on phones so it lines up with the two buttons above it; a compact card from sm up. */}
+          <div className="w-full rounded-2xl bg-white p-5 text-near-black shadow-2xl sm:max-w-xs sm:p-6">
+            <p className="font-playfair text-[22px] font-semibold leading-tight sm:text-2xl">Get your {GUARANTEE.amountLabel} guarantee</p>
             <p className="mt-2 text-sm text-charcoal/75">Register your lock and key number in two minutes. Free for every genuine Watchdog.</p>
             <a href={GUARANTEE.href} className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-near-black px-5 text-sm font-semibold text-white transition-colors duration-150 hover:bg-red">
               Activate now
