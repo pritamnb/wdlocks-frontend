@@ -191,8 +191,10 @@ test('header and headings use Outfit; nav links are 17px semibold with Ultion sp
 
 test('product cards are equal: same height, title/price/button rows aligned across each row', async ({ page }) => {
   await page.goto('/');
-  await page.waitForLoadState('networkidle'); // fonts and images settle the row heights
+  // Fonts settle the row heights (networkidle never arrives here: the hero films keep streaming).
   await page.locator('#products article').first().scrollIntoViewIfNeeded();
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(300);
   const cards = await page.locator('#products article').evaluateAll((els) =>
     els.map((el) => {
       const top = (sel: string) => Math.round(el.querySelector(sel)?.getBoundingClientRect().top ?? -1);

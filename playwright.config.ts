@@ -21,7 +21,8 @@ export default defineConfig({
     { name: 'desktop', testIgnore: /basket/, use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 900 } } },
     { name: 'mobile', testIgnore: /basket/, use: { ...devices['Pixel 7'] } },
     // The live basket flow talks to the real Store API through the proxy; run it alone, after everything else.
-    { name: 'basket-desktop', testMatch: /basket/, dependencies: ['desktop', 'mobile'], fullyParallel: false, use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 900 } } },
-    { name: 'basket-mobile', testMatch: /basket/, dependencies: ['basket-desktop'], fullyParallel: false, use: { ...devices['Pixel 7'] } },
+    // Each proxied Store API call takes ~2 s on shared hosting; the checkout flows chain six or more, so allow 90 s.
+    { name: 'basket-desktop', testMatch: /basket/, dependencies: ['desktop', 'mobile'], fullyParallel: false, timeout: 90_000, use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 900 } } },
+    { name: 'basket-mobile', testMatch: /basket/, dependencies: ['basket-desktop'], fullyParallel: false, timeout: 90_000, use: { ...devices['Pixel 7'] } },
   ],
 });
