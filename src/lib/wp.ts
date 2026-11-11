@@ -56,19 +56,45 @@ interface RawMedia {
 
 const decode = (s: string) => s.replace(/&#8217;/g, '’').replace(/&#8216;/g, '‘').replace(/&#8220;/g, '“').replace(/&#8221;/g, '”').replace(/&amp;/g, '&').replace(/&#038;/g, '&').replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, '').trim();
 
-async function get<T>(path: string): Promise<T | null> {
-  try {
-    const res = await fetch(`${WP}${path}`, { headers, next: { revalidate: REVALIDATE } });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
+/** WordPress could not be reached (network, 5xx, rate limit). Pages let this propagate so Next shows the error page
+ *  and retries on the next request, instead of caching a 404 or an empty list for an hour. */
+export class WpUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'WpUnavailableError';
   }
 }
 
+const ATTEMPTS = 3;
+const TIMEOUT_MS = 12_000;
+
+/** GET from the WP REST API with retries. Returns null only for a genuine 404; throws WpUnavailableError otherwise. */
+async function get<T>(path: string): Promise<T | null> {
+  let lastErr = 'unknown';
+  for (let i = 0; i < ATTEMPTS; i++) {
+    try {
+      const res = await fetch(`${WP}${path}`, { headers, next: { revalidate: REVALIDATE }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+      if (res.status === 404) return null;
+      if (res.ok) return (await res.json()) as T;
+      lastErr = `HTTP ${res.status}`;
+      if (res.status >= 400 && res.status < 500 && res.status !== 429) break; // not transient
+    } catch (err) {
+      lastErr = err instanceof Error ? err.message : 'network error';
+    }
+    await new Promise((r) => setTimeout(r, 400 * (i + 1)));
+  }
+  throw new WpUnavailableError(`WordPress REST ${path}: ${lastErr}`);
+}
+
+/** Featured images are optional: a failed media lookup must not take the whole post down. */
 async function media(id: number): Promise<WpImage | null> {
   if (!id) return null;
-  const m = await get<RawMedia>(`/media/${id}?_fields=source_url,alt_text,media_details`);
+  let m: RawMedia | null;
+  try {
+    m = await get<RawMedia>(`/media/${id}?_fields=source_url,alt_text,media_details`);
+  } catch {
+    return null;
+  }
   if (!m?.source_url) return null;
   return { src: m.source_url, width: m.media_details?.width ?? 1200, height: m.media_details?.height ?? 800, alt: m.alt_text || '' };
 }

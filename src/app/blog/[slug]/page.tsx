@@ -3,15 +3,19 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SITE, SITE_URL } from '@/lib/constants';
-import { formatDate, getPost, getPosts } from '@/lib/wp';
+import { formatDate, getPost } from '@/lib/wp';
 import { BuyBand } from '@/components/home/BuyBand';
 
 export const revalidate = 3600;
 export const dynamicParams = true;
 
+/**
+ * Posts are generated on first request (ISR, 1 h) rather than at build time: a slow or rate-limited WordPress during
+ * a Vercel build used to bake 404s into the deployment. A request-time failure throws, which shows the error page
+ * and is not cached, so the next visit retries.
+ */
 export async function generateStaticParams() {
-  const posts = await getPosts();
-  return posts.map((p) => ({ slug: p.slug }));
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
