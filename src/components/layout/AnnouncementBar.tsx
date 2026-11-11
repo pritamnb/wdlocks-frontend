@@ -35,7 +35,7 @@ export function AnnouncementBar() {
           <span>
             Order today, delivers {delivers}
             <span className="hidden font-medium sm:inline">
-              <span aria-hidden="true" className="mx-2 opacity-70">·</span>order by {SITE.dispatchCutoff} for next-day delivery
+              {' '}<span aria-hidden="true" className="mx-1.5 opacity-70">·</span>{' '}order by {SITE.dispatchCutoff} for next-day delivery
             </span>
           </span>
         </p>
