@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { errorResponse } from '@/lib/cart-proxy';
 import { isWcRestConfigured, getOrder, isOrderPaid, toCheckoutStatus, WcRestError } from '@/lib/wc-rest';
+import { isDemoCheckout, readDemoOrder, toDemoStatus } from '@/lib/demo-checkout';
 import type { CheckoutStatusResponse } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -14,13 +15,19 @@ const ORDER_KEY_RE = /^wc_order_[A-Za-z0-9]{1,40}$/;
  * Responses: 200 CheckoutStatusResponse · 400 invalid · 404 unknown order/key · 502 upstream · 503 not-configured.
  */
 export async function GET(req: Request) {
+  const params = new URL(req.url).searchParams;
+  const orderParam = params.get('order') ?? '';
+  const key = params.get('key') ?? '';
+
+  if (isDemoCheckout() && !isWcRestConfigured()) {
+    const order = readDemoOrder(req);
+    if (!order || String(order.id) !== orderParam || order.key !== key) return errorResponse(404, 'order_not_found', 'Order not found.');
+    return NextResponse.json(toDemoStatus(order), { status: 200, headers: { 'Cache-Control': 'no-store, private' } });
+  }
   if (!isWcRestConfigured()) {
     return errorResponse(503, 'not-configured', 'Order status is not available.');
   }
 
-  const params = new URL(req.url).searchParams;
-  const orderParam = params.get('order') ?? '';
-  const key = params.get('key') ?? '';
   if (!/^\d{1,12}$/.test(orderParam) || !ORDER_KEY_RE.test(key)) {
     return errorResponse(400, 'invalid_request', 'Missing or invalid order reference.');
   }

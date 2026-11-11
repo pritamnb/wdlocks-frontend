@@ -180,7 +180,7 @@ export function VariationSelector({ product, onAdded, headingId, className, show
     if (!selected) return;
     setCheckingOut(true);
     try {
-      if (keyedAlike || CHECKOUT_MODE === 'stripe') {
+      if (keyedAlike || CHECKOUT_MODE !== 'handoff') {
         const ok = await add(false);
         if (!ok) return;
         router.push('/checkout');

@@ -12,7 +12,7 @@ import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { canCheckout } from '@/lib/checkout';
-import { CATALOGUE_BY_ID, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
+import { CATALOGUE_BY_ID, CHECKOUT_MODE, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
 import { previewFromProduct } from '@/lib/cart-optimistic';
 
 export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
@@ -136,7 +136,7 @@ export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
             <li className="rounded-lg bg-cream px-2 py-1.5">📦 Same-day dispatch</li>
             <li className="rounded-lg bg-cream px-2 py-1.5">🔑 3 keys included</li>
           </ul>
-          <p className="mt-2 text-center text-[11px] text-charcoal/75">You’ll complete payment on wdlocks.co.uk, our secure WooCommerce checkout.</p>
+          <p className="mt-2 text-center text-[11px] text-charcoal/75">{CHECKOUT_MODE === 'handoff' ? 'You’ll complete payment on wdlocks.co.uk, our secure WooCommerce checkout.' : 'Cards, Apple Pay, Google Pay, PayPal and Klarna at checkout.'}</p>
         </div>
       )}
     </Modal>

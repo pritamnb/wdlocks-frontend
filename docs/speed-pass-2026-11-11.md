@@ -46,3 +46,11 @@ and brand films in `/public` on Vercel (edge cached, Range requests honoured). N
 Images, Bunny or Vercel Blob would be faster or smaller here; they would add sync and DNS work. The shop must be on
 Vercel Pro (Hobby is non-commercial and caps image transformations). Re-encode and lazy-load films (done for the
 two heaviest), move the 7.3 MB brochure PDF out of `/public`, and revisit only if traffic grows past ~1 TB/month.
+
+## Addendum, 11 Nov: demo checkout
+
+Pritam asked for the checkout to be clickable without waiting for keys ("implement with dummy"). `NEXT_PUBLIC_CHECKOUT_MODE=demo`
+is set on Vercel production: `/checkout` now shows the on-site checkout with a pretend payment step (card fields and
+wallet/PayPal/Klarna tabs), `/api/checkout/intent` issues a demo order in a signed cookie, `/api/checkout/demo` flips it
+to paid or declined, and the return page shows the confirmation. Product-page "Buy now" goes to `/checkout` instead of
+wdlocks.co.uk while a non-handoff mode is active. Remove the variable (or add real keys) to go back.

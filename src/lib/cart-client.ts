@@ -163,3 +163,8 @@ export function getCheckoutStatus(orderId: number, orderKey: string): Promise<Ch
   const q = new URLSearchParams({ order: String(orderId), key: orderKey });
   return checkoutRequest<CheckoutStatusResponse>(`/status?${q.toString()}`, { method: 'GET' });
 }
+
+/** Demo mode only: pretend to pay. 200 = paid, 402 = declined (demo). */
+export function confirmDemoPayment(body: { orderId: number; orderKey: string; outcome: 'succeeded' | 'declined' | 'requires_action'; method: string }): Promise<CheckoutStatusResponse> {
+  return checkoutRequest<CheckoutStatusResponse>('/demo', { method: 'POST', body: JSON.stringify(body) });
+}

@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: 'Checkout', robots: { index: false, f
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const preview = params.preview === '1' || params.preview === 'stripe';
-  if (CHECKOUT_MODE === 'stripe') return <CheckoutPage />;
+  if (CHECKOUT_MODE === 'stripe' || CHECKOUT_MODE === 'demo') return <CheckoutPage />;
   if (preview) return <CheckoutPage preview />;
   return <CheckoutReview />;
 }

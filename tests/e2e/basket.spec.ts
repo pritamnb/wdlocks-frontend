@@ -96,3 +96,40 @@ test('on-site checkout preview: address saves to the basket, delivery rates and 
   await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/remove')), page.getByRole('button', { name: /Remove .* from basket/ }).click()]);
   await expect(page.getByText('Nothing to check out yet')).toBeVisible();
 });
+
+test('demo checkout: pay with the 4242 test card and land on the confirmation (demo mode only)', async ({ page }) => {
+  await page.goto('/products/bruno-teddy-protection-car-key-signal-blocker');
+  await page.waitForLoadState('networkidle');
+  await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/add')), page.getByRole('button', { name: 'Add to basket' }).click()]);
+  await page.goto('/checkout');
+  await page.waitForLoadState('networkidle');
+  const demo = page.getByText('Demo payment.', { exact: false });
+  if (!(await demo.count())) {
+    // Not in demo mode on this target: leave the basket empty and skip.
+    await page.goto('/basket');
+    await Promise.all([page.waitForResponse((r) => r.url().includes('/api/cart/remove')), page.getByRole('button', { name: /Remove .* from basket/ }).click()]);
+    test.skip(true, 'NEXT_PUBLIC_CHECKOUT_MODE is not demo on this target');
+    return;
+  }
+  await page.getByLabel('Email').fill('test@example.com');
+  await page.getByLabel('Phone').fill('02038574718');
+  await page.getByLabel('First name').fill('Test');
+  await page.getByLabel('Last name').fill('Shopper');
+  await page.getByLabel('Address line 1').fill('397 Greenford Road');
+  await page.getByLabel('Town / city').fill('Greenford');
+  const saved = page.waitForResponse((r) => r.url().includes('/api/cart/customer') && r.status() === 200);
+  await page.getByLabel('Postcode').fill('UB6 8RF');
+  await saved;
+  await page.getByLabel('Card number').fill('4242424242424242');
+  await page.getByLabel('Expiry').fill('1230');
+  await page.getByLabel('Security code').fill('123');
+  await page.getByLabel('Name on card').fill('Test Shopper');
+  await page.getByLabel(/terms and conditions/).check();
+  await Promise.all([page.waitForResponse((r) => r.url().includes('/api/checkout/demo')), page.getByRole('button', { name: /^Pay £/ }).click()]);
+  await expect(page).toHaveURL(/\/checkout\/return\?order=\d+&key=wc_order_demo/);
+  await expect(page.getByText('Thank you, your order is confirmed')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/Order #9\d{5}/)).toBeVisible();
+  // The basket was emptied by the return page.
+  await page.goto('/basket');
+  await expect(page.getByText('Your basket is currently empty')).toBeVisible();
+});

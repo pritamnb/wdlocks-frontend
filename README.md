@@ -114,6 +114,16 @@ native checkout (Store API `/checkout` + Stripe; `@stripe/stripe-js` is already 
 
 ## Checkout on our domain (Stripe)
 
+### Demo mode (no keys needed)
+
+`NEXT_PUBLIC_CHECKOUT_MODE=demo` runs the whole on-site checkout against a pretend payment provider: the Stripe
+Payment Element is replaced by a look-alike (card fields plus Apple Pay / Google Pay / PayPal / Klarna tabs), the
+"order" lives in a signed cookie, nothing is charged and nothing reaches WooCommerce. Test cards: `4242 4242 4242 4242`
+pays, `4000 0000 0000 0002` declines, `4000 0025 0000 3155` shows a 3-D Secure style challenge. The mode is ignored as
+soon as real Stripe keys are set. Production is currently in demo mode so the flow can be reviewed end to end.
+
+### Live mode (Stripe + WooCommerce REST)
+
 Server side of `docs/stripe-checkout-plan.md` approach (b): the basket stays in the Store API, the order is
 created through the WooCommerce REST API, and the card/wallet payment is a Stripe PaymentIntent confirmed on
 this domain. Without the env vars below every checkout route answers `503 { code: 'not-configured' }` and the

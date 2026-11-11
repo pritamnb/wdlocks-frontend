@@ -25,6 +25,7 @@ import {
   type WooRestOrder,
 } from '@/lib/wc-rest';
 import { RateLimiter, clientIp } from '@/lib/rate-limit';
+import { isDemoCheckout, newDemoOrder, writeDemoOrder } from '@/lib/demo-checkout';
 import type { WooCart, CheckoutAddressInput, CreatePaymentIntentResponse } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -147,7 +148,8 @@ export async function POST(req: Request) {
   if (!limiter.allow(clientIp(req))) {
     return errorResponse(429, 'rate_limited', 'Too many checkout attempts. Please wait a minute and try again.');
   }
-  if (!isStripeConfigured() || !isWcRestConfigured()) {
+  const demo = isDemoCheckout() && !(isStripeConfigured() && isWcRestConfigured());
+  if (!demo && (!isStripeConfigured() || !isWcRestConfigured())) {
     return errorResponse(503, 'not-configured', 'Card payments are not available yet. Please use the WooCommerce checkout.');
   }
 
@@ -187,6 +189,23 @@ export async function POST(req: Request) {
   }
 
   const hash = cartHash(cart);
+
+  // Demo mode: a pretend order in a signed cookie; the client "pays" via POST /api/checkout/demo. Nothing is charged
+  // and nothing reaches WooCommerce or Stripe.
+  if (demo) {
+    const order = newDemoOrder(totalMinor, body.billing.email ?? '');
+    const payload: CreatePaymentIntentResponse = {
+      clientSecret: `demo_${order.key}_secret`,
+      paymentIntentId: `pi_demo_${order.id}`,
+      orderId: order.id,
+      orderKey: order.key,
+      amount: totalMinor,
+      currency: 'gbp',
+    };
+    const res = NextResponse.json(payload, { status: 200, headers: { 'Cache-Control': 'no-store, private' } });
+    writeDemoOrder(req, res, order);
+    return res;
+  }
 
   // 2. WooCommerce order (reuse or create)
   let order: WooRestOrder;

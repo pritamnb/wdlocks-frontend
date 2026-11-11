@@ -24,6 +24,11 @@ const StripePayment = dynamic(() => import('@/components/checkout/StripePayment'
   loading: () => <Skeleton className="h-64 w-full rounded-xl" />,
 });
 
+const DemoPayment = dynamic(() => import('@/components/checkout/DemoPayment').then((m) => m.DemoPayment), {
+  ssr: false,
+  loading: () => <Skeleton className="h-64 w-full rounded-xl" />,
+});
+
 const LABEL = 'text-xs font-semibold uppercase tracking-[0.14em] text-charcoal/70';
 const STORAGE_KEY = 'wd:checkout-form';
 
@@ -238,6 +243,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   }
 
   const stripeLive = CHECKOUT_MODE === 'stripe';
+  const demo = CHECKOUT_MODE === 'demo';
 
   return (
     <div className="container-wd py-10 sm:py-14">
@@ -247,7 +253,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
           <span aria-hidden="true">🔒</span> Secure checkout · UK delivery · <Link href="/basket" className="font-medium text-near-black underline-offset-2 hover:text-red hover:underline">Edit basket</Link>
         </p>
       </div>
-      {preview && !stripeLive && (
+      {preview && !stripeLive && !demo && (
         <p role="status" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
           Preview of the on-site checkout. Address, delivery and coupons are live; card payment appears here once the Stripe keys are added, until then the last step pays on wdlocks.co.uk.
         </p>
@@ -350,6 +356,10 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
                 >
                   <TermsCheckbox checked={terms} onChange={setTerms} invalid={showErrors && !terms} />
                 </StripePayment>
+              ) : demo ? (
+                <DemoPayment amount={total} prepare={async () => (validate() ? prepare() : null)} returnUrl={returnUrl} disabled={busyLines || savingAddress || savingRate} onError={(m) => setPayError(m)}>
+                  <TermsCheckbox checked={terms} onChange={setTerms} invalid={showErrors && !terms} />
+                </DemoPayment>
               ) : (
                 <div className="space-y-4">
                   <div className="rounded-xl bg-[#f7f7f7] p-4 text-sm text-charcoal/80">
