@@ -31,7 +31,7 @@ export function ExplodedFilm({ className }: { className?: string }) {
     if (video.readyState >= 2) onReady();
 
     const section = (wrap.closest('section') ?? wrap) as HTMLElement;
-    // Fetch the clip only once the block is within a screen of the viewport.
+    // Fetch the clip (0.6 MB) well before the block arrives, so it is ready to play the moment it is centred.
     const loader = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
@@ -39,7 +39,7 @@ export function ExplodedFilm({ className }: { className?: string }) {
         video.load();
         loader.disconnect();
       },
-      { root: null, rootMargin: '100% 0px 100% 0px', threshold: 0 },
+      { root: null, rootMargin: '250% 0px 250% 0px', threshold: 0 },
     );
     loader.observe(section);
 
@@ -107,7 +107,7 @@ export function ExplodedFilm({ className }: { className?: string }) {
             poster={clip.poster}
             muted
             playsInline
-            preload="none"
+            preload="metadata"
             aria-label={clip.alt}
             className={cn('aspect-[776/592] w-full mix-blend-multiply transition-opacity duration-300', ready ? 'opacity-100' : 'opacity-0')}
           />
