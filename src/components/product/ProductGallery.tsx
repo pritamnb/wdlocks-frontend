@@ -28,7 +28,7 @@ export function ProductGallery({ images, name, badge }: { images: WooImage[]; na
           alt={current.alt || name}
           fill
           priority={index === 0}
-          sizes="(max-width: 1024px) 100vw, 50vw"
+          quality={85} sizes="(max-width: 1024px) 100vw, 50vw"
           className="object-contain mix-blend-multiply p-8"
         />
       </div>

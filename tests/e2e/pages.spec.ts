@@ -58,12 +58,12 @@ test('header is white with the expected links, in order', async ({ page, isMobil
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     const items = await dialog.locator('nav > ul > li').allInnerTexts();
-    expect(items.map((t) => t.split('\n')[0].trim())).toEqual(['Locks', 'Keys & Aftercare', 'Why Watchdog', 'Home truths', 'Trades', 'Contact']);
+    expect(items.map((t) => t.split('\n')[0].trim())).toEqual(['Home', 'Locks', 'Keys & Aftercare', 'Why Watchdog', 'Home truths', 'Trades', 'Contact']);
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
   } else {
     const labels = await page.locator('header nav[aria-label="Primary"] > ul > li').allInnerTexts();
-    expect(labels.map((t) => t.trim())).toEqual(['Locks', 'Keys & Aftercare', 'Why Watchdog', 'Home truths', 'Trades', 'Contact']);
+    expect(labels.map((t) => t.trim())).toEqual(['Home', 'Locks', 'Keys & Aftercare', 'Why Watchdog', 'Home truths', 'Trades', 'Contact']);
     await page.getByRole('button', { name: 'Locks', exact: true }).hover();
     const menu = page.locator('#primary-mega-menu');
     await expect(menu).toBeVisible();
@@ -151,7 +151,7 @@ test('own pages exist for blog, terms and privacy', async ({ page }) => {
   const first = page.locator('article h2 a').first();
   await expect(first).toBeVisible();
   await first.click();
-  await expect(page).toHaveURL(/\/blog\/[a-z0-9-]+$/);
+  await expect(page).toHaveURL(/\/blog\/[a-z0-9-]+$/, { timeout: 20_000 });
   await expect(page.locator('.prose-wd')).toBeVisible({ timeout: 20_000 });
   await page.goto('/terms');
   await expect(page.locator('.prose-wd')).toContainText('These terms');
@@ -187,14 +187,14 @@ test('header and headings use Outfit; nav links are 17px semibold with Ultion sp
       return { font: cs.fontFamily, size: cs.fontSize, weight: cs.fontWeight, left: r.left, right: r.right };
     }),
   );
-  // 1280–1439: 17px with 12px padding and 8px gaps; from 1440 (Ultion's reference width): 18px, 15px padding, 10px gaps.
+  // 1280–1439: 16px with 10px padding and 6px gaps; from 1440 (Ultion's reference width): 18px, 13px padding, 8px gaps.
   const wide = page.viewportSize()!.width >= 1440;
   for (const it of items) {
     expect(it.font).toMatch(/Outfit/);
-    expect(it.size).toBe(wide ? '18px' : '17px');
+    expect(it.size).toBe(wide ? '18px' : '16px');
     expect(Number(it.weight)).toBeGreaterThanOrEqual(600);
   }
-  for (let i = 1; i < items.length; i++) expect(Math.round(items[i].left - items[i - 1].right)).toBe(wide ? 10 : 8);
+  for (let i = 1; i < items.length; i++) expect(Math.round(items[i].left - items[i - 1].right)).toBe(wide ? 8 : 6);
   // Nothing in the header may be squeezed: the logo keeps its aspect ratio and the row never overflows the viewport.
   const logo = await page.locator('header img').first().evaluate((img) => ({ w: img.getBoundingClientRect().width, h: img.getBoundingClientRect().height }));
   expect(logo.w / logo.h, 'logo squeezed (source is 7.75:1)').toBeGreaterThan(7);

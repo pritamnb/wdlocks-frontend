@@ -65,7 +65,7 @@ const nextConfig: NextConfig = {
     // Product photos change rarely; keep optimised variants for 31 days so they are not re-transformed daily
     // (every fresh transformation costs ~0.4 s and a Vercel transformation credit). One quality = fewer variants.
     minimumCacheTTL: 60 * 60 * 24 * 31,
-    qualities: [75],
+    qualities: [75, 85],
   },
   async headers() {
     return [

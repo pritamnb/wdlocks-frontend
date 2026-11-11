@@ -11,10 +11,12 @@ export function Protection() {
     <section className="relative overflow-hidden bg-[#f0f0f0]" aria-labelledby="protection-title" id="protection">
       {/* Film layer: full-bleed on desktop, a normal block on phones so the title never sits on top of it. */}
       {/* The exploded view sits on the right, full height, shown whole (it is nearly square); the headline keeps the left. */}
-      <div className="relative lg:absolute lg:inset-y-0 lg:right-0 lg:w-[58%] lg:max-w-none">
-        <ExplodedFilm className="lg:h-full lg:max-w-none [&>video]:lg:h-full [&>video]:lg:w-full [&>video]:lg:object-contain [&>video]:lg:object-right [&_img]:lg:h-full [&_img]:lg:w-full [&_img]:lg:object-contain [&_img]:lg:object-right" />
+      <div className="relative lg:absolute lg:inset-y-6 lg:right-[3%] lg:w-[54%] lg:max-w-none xl:right-[5%] xl:w-[52%]">
+        <ExplodedFilm className="lg:h-full lg:max-w-none [&>video]:lg:h-full [&>video]:lg:w-full [&>video]:lg:object-contain [&>video]:lg:object-center [&_img]:lg:h-full [&_img]:lg:w-full [&_img]:lg:object-contain [&_img]:lg:object-center" />
+        {/* The crop ends mid cam-carrier; fade that edge into the panel (an overlay, so the film's multiply blend is untouched). */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-28 bg-gradient-to-l from-[#f0f0f0] to-transparent lg:block" aria-hidden="true" />
       </div>
-      <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-[#f0f0f0] via-[#f0f0f0]/60 to-transparent lg:block lg:w-[50%]" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-[#f0f0f0] via-[#f0f0f0]/50 to-transparent lg:block lg:w-[44%]" aria-hidden="true" />
       <div className="container-wd relative flex min-h-0 flex-col justify-end pb-16 pt-6 lg:min-h-[680px] lg:justify-center lg:py-20">
         <div className="max-w-md">
           <h2 id="protection-title" className="font-sans text-[2.6rem] font-semibold leading-[1.02] tracking-tight text-[#353535] sm:text-[3.125rem]">

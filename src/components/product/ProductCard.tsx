@@ -9,8 +9,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { useCart } from '@/hooks/useCart';
 import { productPriceLabel, decodeEntities } from '@/lib/wdlocks-api';
 import { primaryImage, ctaLabel, isExternalOnly } from '@/lib/product-helpers';
-import { BRAND_VIDEO, CARD_HOVER_CLIPS, CATALOGUE_BY_ID } from '@/lib/constants';
-import { HoverPreview } from '@/components/media/HoverPreview';
+import { CATALOGUE_BY_ID } from '@/lib/constants';
 import { previewFromProduct } from '@/lib/cart-optimistic';
 import { cn } from '@/lib/cn';
 
@@ -30,7 +29,6 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
   const href = `/products/${entry?.slug ?? product.slug}`;
   const isVariable = product.type === 'variable';
   const externalOnly = isExternalOnly(product);
-  const hoverClip = CARD_HOVER_CLIPS[product.id];
 
   const onCta = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (isVariable) {
@@ -53,21 +51,12 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
   return (
     <article
       className={cn(
-        'group relative grid h-full grid-rows-subgrid row-span-5 gap-y-0 overflow-hidden rounded-[20px] bg-[#f0f0f0]',
-        'transition-transform duration-300 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+        'relative grid h-full grid-rows-subgrid row-span-5 gap-y-0 overflow-hidden rounded-[20px] bg-[#f0f0f0]',
       )}
     >
       <Link href={href} className="relative block aspect-square overflow-hidden" aria-label={name} tabIndex={-1}>
         {image ? (
-          hoverClip ? (
-            // Safari cannot blend <video>, so the card plays a variant of the clip whose white background is pre-tinted to the
-            // tile grey (#f0f0f0, see public/brand/video/*-grey.mp4) and no blend mode is needed.
-            <HoverPreview src={BRAND_VIDEO.clips[hoverClip].mp4.replace(/\.mp4$/, '-grey.mp4')} blend="plain" className="absolute inset-0 bg-[#f0f0f0]">
-              <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
-            </HoverPreview>
-          ) : (
-            <Image src={image.src} alt={image.alt || name} fill priority={priority} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
-          )
+          <Image src={image.src} alt={image.alt || name} fill priority={priority} quality={85} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px" className="object-contain p-5 mix-blend-multiply" />
         ) : (
           <div className="flex h-full items-center justify-center text-charcoal/40">No image</div>
         )}

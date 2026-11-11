@@ -120,6 +120,7 @@ export type MenuGroupId = 'locks' | 'keys';
 
 /** Header navigation. Items with `menu` open a card-style mega-menu (see MegaMenu.tsx). */
 export const NAV_LINKS = [
+  { label: 'Home', href: '/', menu: null },
   { label: 'Locks', href: '/products', menu: 'locks' as MenuGroupId },
   { label: 'Keys & Aftercare', href: '/products#keys-and-aftercare', menu: 'keys' as MenuGroupId },
   { label: 'Why Watchdog', href: '/#why-watchdog', menu: null },
@@ -445,6 +446,8 @@ export const KEY_PRODUCT_IDS: ReadonlySet<number> = new Set([PRODUCT_IDS.EXTRA_K
  */
 export const PRIMARY_IMAGE_OVERRIDES: Readonly<Partial<Record<number, { src: string; width: number; height: number; alt: string }>>> = {
   [PRODUCT_IDS.RIM_CYLINDER]: { src: '/brand/product/rim-cylinder-brass.png', width: 872, height: 872, alt: 'Watchdog brass rim cylinder for nightlatches' },
+  /** Shop photo is 500 × 500; 2× Lanczos upscale. */
+  [PRODUCT_IDS.LUBRICANT]: { src: '/brand/product/lock-lubricant.png', width: 1000, height: 1000, alt: 'Watchdog 3 Star ALPS lock lubricant bottle' },
 };
 
 export const EXTRA_GALLERY_RENDERS: Readonly<Partial<Record<number, ReadonlyArray<keyof typeof BRAND_RENDERS>>>> = {

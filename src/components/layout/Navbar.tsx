@@ -69,7 +69,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
       }}
     >
       {/* Full-width row with 40 px side padding on desktop, like Ultion, so the logo, six links, CTA and basket all fit. */}
-      <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between gap-3 px-4 sm:h-[72px] sm:px-6 lg:h-[100px] lg:px-6">
+      <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between gap-3 px-4 sm:h-[72px] sm:px-6 lg:h-[100px] lg:px-6 wide:px-8">
         <button
           type="button"
           className="-ml-2 inline-flex h-10 w-10 items-center justify-center rounded-md text-near-black transition-colors duration-300 hover:text-red xl:hidden"
@@ -82,10 +82,10 @@ export function Navbar({ products }: { products: WooProduct[] }) {
           </svg>
         </button>
 
-        <Logo priority className="lg:mr-5" />
+        <Logo priority />
 
-        <nav className="hidden flex-1 xl:block" aria-label="Primary">
-          <ul className="flex h-16 items-center gap-2 sm:h-[72px] lg:h-[100px] wide:gap-2.5">
+        <nav className="hidden flex-1 xl:flex xl:justify-end" aria-label="Primary">
+          <ul className="flex h-16 items-center gap-1.5 sm:h-[72px] lg:h-[100px] wide:gap-2">
             {NAV_LINKS.map((link) =>
               link.menu ? (
                 <li
@@ -96,7 +96,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                   <button
                     type="button"
                     className={cn(
-                      'nav-item inline-flex h-full items-center gap-1.5 whitespace-nowrap px-3 text-[17px] font-semibold leading-[1.15] tracking-normal transition-colors duration-300 ease-out hover:text-red wide:px-[15px] wide:text-[18px] ultra:px-5 ultra:text-[20px]',
+                      'nav-item inline-flex h-full items-center gap-1.5 whitespace-nowrap px-2.5 text-[16px] font-semibold leading-[1.15] tracking-normal transition-colors duration-300 ease-out hover:text-red wide:px-[13px] wide:text-[18px] ultra:px-5 ultra:text-[20px]',
                       openGroup === link.menu ? 'nav-item-active text-red' : 'text-near-black',
                     )}
                     aria-expanded={openGroup === link.menu}
@@ -119,7 +119,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                 </li>
               ) : (
                 <li key={link.label}>
-                  <Link href={link.href} className="nav-item inline-flex h-full items-center whitespace-nowrap px-3 text-[17px] font-semibold leading-[1.15] tracking-normal text-near-black transition-colors duration-300 ease-out hover:text-red wide:px-[15px] wide:text-[18px] ultra:px-5 ultra:text-[20px]">
+                  <Link href={link.href} className="nav-item inline-flex h-full items-center whitespace-nowrap px-2.5 text-[16px] font-semibold leading-[1.15] tracking-normal text-near-black transition-colors duration-300 ease-out hover:text-red wide:px-[13px] wide:text-[18px] ultra:px-5 ultra:text-[20px]">
                     {link.label}
                   </Link>
                 </li>
