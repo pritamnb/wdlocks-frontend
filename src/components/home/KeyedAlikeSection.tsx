@@ -1,7 +1,11 @@
 import Link from 'next/link';
-import { ChapterLoop } from '@/components/media/ChapterLoop';
+import { YouTubeEmbed } from '@/components/media/YouTubeEmbed';
 
-/** Ultion's "One key for all locks": the Watchdog keyed-alike service. Fallback visual until the Watchdog keys-merge clip arrives. */
+/**
+ * Ultion's "One key for all locks": the Watchdog keyed-alike service. The panel plays the client's YouTube film
+ * "How to fit a door lock?" (Pritam, 12 Nov: this section "should play this video", youtu.be/rqd_6g9LcFI), muted,
+ * once in view; it replaces the dimple-key chapter loop that stood in until a Watchdog clip arrived.
+ */
 export function KeyedAlikeSection() {
   return (
     <section className="cream-panel border-y border-cream-dark" aria-labelledby="keyed-title">
@@ -18,7 +22,7 @@ export function KeyedAlikeSection() {
           </Link>
         </div>
         <div className="lg:col-span-7">
-          <ChapterLoop clip="dimpleKey" className="mx-auto max-w-[720px] rounded-[2rem]" />
+          <YouTubeEmbed id="rqd_6g9LcFI" title="How to fit a door lock? Watchdog keyed-alike film" poster="/brand/keyed-alike-poster.jpg" className="mx-auto max-w-[720px] rounded-[2rem]" />
         </div>
       </div>
     </section>

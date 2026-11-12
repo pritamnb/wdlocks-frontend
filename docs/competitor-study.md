@@ -717,6 +717,20 @@ Pritam: "prepare it for testing only and not live customer facing Stripe payment
   deploy now passes `--cwd ../wdlocks-frontend-staging` explicitly.
 - Stage 3 (live keys) is deliberately not prepared.
 
+### Pass 37 — 12 Nov 2026: bigger accreditation marks, new rim cylinder render, keyed-alike film
+Three client asks in one go, each verified on production before the push:
+- **"Tested, not claimed" — "the images should be big."** Ultion's 249 × 207 box left the tall Sold Secure mark at 85 px
+  wide and the Kitemark at 117 px on desktop. The three marks now share one height (200 px on phones, 260 px from lg)
+  and scale to it: Sold Secure 246 × 260, Kitemark 260 × 260, Secured by Design 357 × 260 (190/200/327 × 200 on a
+  390 px phone). Secured by Design is the old site's own 1259 px upload, trimmed to 1240 × 760; Sold Secure (218 px)
+  and the Kitemark (300 px) have no larger source on wdlocks.co.uk and the official artwork is only issued to
+  licensees, so those two are soft on 2× screens until the client supplies originals.
+- **Rim cylinder product photo.** Pritam's 1254 px brass render (engraved WATCHDOG) replaces the 4× Lanczos upscale of
+  the 218 px shop photo; served as a 63 KB webp, original kept in client-assets.
+- **"One key for all locks" plays the client's film** "How to fit a door lock?" (youtu.be/rqd_6g9LcFI): a new
+  `YouTubeEmbed` (privacy-enhanced domain, player loaded only once in view, muted autoplay, reduced motion = no
+  autoplay) now serves both this panel and the Sky Sports block; the dimple-key chapter loop stays on the key pages.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

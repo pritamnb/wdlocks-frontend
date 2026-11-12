@@ -447,11 +447,11 @@ export const KEY_PRODUCT_IDS: ReadonlySet<number> = new Set([PRODUCT_IDS.EXTRA_K
 /** Extra gallery images appended after the WooCommerce photos on specific product pages. */
 /**
  * Replacements for WooCommerce product photos that are too small to show large. The rim cylinder photo on
- * wdlocks.co.uk is 218 × 218 px; this is a 4× Lanczos upscale of the same shot (sharper than the browser's own scaling,
- * but still no new detail — a real high-resolution photo from the client should replace it).
+ * wdlocks.co.uk is 218 × 218 px; the 1254 px render is the client's own (Pritam, 12 Nov: "Rim Cylinder replace the
+ * image"), kept at client-assets/product/rim-cylinder-brass-1254.png.
  */
 export const PRIMARY_IMAGE_OVERRIDES: Readonly<Partial<Record<number, { src: string; width: number; height: number; alt: string }>>> = {
-  [PRODUCT_IDS.RIM_CYLINDER]: { src: '/brand/product/rim-cylinder-brass.png', width: 872, height: 872, alt: 'Watchdog brass rim cylinder for nightlatches' },
+  [PRODUCT_IDS.RIM_CYLINDER]: { src: '/brand/product/rim-cylinder-brass-1254.webp', width: 1254, height: 1254, alt: 'Watchdog brass rim cylinder for nightlatches' },
   /** Shop photo is 500 × 500; 2× Lanczos upscale. */
   [PRODUCT_IDS.LUBRICANT]: { src: '/brand/product/lock-lubricant.png', width: 1000, height: 1000, alt: 'Watchdog 3 Star ALPS lock lubricant bottle' },
 };
