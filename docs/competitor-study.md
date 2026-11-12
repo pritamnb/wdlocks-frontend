@@ -666,6 +666,23 @@ clipboard straight into `.env.local` (never through chat); clipboard cleared aft
 - Next: stage 2 needs a WooCommerce REST key (Read/Write) so test-card orders land in the WooCommerce admin; stage 3 is
   live keys on production (runbook in `docs/stripe-checkout-plan.md` §5).
 
+### Pass 35 — 12 Nov 2026: stage 2 verified (test cards → real WooCommerce orders) and the carousel renamed
+- **WooCommerce REST key.** Created in wp-admin via Pritam's signed-in Chrome (WooCommerce → Settings → Advanced →
+  REST API → Add key): "Headless checkout (staging)", owner "Watchdog Locks Team" (#5), Read/Write. Validated by
+  `scripts/stripe-setup.mjs --target staging` (orders endpoint readable), pushed to the staging project, deployed.
+- **Verified on staging** (`tests/e2e/basket-stripe.spec.ts`, now accepting real `wc_order_` keys and order numbers):
+  4242 → WooCommerce order created `pending` by `/api/checkout/intent`, flipped to `processing` by the webhook, "Thank
+  you" page shows the real order number, basket emptied; 0002 → order stays `pending`, shopper sees "declined";
+  3155 → 3-D Secure challenge → `processing`. Orders carry `created_via: headless`, `_headless_site: wdlocks-frontend`
+  and the PaymentIntent id as `transaction_id`. Test orders 6205–6215 were cancelled through the REST API with a note
+  ("TEST ORDER … safe to delete"); customer order 6203 (created via the old checkout) was not touched.
+- Test flakiness fixed: the basket-empty check waits for the Store API (30 s), and the 3-D Secure click now repeats
+  until the return page appears (the first click can land while Stripe's modal is still animating).
+- **Carousel heading** on the homepage is now "How to install Watchdog" (client, 12 Nov; was "See Watchdog in action"),
+  live on production through the main push.
+- Stage 3 (go-live) remains: live keys on production, Apple Pay / Google Pay domain registration, remove
+  `NEXT_PUBLIC_CHECKOUT_MODE=demo` from production, decide the e-mail receipts (Stripe receipt vs WooCommerce's).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

@@ -95,22 +95,23 @@ test('stripe test mode: 4000 0025 0000 3155 asks for 3-D Secure; completing it c
   if (!(await startCheckout(page))) return test.skip(true, 'No Stripe test-mode checkout on this target');
   await fillCard(page, '4000002500003155');
   await placeOrder(page);
-  // Stripe's test challenge is an iframe inside an iframe with a "Complete" button.
-  // Order creation through the WooCommerce REST API can take 10 s or more before the challenge appears.
-  const deadline = Date.now() + 90_000;
-  let completed = false;
-  while (Date.now() < deadline && !completed) {
+  // Stripe's test challenge is an iframe inside an iframe with a "Complete" button. It appears a few seconds after the
+  // order and intent are created (longer with a real WooCommerce order), and a click that lands while the modal is still
+  // animating is lost, so keep clicking until the return page shows up.
+  const deadline = Date.now() + 60_000;
+  let clicks = 0;
+  while (Date.now() < deadline && !/\/checkout\/return\?/.test(page.url())) {
     for (const f of page.frames()) {
       const btn = f.locator('#test-source-authorize-3ds, button:has-text("Complete authentication"), button:has-text("Complete")');
       if (await btn.count().catch(() => 0)) {
-        await btn.first().click().catch(() => {});
-        completed = true;
+        await btn.first().click({ timeout: 2000 }).catch(() => {});
+        clicks += 1;
         break;
       }
     }
-    if (!completed) await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
   }
-  expect(completed, '3-D Secure challenge button found').toBe(true);
+  expect(clicks, '3-D Secure challenge button found').toBeGreaterThan(0);
   await expect(page).toHaveURL(/\/checkout\/return\?order=\d+&key=wc_order_/, { timeout: 40_000 });
   await expect(page.getByText('Thank you, your order is confirmed')).toBeVisible({ timeout: 20_000 });
   await expectEmptyBasket(page);
