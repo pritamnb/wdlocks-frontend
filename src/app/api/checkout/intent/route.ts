@@ -195,7 +195,7 @@ export async function POST(req: Request) {
   // Sandbox stage: a real Stripe PaymentIntent (test mode) for a pretend order held in the signed cookie. The return
   // page reads the intent's outcome through /api/checkout/status; WooCommerce is never touched.
   if (sandbox) {
-    const order = newDemoOrder(totalMinor, body.billing.email ?? '');
+    const order = newDemoOrder(totalMinor, body.billing.email ?? '', body.customerNote);
     let intent: Stripe.PaymentIntent;
     try {
       intent = await getStripe().paymentIntents.create(
@@ -232,7 +232,7 @@ export async function POST(req: Request) {
   // Demo mode: a pretend order in a signed cookie; the client "pays" via POST /api/checkout/demo. Nothing is charged
   // and nothing reaches WooCommerce or Stripe.
   if (demo) {
-    const order = newDemoOrder(totalMinor, body.billing.email ?? '');
+    const order = newDemoOrder(totalMinor, body.billing.email ?? '', body.customerNote);
     const payload: CreatePaymentIntentResponse = {
       clientSecret: `demo_${order.key}_secret`,
       paymentIntentId: `pi_demo_${order.id}`,

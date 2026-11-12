@@ -56,7 +56,6 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   const [billingSame, setBillingSame] = React.useState(true);
   const [billing, setBilling] = React.useState<AddressForm>(EMPTY_ADDRESS);
   const [note, setNote] = React.useState('');
-  const [showNote, setShowNote] = React.useState(false);
   const [terms, setTerms] = React.useState(false);
   const [showErrors, setShowErrors] = React.useState(false);
   const [savingAddress, setSavingAddress] = React.useState(false);
@@ -324,17 +323,11 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
               <ShippingOptions packages={cart.shipping_rates} pending={savingRate || savingAddress} onSelect={(p, r) => void onSelectRate(p, r)} now={now} />
             </div>
             {showErrors && cart.needs_shipping && !selectedRate && <p className="mt-2 text-xs font-medium text-red">Choose a delivery method</p>}
-            <div className="mt-4">
-              {!showNote ? (
-                <button type="button" onClick={() => setShowNote(true)} className="text-sm font-medium text-near-black underline-offset-2 hover:text-red hover:underline">
-                  Add a delivery note
-                </button>
-              ) : (
-                <div>
-                  <label htmlFor="co-note" className={LABEL}>Order notes <span className="font-normal normal-case tracking-normal text-charcoal/50">(optional)</span></label>
-                  <textarea id="co-note" name="note" rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} className={cn(FIELD, 'mt-1.5')} placeholder="Notes about your order, e.g. where to leave the parcel." />
-                </div>
-              )}
+            {/* Always shown (Pritam, 12 Nov: "order notes at payment is missing" — it sat behind an "Add a delivery note"
+                link). Sent as customer_note: the WooCommerce order's customer note, or kept on the demo order. */}
+            <div className="mt-5">
+              <label htmlFor="co-note" className={LABEL}>Order notes <span className="font-normal normal-case tracking-normal text-charcoal/50">(optional)</span></label>
+              <textarea id="co-note" name="note" rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} className={cn(FIELD, 'mt-1.5')} placeholder="Notes about your order, e.g. where to leave the parcel or a safe place." />
             </div>
           </section>
 

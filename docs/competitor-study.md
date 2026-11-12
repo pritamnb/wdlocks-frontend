@@ -800,6 +800,22 @@ html { scroll-behavior: smooth }) before clicking; a coordinate click shows no m
 correction on desktop. The lock-switch e2e matches the new h1 by name (old and new page overlap for <100 ms during the
 commit) and waits 1.5 s instead of 2.5 s.
 
+### Pass 43 — 12 Nov 2026: carousel removed, "How to install Watchdog" rebuilt, order notes always on
+Pritam, three asks:
+1. **"How to install Watchdog" carousel removed with its films** — `VideoBar` and the `VIDEO_BAR` list are gone,
+   `fitting-poster.jpg` deleted. The inside film, turntable and key turntable stay where other blocks use them (hero
+   backdrop, Inside the lock, the key product pages).
+2. **"One key for all locks" kept, renamed "How to install Watchdog"** and rebuilt as `InstallSection`: eyebrow
+   "Fitting guide · 2 min 18 s", heading, three numbered steps (measure to the face of the furniture / 5 mm steps,
+   swap on the single fixing screw, test and register the guarantee), "Shop cylinders" + "Sizing guide" CTAs; the
+   client's "How to fit a door lock?" film on the right with a caption and the phone number. Step copy comes from the
+   film's description and standard euro-cylinder fitting — for the client to check.
+3. **Order notes at payment** — the field existed but sat behind an "Add a delivery note" link in the Delivery step;
+   it is now always shown as "Order notes (optional)". It was already sent as `customer_note` and written to the
+   WooCommerce order (create and update); the demo order now keeps it too (`DemoOrder.customerNote`). Verified on
+   production: the intent request carried the note on a demo payment.
+Desktop + mobile e2e green (52).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

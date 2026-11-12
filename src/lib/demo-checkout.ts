@@ -25,6 +25,8 @@ export interface DemoOrder {
   createdAt: number;
   /** Sandbox stage only: the real Stripe (test-mode) PaymentIntent this pretend order is paid through. */
   intentId?: string;
+  /** The shopper's order notes (what becomes customer_note on a WooCommerce order). */
+  customerNote?: string;
 }
 
 export function isDemoCheckout(): boolean {
@@ -50,7 +52,7 @@ function sign(payload: string): string {
   return createHmac('sha256', signingKey()).update(payload).digest('base64url');
 }
 
-export function newDemoOrder(total: number, email: string): DemoOrder {
+export function newDemoOrder(total: number, email: string, customerNote?: string): DemoOrder {
   const id = 900000 + Math.floor(Math.random() * 99999);
   return {
     id,
@@ -60,6 +62,7 @@ export function newDemoOrder(total: number, email: string): DemoOrder {
     email,
     status: 'pending',
     createdAt: Date.now(),
+    ...(customerNote ? { customerNote } : {}),
   };
 }
 

@@ -39,7 +39,6 @@ export const PRODUCT_IDS = {
 
 export type ProductKey = keyof typeof PRODUCT_IDS;
 
-
 export const SITE = {
   name: 'Watchdog Locks',
   shortName: 'WD Locks',
@@ -285,14 +284,6 @@ export interface VideoBarEntry {
 /** The 40 s manufacturer explainer, opened by the hero's "Watch full video" button. */
 export const EXPLAINER_FILM: VideoBarEntry = { id: 'explainer', title: 'How a Watchdog lock works', durationLabel: '00:40', poster: BRAND_VIDEO.film.poster, mp4: BRAND_VIDEO.film.mp4, aspect: '16/9', blurb: 'Manufacturer film. ' + BRAND_VIDEO.film.chapters };
 
-/** "How to install Watchdog" (was "See Watchdog in action"), in display order. The 15 s drill cut was a repeat of the inside-the-lock film; the client replaced it with his YouTube fitting guide (Paramjit, 11 Nov): "clients get to understand it is simple to do". */
-export const VIDEO_BAR: ReadonlyArray<VideoBarEntry> = [
-  { id: 'fitting', title: 'How to fit a Watchdog lock yourself', durationLabel: '02:18', poster: '/brand/video/fitting-poster.jpg', youtube: 'rqd_6g9LcFI', aspect: '16/9', blurb: 'Step by step: fitting the Watchdog 3 Star ALPS euro cylinder yourself. Measure to the face of the door furniture; cylinders come in 5 mm steps for a flush fit.' },
-  { id: 'inside', title: 'Inside the lock', durationLabel: '00:38', poster: BRAND_VIDEO.insideFilm.poster, mp4: BRAND_VIDEO.insideFilm.mp4, aspect: '5/4', blurb: 'Manufacturer film. ' + BRAND_VIDEO.insideFilm.chapters },
-  { id: 'turntable', title: 'Every angle, every mark', durationLabel: '00:10', poster: BRAND_VIDEO.turntable.poster, mp4: BRAND_VIDEO.turntable.mp4, aspect: '16/9', blurb: 'Silent 3D turntable of the 3 Star ALPS cylinder showing the engraved Kitemark, TS 007 and Sold Secure marks.' },
-  { id: 'key', title: 'The Watchdog key', durationLabel: '00:10', poster: BRAND_VIDEO.clips.keyTurntable.poster, mp4: BRAND_VIDEO.clips.keyTurntable.mp4, aspect: '16/9', blurb: 'Silent 3D turntable of the Watchdog Stays Locked key: dimple cuts and snake groove.' },
-];
-
 
 export type FilmId = 'explainer' | 'inside';
 
@@ -439,7 +430,6 @@ export const PRODUCT_FEATURES: Readonly<Partial<Record<number, ReadonlyArray<Pro
     { eyebrow: 'Everyday', title: 'Fits every fob.', body: 'Room for two keys, a washable cover, and a Watchdog tag so visitors know what it is for.' },
   ],
 };
-
 
 /** Products whose page shows the dimple-key chapter under the gallery. */
 export const KEY_PRODUCT_IDS: ReadonlySet<number> = new Set([PRODUCT_IDS.EXTRA_KEYS_3, PRODUCT_IDS.EXTRA_KEYS_1, PRODUCT_IDS.KEYED_ALIKE]);

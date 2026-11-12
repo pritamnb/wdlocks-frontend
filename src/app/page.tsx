@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { getProductsSSR } from '@/lib/api';
 import { Hero } from '@/components/home/Hero';
 import { TrustStrip } from '@/components/home/TrustStrip';
-import { VideoBar } from '@/components/home/VideoBar';
 import { HomeTruths } from '@/components/home/HomeTruths';
 import { Protection } from '@/components/home/Protection';
 import { InsideTheLock } from '@/components/home/InsideTheLock';
@@ -10,7 +9,7 @@ import { WhyWatchdog } from '@/components/home/WhyWatchdog';
 import { Guarantee } from '@/components/home/Guarantee';
 import { SkySports } from '@/components/home/SkySports';
 import { KeySection } from '@/components/home/KeySection';
-import { KeyedAlikeSection } from '@/components/home/KeyedAlikeSection';
+import { InstallSection } from '@/components/home/InstallSection';
 import { Accreditations } from '@/components/home/Accreditations';
 import { Delivery } from '@/components/home/Delivery';
 import { ProductGrid } from '@/components/product/ProductGrid';
@@ -61,10 +60,9 @@ export default async function HomePage() {
       <HomeTruths />
       <SkySports />
       <KeySection />
-      <KeyedAlikeSection />
+      <InstallSection />
       <InsideTheLock />
       <Guarantee />
-      <VideoBar />
       <Accreditations />
       <Delivery />
     </>
