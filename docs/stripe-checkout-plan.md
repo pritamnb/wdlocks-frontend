@@ -112,8 +112,8 @@ pushes them to Vercel; nothing else changes between stages).
 | Stage | Where | Keys | What happens | Who sees it |
 |---|---|---|---|---|
 | 0 (today) | production wdlocks-frontend.vercel.app | none (`NEXT_PUBLIC_CHECKOUT_MODE=demo`) | pretend provider, pretend orders | everyone — nothing is charged |
-| **1 sandbox** | **staging** wdlocks-frontend-staging.vercel.app | `pk_test_` + `sk_test_` + `whsec_` | real Stripe Payment Element in **test mode**, Stripe's dummy cards, real test-mode PaymentIntents; the order stays a pretend one (cookie), WooCommerce untouched | Pritam + Paramjit, on any phone (no login wall, `noindex`) |
-| 2 orders | staging | + `ck_`/`cs_` WooCommerce REST key | test-card orders appear in the WooCommerce admin as `pending` → `processing`, marked by the webhook; test orders are cancelled afterwards | same |
+| **1 sandbox** ✅ 12 Nov | **staging** wdlocks-frontend-staging.vercel.app | `pk_test_` + `sk_test_` + `whsec_` | real Stripe Payment Element in **test mode**, Stripe's dummy cards, real test-mode PaymentIntents; the order stays a pretend one (cookie), WooCommerce untouched | Pritam + Paramjit, on any phone (no login wall, `noindex`) |
+| 2 orders ✅ 12 Nov | staging | + `ck_`/`cs_` WooCommerce REST key | test-card orders appear in the WooCommerce admin as `pending` → `processing`, marked by the webhook; test orders are cancelled afterwards | same |
 | 3 live | production | `pk_live_` + `sk_live_` + `whsec_` + `ck_`/`cs_` | real money; Apple Pay / Google Pay need the production domain registered under Payment method domains | shoppers |
 
 Staging is its own Vercel project (`wdlocks-frontend-staging`, deployed from the `staging` branch via the git worktree

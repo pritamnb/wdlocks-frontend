@@ -683,6 +683,25 @@ clipboard straight into `.env.local` (never through chat); clipboard cleared aft
 - Stage 3 (go-live) remains: live keys on production, Apple Pay / Google Pay domain registration, remove
   `NEXT_PUBLIC_CHECKOUT_MODE=demo` from production, decide the e-mail receipts (Stripe receipt vs WooCommerce's).
 
+### Pass 35 — 12 Nov 2026: stage 2 verified — test-card orders land in WooCommerce
+Pritam signed in to wp-admin in his Chrome; the REST API key "Headless checkout (staging)" (owner Watchdog Locks Team
+#5, Read/Write) was created on WooCommerce → Settings → Advanced → REST API and written to `.env.local`;
+`stripe-setup.mjs --target staging` confirmed WooCommerce accepts it and pushed `WC_CONSUMER_KEY/SECRET` to the staging
+project; deployed.
+- **Verified on staging (`basket-stripe.spec.ts`, 3/3, 1.6 min):** 4242 → WooCommerce order created `created_via:
+  headless`, marked **processing / paid** by the webhook with the note "Stripe payment succeeded: pi_… via card (visa
+  •••• 4242)" and the intent id as `transaction_id`; declined 0002 → order stays **pending**, shopper sees the
+  decline; 3155 → 3-D Secure challenge → processing / paid. Orders #6205–#6207 and the reruns' orders were then
+  cancelled through the REST API with a note explaining they were test orders (the admin "New order" emails for them
+  were real — WooCommerce sent them as for any order; the shopper's "Processing order" email to test@example.com
+  bounced, as expected for a reserved domain).
+- Fixes along the way: the e2e now accepts real order keys (`wc_order_…`, numbers like #6205) and runs `test.slow()`
+  because REST order creation on the shared host takes 10–20 s per step; the webhook note names the method actually
+  used (brand + last4) rather than every type the intent allowed.
+- Next: stage 3 = live keys on production (`stripe-setup.mjs --target production`), Apple Pay / Google Pay domain
+  registration, remove `NEXT_PUBLIC_CHECKOUT_MODE` from production; and tell Paramjit/Vijay to ignore the cancelled
+  test orders in the admin.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
