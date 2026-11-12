@@ -738,6 +738,15 @@ so the rim cylinder and keyed-alike entries swapped places: 1 cylinder · 2 thum
 cylinder · 5 3 Star keys · 6 1 Star keys · 7 rim cylinder · 8 lubricant · 9 Bruno Teddy. Verified on production;
 desktop + mobile e2e green (52).
 
+### Pass 39 — 12 Nov 2026: "Tested, not claimed" spacing and responsiveness
+Pritam: "increase the spacing and make it responsive". Three columns from 640 px had squashed every mark to 176 px and
+wrapped the titles. Now the three stack until lg (one centred column, 420 px max), then sit three across with 72–96 px
+between them; each mark fills a 6:5 box that follows its column (400 px max), via `fill` + object-contain. A first cut
+with `width/height` + `w-auto` rendered the marks at 136 px: with a `w` srcset the browser sizes an auto-width img from
+the candidate's density (218 px ÷ 640w/400px), so the box must size the image. Spacing: 40 px mark → title, 24 px title
+→ text, 80 px between stacked items, section 64/80/96 px. Measured on production: Sold Secure 213 × 224 on a 390 px
+phone, 269 × 284 at 1440; Secured by Design 351 and 341 px wide.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
