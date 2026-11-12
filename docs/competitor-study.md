@@ -648,6 +648,24 @@ like a staging env" before anything real. Plan and runbook in `docs/stripe-check
 - Main's push now auto-deploys production through the Vercel Git integration (noticed: deployment `ra54fntm3` at
   00:22 came from the push, not the CLI), so a `git push origin main` is a production deploy.
 
+### Pass 34 — 12 Nov 2026: stage 1 live on staging — real Stripe test-mode payments
+Pritam asked for the test keys to be fetched from the client's Stripe dashboard. Via his signed-in Chrome: account menu
+(top left) → "Switch to sandbox" → **Test mode**; the API keys page there already held a `pk_test_` publishable key and
+a full-access `sk_test_` secret key (created 11 Nov). Both were copied with Stripe's own Copy button and pasted from the
+clipboard straight into `.env.local` (never through chat); clipboard cleared afterwards.
+- `node scripts/stripe-setup.mjs --target staging`: account confirmed (GB, Watchdog Locksmiths Ltd, charges enabled),
+  test-mode webhook endpoint `we_1UamNZAi3njqKy9rouoMf5Co` created for
+  `https://wdlocks-frontend-staging.vercel.app/api/stripe/webhook`, keys pushed to the staging project; deployed.
+- **Verified on staging with `tests/e2e/basket-stripe.spec.ts`** (3/3, 58 s): 4242 → return page "Thank you, your
+  order is confirmed", basket emptied; 4000 0000 0000 0002 → "declined" message, stays on /checkout, basket kept;
+  4000 0025 0000 3155 → Stripe's 3-D Secure challenge completed → confirmed. Test skips itself on any target without
+  the "Test mode" banner, so it can never drive live keys. The checkout page never reaches `networkidle` (Stripe.js
+  keeps a socket open) and the card fields live in the iframe titled "Secure payment input frame".
+- The payments show in the Stripe Dashboard (Test mode → Transactions) with `sandbox=true` metadata and a
+  "not a real order" description; the live WooCommerce shop received nothing.
+- Next: stage 2 needs a WooCommerce REST key (Read/Write) so test-card orders land in the WooCommerce admin; stage 3 is
+  live keys on production (runbook in `docs/stripe-checkout-plan.md` §5).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
