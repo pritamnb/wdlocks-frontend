@@ -816,6 +816,17 @@ Pritam, three asks:
    production: the intent request carried the note on a demo payment.
 Desktop + mobile e2e green (52).
 
+### Pass 44 — 12 Nov 2026: install panel film only, new logo artwork
+Pritam, two asks:
+1. **"How to install Watchdog" trimmed to the film** ("Film only"): the three written steps are gone from
+   `InstallSection`; eyebrow, heading, one line of copy ("Watch the fitting film to see how"), the two CTAs and the
+   film with its caption remain. Nothing on the page claims a fitting method any more.
+2. **Logo replaced** with the 2000 × 667 render Pritam sent (same lock-up, black type instead of charcoal). Trimmed to
+   1955 × 251 with the white knocked out → `watchdog-stays-locked.png`; the light variant for the dark panels is
+   rebuilt from it (black → white, red kept). `Logo` now declares 1955 × 251; the aspect is the same as before, so the
+   header height is unchanged. Original kept in client-assets/brand. Verified live: header (desktop), mobile menu
+   (light variant), product-page and Why Watchdog panels use the same component.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
