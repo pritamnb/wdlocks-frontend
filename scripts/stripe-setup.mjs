@@ -153,5 +153,5 @@ for (const [name, value] of Object.entries(vars)) {
   console.log(`✓ Vercel ${TARGET}: ${name}`);
 }
 
-const deployCmd = TARGET === 'staging' ? `cd ${STAGING_DIR} && git merge main && vercel deploy --prod --yes` : 'vercel deploy --prod --yes';
+const deployCmd = TARGET === 'staging' ? `git -C ${STAGING_DIR} merge main && vercel deploy --prod --yes --cwd ${STAGING_DIR}` : 'vercel deploy --prod --yes';
 console.log(`\nDone. Deploy to make it live:\n  ${deployCmd}\nThen test a ${mode}-mode payment at ${siteUrl}/checkout${mode === 'test' ? ' with card 4242 4242 4242 4242' : ''}.`);

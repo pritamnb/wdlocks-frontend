@@ -702,6 +702,21 @@ project; deployed.
   registration, remove `NEXT_PUBLIC_CHECKOUT_MODE` from production; and tell Paramjit/Vijay to ignore the cancelled
   test orders in the admin.
 
+### Pass 36 — 12 Nov 2026: testing only — staging is the client's playground, no live Stripe
+Pritam: "prepare it for testing only and not live customer facing Stripe payment gateway". So:
+- Staging back to stage 1: `WC_CONSUMER_KEY/SECRET` removed from the staging project and redeployed; test purchases
+  create pretend orders (`wc_order_demo…`, #9xxxxx) and real test-mode PaymentIntents, nothing in WooCommerce. Verified
+  with the three card tests (one run hit a momentary "store temporarily unavailable" from the WordPress Store API; the
+  4242 case passed on rerun).
+- Staging domain registered under Payment method domains (test mode): Apple Pay, Google Pay, Link active, so the
+  Express Checkout buttons appear on the test site.
+- Tester guide for Paramjit (plain English: link, the three cards, what to look at, where payments show in the Stripe
+  dashboard, what it is not): https://claude.ai/artifact/9FJYntpUtWQcvQtunFi9m2.
+- Production untouched: demo provider, no Stripe keys. A `vercel deploy` meant for staging landed on the main project
+  once because the shell's working directory had reset; same commit and variables, so no change, but every staging
+  deploy now passes `--cwd ../wdlocks-frontend-staging` explicitly.
+- Stage 3 (live keys) is deliberately not prepared.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

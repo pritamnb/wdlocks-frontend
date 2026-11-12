@@ -128,6 +128,21 @@ Code path per stage (`src/lib/demo-checkout.ts` `isStripeSandbox()`): with Strip
 signature and acknowledges with `{ sandbox: true }` since there is no order to update. The checkout shows a "Test
 mode" banner whenever the publishable key starts with `pk_test_`.
 
+**Decision, 12 Nov 2026 (Pritam): testing only for now.** The staging site is the client's test playground and stays
+at stage 1 (Stripe test keys, pretend orders): the WooCommerce REST key was removed from the staging project again
+after the stage 2 verification so that the client's test purchases never create orders in the live shop or trigger
+WooCommerce e-mails. Production keeps the demo provider and takes no card payments. Stage 3 (live keys, customer
+facing) is **not** prepared and needs a separate go-ahead. The staging domain is registered under Stripe's Payment
+method domains in test mode (`pmd_1UawHSAi3njqKy9rrxhs8Vww`: Apple Pay, Google Pay and Link active), so the wallet
+buttons show on the test site. Tester guide for Paramjit: https://claude.ai/artifact/9FJYntpUtWQcvQtunFi9m2.
+
+To re-run the stage 2 check (real WooCommerce orders from test cards): `node scripts/stripe-setup.mjs --target staging`
+with the `WC_CONSUMER_*` lines in `.env.local`, redeploy staging, run the e2e, then cancel the test orders through the
+REST API (filter `created_via=headless` + `test@example.com`) and remove the two variables from the staging project
+again (`vercel env rm WC_CONSUMER_KEY --environment production --cwd ../wdlocks-frontend-staging`, same for the secret)
+and redeploy. Always pass `--cwd` to `vercel` for the staging project: a bare `vercel deploy` after a `cd` landed on the
+main project once (12 Nov, harmless: same commit, same variables).
+
 Runbook:
 1. Stripe Dashboard (test mode on) → Developers → API keys: copy the publishable and secret test keys into
    `.env.local` (`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`). Keys never go through chat.
