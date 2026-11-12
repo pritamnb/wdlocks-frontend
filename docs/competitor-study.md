@@ -785,6 +785,21 @@ The demo-checkout e2e now waits 3 s before checking the emptied basket, as the S
 the clear without awaiting it; it failed three times in a row on a slow Store API). Noted for later: the basket page
 still says "Payment is taken securely on wdlocks.co.uk" under Proceed in demo mode.
 
+### Pass 42 — 12 Nov 2026: Key operated ↔ Thumb turn switch no longer flickers or resets the scroll
+Pritam: "Radio button switch issue … screen flickers, scrolled (up or below) window resets" on
+/products/3-star-alps-cylinder-door-lock?size=35-35. The switch is a route change to the sibling product. Two causes,
+both measured on production with a scroll/mutation probe:
+- the route's `loading.tsx` skeleton flashed while the sibling page loaded, and the page shrank to it for a moment →
+  `VariationSelector` now prefetches the sibling page (with the chosen size in the href) on mount and whenever the size
+  changes, so the switch commits at once (0 skeleton mutations after; 1 before);
+- the anchor-restore loop that keeps the switch under the cursor re-corrected at 60 ms … 3.2 s, undoing any scroll the
+  shopper made in between (probe: a 400 px scroll 1.2 s after the switch was reverted at 2.2 s) → it now corrects at
+  60/200/500 ms only and stops on the first wheel/touch/key/pointer event (the scroll now sticks).
+A residual 200 px "wobble" in the probe turned out to be Playwright scrolling the button back into view (smoothly, via
+html { scroll-behavior: smooth }) before clicking; a coordinate click shows no movement on a phone and one 17 px
+correction on desktop. The lock-switch e2e matches the new h1 by name (old and new page overlap for <100 ms during the
+commit) and waits 1.5 s instead of 2.5 s.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

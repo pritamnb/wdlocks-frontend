@@ -101,8 +101,9 @@ test('product page: lock switch stays in place, Buy now replaces Checkout now', 
   const before = await switchBtn.boundingBox();
   await switchBtn.click();
   await expect(page).toHaveURL(/3-star-alps-euro-cylinder-thumb-turn-lock\?size=/);
-  await expect(page.locator('h1')).toContainText('Thumb Turn');
-  await page.waitForTimeout(2500); // the anchor restore keeps correcting while images above settle
+  // During the route commit the old and new page briefly overlap (<100 ms), so match the new heading, not "the" h1.
+  await expect(page.getByRole('heading', { level: 1, name: /Thumb Turn/ })).toBeVisible();
+  await page.waitForTimeout(1500); // the anchor restore corrects for up to 500 ms while images above settle
   // Positions are fixed: Thumb turn stays on the right, now checked; Key operated stays on the left.
   await expect(page.getByRole('radio', { name: 'Thumb turn' })).toHaveAttribute('aria-checked', 'true');
   const after = await page.getByRole('radio', { name: 'Thumb turn' }).boundingBox();

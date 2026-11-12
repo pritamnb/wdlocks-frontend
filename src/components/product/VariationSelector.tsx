@@ -98,13 +98,31 @@ export function VariationSelector({ product, onAdded, headingId, className, show
         if (Math.abs(now - top) > 2) window.scrollBy({ top: now - top, behavior: 'instant' as ScrollBehavior });
       };
       settle();
-      // Images and fonts above the configurator can still change height for a moment after the route change.
-      // Mobile browsers clamp scrollY while the new page is still short, so keep correcting for a few seconds.
-      [60, 200, 500, 1000, 1600, 2400, 3200].forEach((ms) => setTimeout(settle, ms));
+      // Images and fonts above the configurator can still change height for a moment after the route change, so
+      // correct a few more times — but only until the shopper scrolls: Pritam, 12 Nov, "scrolled (up or below)
+      // window resets" was this loop (it used to run for 3.2 s) undoing a scroll made after the switch.
+      const timers = [60, 200, 500].map((ms) => setTimeout(settle, ms));
+      const events = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+      const stop = () => {
+        timers.forEach(clearTimeout);
+        events.forEach((ev) => window.removeEventListener(ev, stop));
+      };
+      events.forEach((ev) => window.addEventListener(ev, stop, { passive: true }));
+      return stop;
     } catch {
       /* ignore */
     }
   }, [product.id]);
+
+  // The Key operated ↔ Thumb turn switch is a route change to the sibling product. Prefetch that page (with the size
+  // the shopper has picked, so the href matches) so the switch renders at once instead of flashing the route's loading
+  // skeleton and letting the page shrink to it (Pritam, 12 Nov: "screen flickers").
+  const siblingId = product.id === PRODUCT_IDS.CYLINDER_LOCK ? PRODUCT_IDS.THUMB_TURN : product.id === PRODUCT_IDS.THUMB_TURN ? PRODUCT_IDS.CYLINDER_LOCK : null;
+  const siblingSlug = siblingId ? CATALOGUE_BY_ID[siblingId]?.slug : undefined;
+  const sizeQuery = selected?.short ? `?size=${selected.short.replace('/', '-')}` : '';
+  React.useEffect(() => {
+    if (siblingSlug) router.prefetch(`/products/${siblingSlug}${sizeQuery}`);
+  }, [router, siblingSlug, sizeQuery]);
 
   // A shopper looking at a configurator is likely to add, so establish the basket session now (one call, idempotent).
   React.useEffect(() => {
@@ -144,7 +162,6 @@ export function VariationSelector({ product, onAdded, headingId, className, show
 
   const otherLockId = product.id === PRODUCT_IDS.CYLINDER_LOCK ? PRODUCT_IDS.THUMB_TURN : PRODUCT_IDS.CYLINDER_LOCK;
   const otherLock = CATALOGUE_BY_ID[otherLockId];
-  const sizeQuery = selected?.short ? `?size=${selected.short.replace('/', '-')}` : '';
 
   const add = async (openDrawer: boolean) => {
     setTouched(true);
