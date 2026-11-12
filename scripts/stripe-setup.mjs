@@ -4,7 +4,7 @@
  *
  * Reads the keys from .env.local (never from the command line, so they stay out of shell history and chat):
  *   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY  pk_test_… / pk_live_…
- *   STRIPE_SECRET_KEY                   sk_test_… / sk_live_…  (same mode as the publishable key)
+ *   STRIPE_SECRET_KEY                   sk_test_… / rk_test_… / sk_live_… / rk_live_…  (same mode as the publishable key)
  *   WC_CONSUMER_KEY / WC_CONSUMER_SECRET ck_… / cs_…  (WooCommerce → Settings → Advanced → REST API, Read/Write)
  *   STRIPE_WEBHOOK_SECRET               whsec_… (optional: created for you when missing)
  *
@@ -67,9 +67,10 @@ let whsec = env.STRIPE_WEBHOOK_SECRET;
 
 // 1. Shape checks (no values are ever printed).
 if (!pk || !/^pk_(test|live)_/.test(pk)) fail(`${ENV_FILE}: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY must start with pk_test_ or pk_live_.`);
-if (!sk || !/^sk_(test|live)_/.test(sk)) fail(`${ENV_FILE}: STRIPE_SECRET_KEY must start with sk_test_ or sk_live_ (restricted rk_ keys are not enough).`);
+// Stripe's permission-based keys ("Full access – except sensitive operations") start with rk_; they work the same way.
+if (!sk || !/^(sk|rk)_(test|live)_/.test(sk)) fail(`${ENV_FILE}: STRIPE_SECRET_KEY must start with sk_test_, rk_test_, sk_live_ or rk_live_.`);
 const mode = pk.startsWith('pk_live_') ? 'live' : 'test';
-if (!sk.startsWith(`sk_${mode}_`)) fail(`The publishable key is ${mode} mode but the secret key is not. Both must come from the same mode.`);
+if (!/^(sk|rk)_/.test(sk) || !sk.includes(`_${mode}_`)) fail(`The publishable key is ${mode} mode but the secret key is not. Both must come from the same mode.`);
 const withWc = Boolean(ck || cs);
 if (withWc && (!ck || !ck.startsWith('ck_'))) fail(`${ENV_FILE}: WC_CONSUMER_KEY must start with ck_.`);
 if (withWc && (!cs || !cs.startsWith('cs_'))) fail(`${ENV_FILE}: WC_CONSUMER_SECRET must start with cs_.`);
