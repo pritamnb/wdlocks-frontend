@@ -598,7 +598,7 @@ is centred, pauses off screen).
 ### Pass 31 — 11 Nov 2026, evening: Paramjit's WhatsApp batch and a header overflow
 Paramjit (18:54–19:28): use the YouTube fitting guide https://youtu.be/rqd_6g9LcFI ("How to fit a door lock?", 2:18,
 Watchdog Locksmiths channel) on the main page in place of a film that "is repeated twice", so customers see it is simple
-to fit themselves; a bigger Sky Sports logo "as per this" photo (the photo did not reach us — still open); and the red
+to fit themselves; a bigger Sky Sports logo "as per this" photo (the photo arrived 12 Nov — Pass 32); and the red
 straight-edge key tag render (Watchdog_Red_Straight_Edge(1).pdf) "as it's more realistic". Pritam: the burglar photo goes
 behind the 64 % Home truths figure.
 - **"See Watchdog in action."** The 15 s drill cut was a repeat of the inside-the-lock film; it is replaced by the fitting
@@ -616,6 +616,19 @@ behind the 64 % Home truths figure.
   window, giving a horizontal scrollbar with the basket off screen. Links keep 20 px type with 16 px padding at `ultra`
   and the label stays icon-only from `xl`; no overflow at 360–1920 px on production.
 - 52/52 page tests on production; local screenshots and a width sweep (360–1920) before the deploy.
+
+### Pass 32 — 12 Nov 2026: the Sky Sports logo at the old site's size
+Pritam forwarded Paramjit's reference (a phone screenshot of the "How we protect you" block on wdlocks.co.uk): "As seen
+on" on its own line and the Sky Sports mark under it at about 70 % of the screen width, with "the logo size only" to
+change.
+- The 300 × 171 webp we had (`as-seen-on-sky-sports.png`) went soft at that size, so the old site's own 1400 × 800
+  upload (`wp-content/uploads/2025/05/sky-sports.webp`) was trimmed of its transparent margins and saved as
+  `sky-sports-logo.webp` (1000 × 214, 23 KB). New file name because the image optimiser caches by URL.
+- `SkySports.tsx`: the inline "As seen on + 56/72 px logo" line is now a label line and a 70 %-width logo capped at
+  440 px. Measured on production: 251 × 54 at 390 px (64 % of the screen, the reference is ~70 %), 440 × 94 at 1440 px.
+  No horizontal overflow at either width.
+- Still open from Paramjit's batch: nothing. Longer-standing asks (Stripe keys, photos, exploded render, host cache,
+  Resend key, reviews source, extra-keys rule, Vercel Pro) unchanged.
 
 ## 9. Independent review
 

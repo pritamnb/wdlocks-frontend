@@ -31,6 +31,7 @@ Locations: `~/Downloads/WD/` (raw downloads) · `~/Documents/wdlocks/client-asse
 | **Red straight-edge key tag render** `Watchdog_Red_Straight_Edge(1).pdf` (2700 × 1418 on white) | Paramjit WhatsApp, 11 Nov 19:28 ("more realistic") | Downloads/WD/Images/red_straight → public/brand/product/guarantee-keytag-red.png (cut out, 900 × 1321) | **Yes — Guarantee panel + Home truths "Behind Watchdog"** (replaced the yellow Brisant tag) |
 | **Burglar photo** (balaclava, 1230 × 1066 webp) | Pritam, 11 Nov | public/brand/burglar.jpg | **Yes — behind the Home truths 64 % figure** |
 | **YouTube "How to fit a door lock?"** https://youtu.be/rqd_6g9LcFI (2:18, Watchdog Locksmiths channel) | Paramjit WhatsApp, 11 Nov | embedded (youtube-nocookie); poster public/brand/video/fitting-poster.jpg from the YouTube thumbnail | **Yes — first slot of "See Watchdog in action"** |
+| **Sky Sports logo** (old site's 1400 × 800 upload, `wp-content/uploads/2025/05/sky-sports.webp`) | wdlocks.co.uk, fetched 12 Nov (Paramjit: "increase the Sky Sports logo as per this") | public/brand/sky-sports-logo.webp (trimmed, 1000 × 214) | **Yes — "How we protect you", replaces the 300 px copy** |
 | Old-site product photos (300×300) + logo | Downloads/WD/Images, LOGO1 | — | Logo rebuilt; photos come from the Store API |
 
 ## Ultion-branded — NOT usable (engraving says Ultion)

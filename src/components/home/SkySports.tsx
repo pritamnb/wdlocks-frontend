@@ -48,12 +48,13 @@ export function SkySports() {
   return (
     <section className="bg-white py-16 lg:py-24" aria-labelledby="sky-sports-title">
       <div className="container-wd">
+        {/* Client, 12 Nov: the logo as large as on wdlocks.co.uk — "As seen on" on its own line, the Sky Sports mark
+            under it at about 70% of a phone's width (440 px on desktop). The 1000 px render is the old site's own
+            upload, trimmed; the 300 px one went soft at this size. */}
         <div className="mx-auto max-w-2xl text-center">
           <h2 id="sky-sports-title" className="heading-display text-3xl sm:text-4xl lg:text-5xl">How we protect you</h2>
-          <p className="mt-6 flex items-center justify-center gap-4 text-sm font-semibold uppercase tracking-[0.16em] text-charcoal/70 sm:text-base">
-            As seen on
-            <Image src="/brand/as-seen-on-sky-sports.png" alt="Sky Sports" width={300} height={171} sizes="220px" className="h-14 w-auto sm:h-[72px]" />
-          </p>
+          <p className="mt-6 text-base font-semibold uppercase tracking-[0.16em] text-charcoal/70 sm:text-lg">As seen on</p>
+          <Image src="/brand/sky-sports-logo.webp" alt="Sky Sports" width={1000} height={214} sizes="(min-width: 640px) 440px, 70vw" className="mx-auto mt-4 h-auto w-[70%] max-w-[440px]" />
         </div>
         <div ref={ref} className="relative mx-auto mt-10 aspect-video w-full max-w-5xl overflow-hidden rounded-2xl bg-near-black shadow-card">
           {load ? (
