@@ -7,6 +7,8 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { isSecureRequest } from '@/lib/cart-proxy';
+import { isStripeConfigured } from '@/lib/stripe-server';
+import { isWcRestConfigured } from '@/lib/wc-rest';
 import type { CheckoutOrderStatus, CheckoutStatusResponse } from '@/types';
 
 export const DEMO_ORDER_COOKIE = 'wd_demo_order';
@@ -21,10 +23,22 @@ export interface DemoOrder {
   email: string;
   status: CheckoutOrderStatus;
   createdAt: number;
+  /** Sandbox stage only: the real Stripe (test-mode) PaymentIntent this pretend order is paid through. */
+  intentId?: string;
 }
 
 export function isDemoCheckout(): boolean {
   return process.env.NEXT_PUBLIC_CHECKOUT_MODE === 'demo';
+}
+
+/**
+ * Stage 1 of the payments rollout ("sandbox"): Stripe TEST keys are set but no WooCommerce REST key. The shopper sees
+ * the real Stripe Payment Element and pays with Stripe's test cards; the PaymentIntent is real (test mode, nothing is
+ * charged) while the order stays a pretend one in the cookie, so the live shop sees nothing. Stage 2 adds the
+ * WooCommerce key and every route takes the real order path.
+ */
+export function isStripeSandbox(): boolean {
+  return isDemoCheckout() && isStripeConfigured() && !isWcRestConfigured();
 }
 
 /** Not a secret worth protecting (demo orders are make-believe) — it only keeps the cookie from being hand-edited. */

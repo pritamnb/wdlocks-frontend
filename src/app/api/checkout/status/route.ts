@@ -1,13 +1,30 @@
 import { NextResponse } from 'next/server';
 import { errorResponse } from '@/lib/cart-proxy';
 import { isWcRestConfigured, getOrder, isOrderPaid, toCheckoutStatus, WcRestError } from '@/lib/wc-rest';
-import { isDemoCheckout, readDemoOrder, toDemoStatus } from '@/lib/demo-checkout';
-import type { CheckoutStatusResponse } from '@/types';
+import { isDemoCheckout, isStripeSandbox, readDemoOrder, writeDemoOrder, toDemoStatus, type DemoOrder } from '@/lib/demo-checkout';
+import { getStripe, describeStripeError } from '@/lib/stripe-server';
+import type { CheckoutOrderStatus, CheckoutStatusResponse } from '@/types';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const ORDER_KEY_RE = /^wc_order_[A-Za-z0-9]{1,40}$/;
+
+/** PaymentIntent status → the order status the return page understands (same mapping the webhook applies to real orders). */
+function statusFromIntent(status: string, hadError: boolean): CheckoutOrderStatus {
+  switch (status) {
+    case 'succeeded':
+      return 'processing';
+    case 'processing':
+      return 'on-hold';
+    case 'canceled':
+      return 'cancelled';
+    case 'requires_payment_method':
+      return hadError ? 'failed' : 'pending';
+    default:
+      return 'pending';
+  }
+}
 
 /**
  * GET /api/checkout/status?order=<id>&key=<order_key>
@@ -22,6 +39,20 @@ export async function GET(req: Request) {
   if (isDemoCheckout() && !isWcRestConfigured()) {
     const order = readDemoOrder(req);
     if (!order || String(order.id) !== orderParam || order.key !== key) return errorResponse(404, 'order_not_found', 'Order not found.');
+    // Sandbox stage: the pretend order's status is whatever its real (test-mode) PaymentIntent says.
+    if (isStripeSandbox() && order.intentId && order.status === 'pending') {
+      try {
+        const intent = await getStripe().paymentIntents.retrieve(order.intentId);
+        const next: DemoOrder = { ...order, status: statusFromIntent(intent.status, Boolean(intent.last_payment_error)) };
+        const res = NextResponse.json(toDemoStatus(next), { status: 200, headers: { 'Cache-Control': 'no-store, private' } });
+        if (next.status !== order.status) writeDemoOrder(req, res, next);
+        return res;
+      } catch (err) {
+        const info = describeStripeError(err);
+        console.error('[checkout/status] stripe failure (sandbox)', { type: info.type, code: info.code, requestId: info.requestId });
+        return errorResponse(502, 'upstream_unavailable', 'Could not read the payment status. Please try again.');
+      }
+    }
     return NextResponse.json(toDemoStatus(order), { status: 200, headers: { 'Cache-Control': 'no-store, private' } });
   }
   if (!isWcRestConfigured()) {

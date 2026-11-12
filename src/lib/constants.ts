@@ -18,6 +18,8 @@ export const HANDOFF_PLUGIN_INSTALLED = process.env.NEXT_PUBLIC_CART_HANDOFF_PLU
  * page can be previewed without keys at /checkout?preview=1.
  */
 export const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
+/** Stripe test keys (pk_test_…): the checkout is real but takes only Stripe's test cards and never charges anyone. */
+export const STRIPE_TEST_MODE = STRIPE_PUBLISHABLE_KEY.startsWith('pk_test_');
 /** 'demo' runs the on-site checkout against a pretend payment provider (NEXT_PUBLIC_CHECKOUT_MODE=demo): nothing is charged. */
 export const CHECKOUT_MODE: 'stripe' | 'demo' | 'handoff' = STRIPE_PUBLISHABLE_KEY ? 'stripe' : process.env.NEXT_PUBLIC_CHECKOUT_MODE === 'demo' ? 'demo' : 'handoff';
 

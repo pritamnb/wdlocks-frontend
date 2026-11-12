@@ -108,11 +108,12 @@ async function onChargeRefunded(charge: Stripe.Charge): Promise<void> {
 /**
  * POST /api/stripe/webhook — Stripe → WooCommerce order lifecycle.
  * Events: payment_intent.succeeded, payment_intent.payment_failed, payment_intent.processing, charge.refunded.
- * 400 bad signature · 503 not configured · 500 when WooCommerce could not be updated (so Stripe retries) · 200 otherwise.
+ * 400 bad signature · 503 not configured · 500 when WooCommerce could not be updated (so Stripe retries) · 200 otherwise
+ * (including the sandbox stage, where there is no WooCommerce order to update).
  */
 export async function POST(req: Request) {
   const secret = getStripeWebhookSecret();
-  if (!isStripeConfigured() || !secret || !isWcRestConfigured()) {
+  if (!isStripeConfigured() || !secret) {
     return json(503, { code: 'not-configured', message: 'Webhook is not configured.' });
   }
 
@@ -130,6 +131,13 @@ export async function POST(req: Request) {
 
   if (seenEventIds.has(event.id)) return json(200, { received: true, duplicate: true });
   remember(event.id);
+
+  // Sandbox stage (Stripe test keys, no WooCommerce key): the signature path is exercised for real, but there is no
+  // order to update — acknowledge so Stripe does not retry.
+  if (!isWcRestConfigured()) {
+    console.info('[stripe/webhook] sandbox: acknowledged without an order', { eventId: event.id, type: event.type });
+    return json(200, { received: true, sandbox: true });
+  }
 
   try {
     switch (event.type) {

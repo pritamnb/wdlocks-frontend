@@ -28,7 +28,7 @@ export interface StripePaymentProps {
 
 const appearance: StripeElementsOptions['appearance'] = {
   theme: 'stripe',
-  variables: { colorPrimary: '#1b1a1c', colorText: '#1b1a1c', colorDanger: '#da1519', fontFamily: 'Inter, system-ui, sans-serif', borderRadius: '12px', spacingUnit: '4px' },
+  variables: { colorPrimary: '#1b1a1c', colorText: '#1b1a1c', colorDanger: '#da1519', fontFamily: 'Outfit, system-ui, sans-serif', borderRadius: '12px', spacingUnit: '4px' },
 };
 
 /**
@@ -38,7 +38,7 @@ const appearance: StripeElementsOptions['appearance'] = {
  */
 export function StripePayment(props: StripePaymentProps) {
   const options: StripeElementsOptions = React.useMemo(
-    () => ({ mode: 'payment', amount: Math.max(props.amount, 50), currency: 'gbp', appearance, paymentMethodCreation: 'manual' }),
+    () => ({ mode: 'payment', amount: Math.max(props.amount, 50), currency: 'gbp', appearance, paymentMethodCreation: 'manual', fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap' }] }),
     [props.amount],
   );
   return (

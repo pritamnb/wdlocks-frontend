@@ -25,7 +25,7 @@ import {
   type WooRestOrder,
 } from '@/lib/wc-rest';
 import { RateLimiter, clientIp } from '@/lib/rate-limit';
-import { isDemoCheckout, newDemoOrder, writeDemoOrder } from '@/lib/demo-checkout';
+import { isDemoCheckout, isStripeSandbox, newDemoOrder, writeDemoOrder } from '@/lib/demo-checkout';
 import type { WooCart, CheckoutAddressInput, CreatePaymentIntentResponse } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -148,8 +148,10 @@ export async function POST(req: Request) {
   if (!limiter.allow(clientIp(req))) {
     return errorResponse(429, 'rate_limited', 'Too many checkout attempts. Please wait a minute and try again.');
   }
-  const demo = isDemoCheckout() && !(isStripeConfigured() && isWcRestConfigured());
-  if (!demo && (!isStripeConfigured() || !isWcRestConfigured())) {
+  // Rollout stages: demo (pretend provider) → sandbox (Stripe test keys, pretend orders) → live (Stripe + WooCommerce).
+  const sandbox = isStripeSandbox();
+  const demo = isDemoCheckout() && !sandbox && !(isStripeConfigured() && isWcRestConfigured());
+  if (!demo && !sandbox && (!isStripeConfigured() || !isWcRestConfigured())) {
     return errorResponse(503, 'not-configured', 'Card payments are not available yet. Please use the WooCommerce checkout.');
   }
 
@@ -189,6 +191,43 @@ export async function POST(req: Request) {
   }
 
   const hash = cartHash(cart);
+
+  // Sandbox stage: a real Stripe PaymentIntent (test mode) for a pretend order held in the signed cookie. The return
+  // page reads the intent's outcome through /api/checkout/status; WooCommerce is never touched.
+  if (sandbox) {
+    const order = newDemoOrder(totalMinor, body.billing.email ?? '');
+    let intent: Stripe.PaymentIntent;
+    try {
+      intent = await getStripe().paymentIntents.create(
+        {
+          amount: totalMinor,
+          currency: 'gbp',
+          automatic_payment_methods: { enabled: true },
+          metadata: { sandbox: 'true', demo_order_id: String(order.id), demo_order_key: order.key, cart_hash: hash },
+          description: `WD Locks sandbox order #${order.number} (not a real order)`,
+          ...(body.billing.email ? { receipt_email: body.billing.email } : {}),
+          shipping: toStripeShipping(body.shipping),
+        },
+        { idempotencyKey: `demo-order-${order.id}-${totalMinor}` },
+      );
+    } catch (err) {
+      const info = describeStripeError(err);
+      console.error('[checkout/intent] stripe failure (sandbox)', { type: info.type, code: info.code, requestId: info.requestId });
+      return errorResponse(502, 'payment_init_failed', 'We could not start the payment. Please try again in a moment.');
+    }
+    if (!intent.client_secret) return errorResponse(502, 'payment_init_failed', 'We could not start the payment. Please try again in a moment.');
+    const payload: CreatePaymentIntentResponse = {
+      clientSecret: intent.client_secret,
+      paymentIntentId: intent.id,
+      orderId: order.id,
+      orderKey: order.key,
+      amount: totalMinor,
+      currency: 'gbp',
+    };
+    const res = NextResponse.json(payload, { status: 200, headers: { 'Cache-Control': 'no-store, private' } });
+    writeDemoOrder(req, res, { ...order, intentId: intent.id });
+    return res;
+  }
 
   // Demo mode: a pretend order in a signed cookie; the client "pays" via POST /api/checkout/demo. Nothing is charged
   // and nothing reaches WooCommerce or Stripe.
