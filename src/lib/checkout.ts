@@ -1,4 +1,4 @@
-import { CHECKOUT_URL, HANDOFF_PLUGIN_INSTALLED } from '@/lib/constants';
+import { CHECKOUT_MODE, CHECKOUT_URL, HANDOFF_PLUGIN_INSTALLED } from '@/lib/constants';
 import type { WooCart } from '@/types';
 
 /**
@@ -18,9 +18,16 @@ import type { WooCart } from '@/types';
  *     refresh re-adds it. Therefore native mode only permits single-line baskets (see canCheckout)
  *     and we clear the headless basket on handoff so returning shoppers can't re-send it.
  */
-export function canCheckout(cart: WooCart | null): { ok: boolean; reason?: string } {
+/**
+ * The one-line rule only matters when the basket is handed to wdlocks.co.uk. The on-site checkout (demo or Stripe)
+ * takes any number of lines, so the basket and drawer pass nothing and the rule follows CHECKOUT_MODE; the two places
+ * that really hand off (CheckoutReview, the checkout page's "Continue to secure payment") pass `handoff: true`.
+ * Pritam, 12 Nov: "Yes, remove it" — production runs the on-site checkout and was still showing the message.
+ */
+export function canCheckout(cart: WooCart | null, opts: { handoff?: boolean } = {}): { ok: boolean; reason?: string } {
   if (!cart || cart.items.length === 0) return { ok: false, reason: 'Your basket is empty.' };
-  if (!HANDOFF_PLUGIN_INSTALLED && cart.items.length > 1) {
+  const handoff = opts.handoff ?? CHECKOUT_MODE === 'handoff';
+  if (handoff && !HANDOFF_PLUGIN_INSTALLED && cart.items.length > 1) {
     return {
       ok: false,
       reason:

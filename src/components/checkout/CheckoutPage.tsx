@@ -187,7 +187,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
 
   const handoff = async () => {
     if (!cart || !validate()) return;
-    const gate = canCheckout(cart);
+    const gate = canCheckout(cart, { handoff: true });
     if (!gate.ok) {
       setPayError(gate.reason ?? 'Please review your basket.');
       return;

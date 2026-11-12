@@ -31,7 +31,7 @@ export function CheckoutReview() {
   }, []);
 
   const items = cart?.items ?? [];
-  const gate = canCheckout(cart);
+  const gate = canCheckout(cart, { handoff: true });
 
   const continueToPayment = async () => {
     if (!cart || !gate.ok) return;

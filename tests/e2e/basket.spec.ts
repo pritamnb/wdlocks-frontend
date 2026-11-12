@@ -138,7 +138,9 @@ test('demo checkout: pay with the 4242 test card and land on the confirmation (d
   await expect(page).toHaveURL(/\/checkout\/return\?order=\d+&key=wc_order_demo/);
   await expect(page.getByText('Thank you, your order is confirmed')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText(/Order #9\d{5}/)).toBeVisible();
-  // The basket was emptied by the return page.
+  // The basket was emptied by the return page, which fires the clear without awaiting it; the Store API takes ~2 s a
+  // call on shared hosting, so give it a moment before leaving (as the Stripe spec does) and allow a slow reply.
+  await page.waitForTimeout(3000);
   await page.goto('/basket');
-  await expect(page.getByText('Your basket is currently empty')).toBeVisible();
+  await expect(page.getByText('Your basket is currently empty')).toBeVisible({ timeout: 30_000 });
 });

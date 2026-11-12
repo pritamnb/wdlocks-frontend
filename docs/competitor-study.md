@@ -776,6 +776,15 @@ Pritam: "At payment gateway can we keep the colours of each payment gateway? to 
   native `?add-to-cart=` URL carries one line. Production runs the on-site demo checkout, which takes any number of
   lines, yet the basket and drawer still apply the hand-off gate — a leftover to fix (gate only in handoff mode).
 
+### Pass 41 — 12 Nov 2026: the one-product-line limit only applies when handing off
+Pritam: "Yes, remove it". `canCheckout` now applies the single-line rule only when the basket is really handed to
+wdlocks.co.uk: by default when `CHECKOUT_MODE === 'handoff'` (and the mu-plugin is not installed), and always at the two
+real hand-off points (`CheckoutReview`, the checkout page's "Continue to secure payment"), which pass `handoff: true`.
+Production (demo checkout) verified with a two-line basket: no message, Proceed enabled, checkout shows both lines.
+The demo-checkout e2e now waits 3 s before checking the emptied basket, as the Stripe spec does (the return page fires
+the clear without awaiting it; it failed three times in a row on a slow Store API). Noted for later: the basket page
+still says "Payment is taken securely on wdlocks.co.uk" under Proceed in demo mode.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
