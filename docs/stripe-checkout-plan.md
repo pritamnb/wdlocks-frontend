@@ -136,6 +136,12 @@ facing) is **not** prepared and needs a separate go-ahead. The staging domain is
 method domains in test mode (`pmd_1UawHSAi3njqKy9rrxhs8Vww`: Apple Pay, Google Pay and Link active), so the wallet
 buttons show on the test site. Tester guide for Paramjit: https://claude.ai/artifact/9FJYntpUtWQcvQtunFi9m2.
 
+PayPal and Google Pay were switched on in the account's default payment method configuration
+(`pmc_1UadF6Ai3njqKy9rQnZfckN7`) through the API on 12 Nov (Pritam's go-ahead), so the staging Payment Element now
+shows Card, PayPal, Klarna, Revolut Pay and Amazon Pay tabs plus Link, and the Google Pay button can appear in Chrome.
+In test mode every redirect method (PayPal, Klarna, Revolut Pay, Amazon Pay) lands on a Stripe-hosted test page with
+approve / fail buttons. Live-mode PayPal needs the PayPal activation step in the Stripe Dashboard before stage 3.
+
 To re-run the stage 2 check (real WooCommerce orders from test cards): `node scripts/stripe-setup.mjs --target staging`
 with the `WC_CONSUMER_*` lines in `.env.local`, redeploy staging, run the e2e, then cancel the test orders through the
 REST API (filter `created_via=headless` + `test@example.com`) and remove the two variables from the staging project

@@ -7,6 +7,7 @@ import { confirmDemoPayment, friendlyCartError, CartClientError } from '@/lib/ca
 import { formatPrice } from '@/lib/wdlocks-api';
 import { FIELD } from '@/lib/checkout-form';
 import { cn } from '@/lib/cn';
+import { AmexMark, ApplePayMark, CardMark, GooglePayMark, KlarnaMark, MastercardMark, PayPalMark, VisaMark } from './PaymentMarks';
 
 type Method = 'card' | 'paypal' | 'googlepay' | 'applepay' | 'klarna';
 
@@ -17,6 +18,24 @@ const METHODS: Array<{ id: Method; label: string; hint: string }> = [
   { id: 'paypal', label: 'PayPal', hint: 'Pay in 3 available' },
   { id: 'klarna', label: 'Klarna', hint: 'Pay in 3 interest-free' },
 ];
+
+/** Each tab carries the provider's own mark in its brand colours, like Stripe's Payment Element tabs. */
+const MARK: Record<Method, React.ReactNode> = {
+  card: <CardMark className="text-near-black" />,
+  applepay: <ApplePayMark className="text-near-black" />,
+  googlepay: <GooglePayMark className="text-near-black" />,
+  paypal: <PayPalMark />,
+  klarna: <KlarnaMark />,
+};
+
+/** Pay button in the provider's colours: black Apple Pay / Google Pay, PayPal gold, Klarna pink, our red for cards. */
+const BUTTON: Record<Method, string> = {
+  card: 'bg-red text-white hover:bg-red-deep',
+  applepay: 'bg-black text-white hover:bg-near-black',
+  googlepay: 'bg-black text-white hover:bg-near-black',
+  paypal: 'bg-[#ffc439] text-[#003087] hover:bg-[#f5b92e]',
+  klarna: 'bg-[#ffb3c7] text-near-black hover:bg-[#ffa0ba]',
+};
 
 export interface DemoPaymentProps {
   amount: number;
@@ -112,7 +131,26 @@ export function DemoPayment({ amount, prepare, returnUrl, disabled, onError, chi
     }
   };
 
-  const walletLabel = method === 'applepay' ? 'Pay with Apple Pay' : method === 'googlepay' ? 'Pay with Google Pay' : method === 'paypal' ? 'Pay with PayPal' : method === 'klarna' ? 'Continue with Klarna' : `Pay ${formatPrice(amount)}`;
+  const walletLabel =
+    method === 'applepay' ? (
+      <>
+        Pay with <ApplePayMark className="h-7 text-white" />
+      </>
+    ) : method === 'googlepay' ? (
+      <>
+        Pay with <GooglePayMark className="h-6 text-white" />
+      </>
+    ) : method === 'paypal' ? (
+      <>
+        <PayPalMark className="h-5 w-5" /> Pay with PayPal
+      </>
+    ) : method === 'klarna' ? (
+      <>
+        <KlarnaMark inverted /> Continue with Klarna
+      </>
+    ) : (
+      `Pay ${formatPrice(amount)}`
+    );
 
   return (
     <div className="space-y-4">
@@ -134,8 +172,17 @@ export function DemoPayment({ amount, prepare, returnUrl, disabled, onError, chi
               method === m.id ? 'border-near-black bg-white ring-1 ring-near-black' : 'border-black/10 bg-[#f7f7f7] hover:border-black/30',
             )}
           >
-            <span className="text-sm font-semibold text-near-black">{m.label}</span>
-            <span className="text-[11px] text-charcoal/60">{m.hint}</span>
+            <span className="flex h-5 items-center">{MARK[m.id]}</span>
+            <span className="mt-1.5 text-sm font-semibold text-near-black">{m.label}</span>
+            {m.id === 'card' ? (
+              <span className="mt-1 flex items-center gap-1.5" aria-label={m.hint}>
+                <VisaMark className="h-3" />
+                <MastercardMark className="h-3.5" />
+                <AmexMark className="h-3.5" />
+              </span>
+            ) : (
+              <span className="text-[11px] text-charcoal/60">{m.hint}</span>
+            )}
           </button>
         ))}
       </div>
@@ -187,7 +234,7 @@ export function DemoPayment({ amount, prepare, returnUrl, disabled, onError, chi
         disabled={disabled || busy !== 'idle'}
         className={cn(
           'inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl text-base font-semibold transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50',
-          method === 'card' || method === 'klarna' ? 'bg-red text-white hover:bg-red-deep' : 'bg-near-black text-white hover:bg-charcoal',
+          BUTTON[method],
         )}
       >
         {busy !== 'idle' && <Spinner />}

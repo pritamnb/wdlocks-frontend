@@ -747,6 +747,20 @@ the candidate's density (218 px ÷ 640w/400px), so the box must size the image. 
 → text, 80 px between stacked items, section 64/80/96 px. Measured on production: Sold Secure 213 × 224 on a 390 px
 phone, 269 × 284 at 1440; Secured by Design 351 and 341 px wide.
 
+### Pass 40 — 12 Nov 2026: payment tabs in each provider's own colours; PayPal and Google Pay on in Stripe
+Pritam: "At payment gateway can we keep the colours of each payment gateway? to look authentic?"
+- Demo provider (`DemoPayment.tsx`, the live site's pretend checkout): every tab now carries the provider's mark in its
+  brand colours like Stripe's Payment Element tabs: generic card icon with Visa / Mastercard / Amex marks under it,
+  black Apple Pay and Google Pay marks, PayPal blue monogram, Klarna pink badge. The pay button follows the method:
+  black "Pay with  Pay" / "Pay with G Pay", PayPal gold with the blue wordmark, Klarna pink, our red for cards. Marks
+  are the CC0 Simple Icons glyphs in `src/components/checkout/PaymentMarks.tsx` (Mastercard drawn by hand); the wide
+  wordmarks use a cropped viewBox so `h-* w-auto` gives them real width.
+- Stripe test mode: PayPal and Google Pay switched on in the account's default payment method configuration through
+  the API (Pritam's go-ahead); the staging Payment Element now shows Card, PayPal, Klarna, Revolut Pay, Amazon Pay
+  tabs plus Link. Noted in stripe-checkout-plan.md §5.
+- Checked locally on a demo-mode dev server (`.claude/launch.json` → `dev-demo`, Stripe key blanked, port 3001) at
+  1280 px and 390 px, then on production after the push.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
