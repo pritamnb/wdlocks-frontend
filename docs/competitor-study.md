@@ -630,6 +630,24 @@ change.
 - Still open from Paramjit's batch: nothing. Longer-standing asks (Stripe keys, photos, exploded render, host cache,
   Resend key, reviews source, extra-keys rule, Vercel Pro) unchanged.
 
+### Pass 33 — 12 Nov 2026: payments rollout, stage 1 ready (Stripe test mode on a staging site)
+Pritam has access to the client's Stripe account and asked to go step by step: "dummy transactions with dummy cards,
+like a staging env" before anything real. Plan and runbook in `docs/stripe-checkout-plan.md` §5.
+- **Staging site:** https://wdlocks-frontend-staging.vercel.app — its own Vercel project deployed from the new `staging`
+  branch (worktree `../wdlocks-frontend-staging`), because preview deployments sit behind Vercel's login wall, which the
+  client's phone and Stripe's webhook cannot pass. Same WooCommerce backend, `NEXT_PUBLIC_CHECKOUT_MODE=demo`, `noindex`
+  + robots disallow (`IS_STAGING`). The demo 4242 checkout e2e passes there (53/53 with its page-test dependencies).
+- **Sandbox stage in code:** Stripe test keys without a WooCommerce key now run the real Payment Element and real
+  test-mode PaymentIntents against the pretend cookie order (`isStripeSandbox()` in intent/status/webhook); a "Test
+  mode" banner shows whenever the publishable key is `pk_test_`. Stripe's Elements iframe now loads Outfit (was Inter).
+- **`scripts/stripe-setup.mjs --target staging|production`:** validates key shapes and modes, calls Stripe to confirm
+  the account, checks the WooCommerce REST key when present, creates/updates the webhook endpoint (writes `whsec_` to
+  `.env.local`), pushes the variables to the right Vercel project. Keys are read from `.env.local` only.
+- **Waiting on Pritam:** the test publishable + secret key pasted into `.env.local` (placeholders added). Then stage 1
+  is one command plus a staging deploy. The WooCommerce REST key is stage 2; live keys are stage 3.
+- Main's push now auto-deploys production through the Vercel Git integration (noticed: deployment `ra54fntm3` at
+  00:22 came from the push, not the CLI), so a `git push origin main` is a production deploy.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

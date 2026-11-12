@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { outfit } from '@/lib/fonts';
 import { RootLayout as SiteChrome } from '@/components/layout/RootLayout';
-import { SITE, SITE_URL } from '@/lib/constants';
+import { IS_STAGING, SITE, SITE_URL } from '@/lib/constants';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     title: `${SITE.name} | BSI Kitemarked 3 Star Euro Cylinder Locks`,
     description: SITE.description,
   },
-  robots: { index: true, follow: true },
+  robots: IS_STAGING ? { index: false, follow: false } : { index: true, follow: true },
   icons: { icon: '/favicon.ico' },
 };
 

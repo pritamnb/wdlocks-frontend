@@ -16,7 +16,7 @@
  *   2. staging + test keys + WooCommerce key    → test-card orders appear in the WooCommerce admin
  *   3. production + live keys + WooCommerce key → go-live
  *
- *   node scripts/stripe-setup.mjs --target staging       Vercel preview env for the `staging` branch
+ *   node scripts/stripe-setup.mjs --target staging       the wdlocks-frontend-staging Vercel project (staging branch)
  *   node scripts/stripe-setup.mjs --target production    Vercel production
  *   add --check to only validate the keys and change nothing
  */
@@ -28,9 +28,14 @@ const ENV_FILE = '.env.local';
 const CHECK_ONLY = process.argv.includes('--check');
 const TARGET = process.argv[process.argv.indexOf('--target') + 1];
 if (!['staging', 'production'].includes(TARGET)) fail('Pass --target staging or --target production.');
-const STAGING_URL = 'https://wdlocks-frontend-git-staging-pritamnbs-projects.vercel.app';
-/** `vercel env add NAME --environment <env> [--git-branch staging]` */
-const VERCEL_SCOPE = TARGET === 'staging' ? ['--environment', 'preview', '--git-branch', 'staging'] : ['--environment', 'production'];
+/**
+ * Staging is its own Vercel project (wdlocks-frontend-staging, no login wall, deployed from the `staging` branch in the
+ * git worktree ../wdlocks-frontend-staging) because preview deployments on this plan sit behind Vercel Authentication,
+ * which Stripe's webhook and the client's phone could not get through.
+ */
+const STAGING_URL = 'https://wdlocks-frontend-staging.vercel.app';
+const STAGING_DIR = new URL('../../wdlocks-frontend-staging/', import.meta.url).pathname;
+const VERCEL_CWD = TARGET === 'staging' ? STAGING_DIR : process.cwd();
 const WEBHOOK_EVENTS = ['payment_intent.succeeded', 'payment_intent.payment_failed', 'payment_intent.processing', 'charge.refunded'];
 const STRIPE_API_VERSION = '2026-10-28.endive';
 
@@ -134,17 +139,18 @@ const vars = {
   STRIPE_SECRET_KEY: sk,
   STRIPE_WEBHOOK_SECRET: whsec,
   ...(withWc ? { WC_CONSUMER_KEY: ck, WC_CONSUMER_SECRET: cs } : {}),
-  ...(TARGET === 'staging' ? { NEXT_PUBLIC_SITE_URL: STAGING_URL, NEXT_PUBLIC_CHECKOUT_MODE: 'demo' } : {}),
+  ...(TARGET === 'staging' ? { NEXT_PUBLIC_CHECKOUT_MODE: 'demo' } : {}),
 };
 for (const [name, value] of Object.entries(vars)) {
-  const r = spawnSync('vercel', ['env', 'add', name, ...VERCEL_SCOPE, '--force', '--sensitive'], { input: value, encoding: 'utf8' });
+  const args = ['env', 'add', name, '--environment', 'production', '--force'];
+  const r = spawnSync('vercel', [...args, '--sensitive'], { input: value, encoding: 'utf8', cwd: VERCEL_CWD });
   if (r.status !== 0) {
     // --sensitive is only available on some plans; retry without it.
-    const r2 = spawnSync('vercel', ['env', 'add', name, ...VERCEL_SCOPE, '--force'], { input: value, encoding: 'utf8' });
+    const r2 = spawnSync('vercel', args, { input: value, encoding: 'utf8', cwd: VERCEL_CWD });
     if (r2.status !== 0) fail(`vercel env add ${name} failed:\n${(r2.stderr || r2.stdout).trim()}`);
   }
   console.log(`✓ Vercel ${TARGET}: ${name}`);
 }
 
-const deployCmd = TARGET === 'staging' ? 'git checkout staging && git merge main && vercel deploy --yes' : 'vercel deploy --prod --yes';
+const deployCmd = TARGET === 'staging' ? `cd ${STAGING_DIR} && git merge main && vercel deploy --prod --yes` : 'vercel deploy --prod --yes';
 console.log(`\nDone. Deploy to make it live:\n  ${deployCmd}\nThen test a ${mode}-mode payment at ${siteUrl}/checkout${mode === 'test' ? ' with card 4242 4242 4242 4242' : ''}.`);

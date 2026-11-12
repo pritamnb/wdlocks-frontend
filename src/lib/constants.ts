@@ -9,6 +9,8 @@ export const STORE_API = `${WC_BASE}/wp-json/wc/store/v1`;
 export const CHECKOUT_URL = `${WC_BASE}/checkout/`;
 export const SITE_URL =
   (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+/** The staging deployment (wdlocks-frontend-staging.vercel.app, payments rollout): never indexed. */
+export const IS_STAGING = /-staging\./.test(SITE_URL);
 /** true once backend/wd-cart-handoff.php is installed on WordPress — enables multi-line checkout handoff. */
 export const HANDOFF_PLUGIN_INSTALLED = process.env.NEXT_PUBLIC_CART_HANDOFF_PLUGIN === 'true';
 

@@ -102,3 +102,43 @@ What to request from the client:
 5. Decide PayPal: through Stripe (recommended) or keep the PayPal business account (then PayPal REST client id/secret, sandbox + live). Decide whether Trustly is needed (not available via Stripe; drop or keep via PayPal).
 6. Optional for approach (a): install `WooCommerce Stripe Gateway`, connect it to the same account, enable Klarna/Clearpay/PayPal sub-gateways, and tell us the publishable key; the Store API checkout endpoint is already enabled, so no further WP change is needed.
 7. Copy of the terms/privacy wording and the order-confirmation email template to keep the same content; VAT number for receipts.
+
+## 5. Rollout stages (12 Nov 2026) — "step wise, dummy cards first"
+
+Pritam has access to the client's Stripe account (`acct_1UadEbAi3njqKy9r`). The checkout goes live in three stages, each
+switched purely by which keys are present (`scripts/stripe-setup.mjs` validates the keys, registers the webhook and
+pushes them to Vercel; nothing else changes between stages).
+
+| Stage | Where | Keys | What happens | Who sees it |
+|---|---|---|---|---|
+| 0 (today) | production wdlocks-frontend.vercel.app | none (`NEXT_PUBLIC_CHECKOUT_MODE=demo`) | pretend provider, pretend orders | everyone — nothing is charged |
+| **1 sandbox** | **staging** wdlocks-frontend-staging.vercel.app | `pk_test_` + `sk_test_` + `whsec_` | real Stripe Payment Element in **test mode**, Stripe's dummy cards, real test-mode PaymentIntents; the order stays a pretend one (cookie), WooCommerce untouched | Pritam + Paramjit, on any phone (no login wall, `noindex`) |
+| 2 orders | staging | + `ck_`/`cs_` WooCommerce REST key | test-card orders appear in the WooCommerce admin as `pending` → `processing`, marked by the webhook; test orders are cancelled afterwards | same |
+| 3 live | production | `pk_live_` + `sk_live_` + `whsec_` + `ck_`/`cs_` | real money; Apple Pay / Google Pay need the production domain registered under Payment method domains | shoppers |
+
+Staging is its own Vercel project (`wdlocks-frontend-staging`, deployed from the `staging` branch via the git worktree
+`../wdlocks-frontend-staging`): preview deployments on this plan sit behind Vercel Authentication, which neither the
+client's phone nor Stripe's webhook can pass. `IS_STAGING` (derived from `NEXT_PUBLIC_SITE_URL`) makes robots and the
+page metadata `noindex`.
+
+Code path per stage (`src/lib/demo-checkout.ts` `isStripeSandbox()`): with Stripe keys but no WooCommerce key and
+`NEXT_PUBLIC_CHECKOUT_MODE=demo`, `/api/checkout/intent` creates a real test-mode PaymentIntent (metadata
+`sandbox=true`, `demo_order_id`) for the cookie order, `/api/checkout/status` reads the intent's status back
+(succeeded → processing/paid, requires_payment_method with an error → failed), and `/api/stripe/webhook` verifies the
+signature and acknowledges with `{ sandbox: true }` since there is no order to update. The checkout shows a "Test
+mode" banner whenever the publishable key starts with `pk_test_`.
+
+Runbook:
+1. Stripe Dashboard (test mode on) → Developers → API keys: copy the publishable and secret test keys into
+   `.env.local` (`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`). Keys never go through chat.
+2. `node scripts/stripe-setup.mjs --target staging` → checks the keys, creates the webhook endpoint for
+   `https://wdlocks-frontend-staging.vercel.app/api/stripe/webhook` (writes `STRIPE_WEBHOOK_SECRET` back), pushes
+   the variables to the staging project.
+3. `cd ../wdlocks-frontend-staging && git merge main && vercel deploy --prod --yes`, then pay on staging with
+   `4242 4242 4242 4242` (any future expiry, any CVC); `4000 0000 0000 0002` declined; `4000 0025 0000 3155` 3-D Secure.
+   Payments appear in the Stripe Dashboard (test mode) → Payments.
+4. Stage 2: WooCommerce → Settings → Advanced → REST API → Add key (Read/Write) into `.env.local`
+   (`WC_CONSUMER_KEY/SECRET`), rerun step 2 and 3.
+5. Stage 3: live keys in `.env.local`, `node scripts/stripe-setup.mjs --target production`, `vercel deploy --prod --yes`,
+   register the domain for Apple Pay / Google Pay, remove `NEXT_PUBLIC_CHECKOUT_MODE` from production.
+
