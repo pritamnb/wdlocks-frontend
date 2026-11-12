@@ -33,7 +33,7 @@ export interface CartContextValue {
   itemCount: number;
   /** Items subtotal including VAT, in pence — matches the inc-VAT prices shown on cards. */
   subtotalPence: number;
-  /** Cart keys currently being mutated (disable their controls). */
+  /** Cart keys with a change the server has not confirmed yet (checkout waits for these; the controls stay live). */
   pendingKeys: ReadonlySet<string>;
   isAdding: boolean;
   isOpen: boolean;
@@ -104,6 +104,8 @@ function createSequence() {
 const REFOCUS_REFRESH_MS = 5 * 60_000;
 /** Warm the session shortly after load when the page is idle, so the first click is fast even without a hover. */
 const IDLE_WARM_MS = 4_000;
+/** How long after the last +/− tap the new quantity is sent (one request per burst of taps). */
+const QUANTITY_DEBOUNCE_MS = 350;
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
@@ -226,12 +228,86 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const markPending = React.useCallback((key: string, on: boolean) => {
     setPendingKeys((prev) => {
+      if (on === prev.has(key)) return prev;
       const next = new Set(prev);
       if (on) next.add(key);
       else next.delete(key);
       return next;
     });
   }, []);
+
+  // Quantity changes (Pritam, 12 Nov: "+/− and checkout feel slow"). Every tap changes the line at once and the
+  // controls never lock. The Store API (2–3 s a call) gets one request per burst of taps, carrying the final
+  // quantity, and update/remove requests run one at a time so WooCommerce never saves the same session twice at
+  // once. A server reply only fills in what the shopper has not changed since it was sent.
+  const desiredQty = React.useRef(new Map<string, number>());
+  const removingKeys = React.useRef(new Set<string>());
+  const flushTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushing = React.useRef(false);
+  const mutationChain = React.useRef<Promise<void>>(Promise.resolve());
+
+  /**
+   * Stores a cart from the server, keeping the shopper's unsent quantities, lines being removed and provisional
+   * lines from adds still in flight (except `settledTemp`, the provisional line this reply replaces).
+   */
+  const commitCart = React.useCallback((next: WooCart, settledTemp?: string) => {
+    const temps = (cartRef.current?.items ?? []).filter((i) => isOptimisticKey(i.key) && i.key !== settledTemp);
+    let merged = next;
+    if (desiredQty.current.size > 0 || removingKeys.current.size > 0 || temps.length > 0) {
+      const items = next.items
+        .filter((i) => !removingKeys.current.has(i.key))
+        .map((i) => {
+          const q = desiredQty.current.get(i.key);
+          return q === undefined || q === i.quantity ? i : scaleLine(i, q);
+        });
+      merged = withOptimisticItems(next, [...items, ...temps]);
+    }
+    cartRef.current = merged;
+    setCart(merged);
+    setStatus('ready');
+    setError(null);
+  }, []);
+
+  /** Sends queued quantities one request at a time until none are left (taps during a request queue the next). */
+  const flushQuantities = React.useCallback(() => {
+    if (flushTimer.current) {
+      clearTimeout(flushTimer.current);
+      flushTimer.current = null;
+    }
+    if (flushing.current) return; // the running loop picks up whatever was queued
+    flushing.current = true;
+    mutationChain.current = mutationChain.current.then(async () => {
+      try {
+        for (;;) {
+          const entry = [...desiredQty.current].find(([k]) => !isOptimisticKey(k));
+          if (!entry) break;
+          const [key, quantity] = entry;
+          try {
+            const next = await updateItem({ key, quantity });
+            if (desiredQty.current.get(key) === quantity) desiredQty.current.delete(key);
+            commitCart(next);
+            if (!desiredQty.current.has(key) && !removingKeys.current.has(key)) markPending(key, false);
+          } catch (err) {
+            // Drop every unsent change and show the server's basket again.
+            for (const k of [...desiredQty.current.keys()]) {
+              if (isOptimisticKey(k)) continue;
+              desiredQty.current.delete(k);
+              if (!removingKeys.current.has(k)) markPending(k, false);
+            }
+            toast({ type: 'error', message: friendlyCartError(err) });
+            void load();
+          }
+        }
+      } finally {
+        flushing.current = false;
+      }
+    });
+  }, [commitCart, markPending, toast, load]);
+
+  const scheduleFlush = React.useCallback(() => {
+    if (flushTimer.current) clearTimeout(flushTimer.current);
+    flushTimer.current = setTimeout(flushQuantities, QUANTITY_DEBOUNCE_MS);
+  }, [flushQuantities]);
 
   const addToCart = React.useCallback(
     async ({ id, quantity = 1, variation, name, openDrawer = true, preview }: AddToCartInput) => {
@@ -240,6 +316,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       mutationSeq.bump();
       // Optimistic: show the line and open the drawer immediately; the server cart replaces it when it arrives.
       const snapshot = cartRef.current;
+      const knownKeys = new Set((snapshot?.items ?? []).map((i) => i.key));
       let tempKey: string | null = null;
       if (preview) {
         const base = snapshot ?? emptyCart();
@@ -257,10 +334,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Let an in-flight session fetch finish first so the add joins that session (one cookie, one basket).
         if (warmPromise.current) await warmPromise.current.catch(() => undefined);
         const next = await addItem({ id, quantity, variation });
-        cartRef.current = next;
-        setCart(next);
-        setStatus('ready');
-        setError(null);
+        // +/− pressed on the provisional line while the add was in flight: carry the change over to the real line.
+        const tempWanted = tempKey ? desiredQty.current.get(tempKey) : undefined;
+        if (tempKey) desiredQty.current.delete(tempKey);
+        if (tempWanted !== undefined && tempWanted !== quantity) {
+          const real = next.items.find((i) => i.id === id && !knownKeys.has(i.key)) ?? next.items.find((i) => i.id === id);
+          if (real) {
+            desiredQty.current.set(real.key, Math.max(1, real.quantity + tempWanted - quantity));
+            markPending(real.key, true);
+            scheduleFlush();
+          }
+        }
+        commitCart(next, tempKey ?? undefined);
         toast({
           type: 'success',
           message: name ? `${name} added to basket ✓` : 'Added to basket ✓',
@@ -270,6 +355,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return true;
       } catch (err) {
         if (tempKey) {
+          desiredQty.current.delete(tempKey);
           // Roll the provisional line back (keep anything else that landed meanwhile).
           const current = cartRef.current;
           if (current) {
@@ -285,48 +371,66 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsAdding(false);
       }
     },
-    [toast, openCart, markPending, mutationSeq],
+    [toast, openCart, markPending, mutationSeq, commitCart, scheduleFlush],
   );
 
   const removeCartItem = React.useCallback(
     async (key: string) => {
       const snapshot = cartRef.current;
-      if (!snapshot) return false;
+      if (!snapshot || isOptimisticKey(key)) return false;
       const item = snapshot.items.find((i) => i.key === key);
+      if (!item) return false;
       mutationSeq.bump();
+      desiredQty.current.delete(key);
+      removingKeys.current.add(key);
       // Optimistic removal
-      setCart(withOptimisticItems(snapshot, snapshot.items.filter((i) => i.key !== key)));
+      const without = withOptimisticItems(snapshot, snapshot.items.filter((i) => i.key !== key));
+      cartRef.current = without;
+      setCart(without);
       markPending(key, true);
-      try {
-        const next = await removeItem({ key });
-        setCart(next);
-        if (item) {
+      let ok = false;
+      const run = mutationChain.current.then(async () => {
+        try {
+          const next = await removeItem({ key });
+          removingKeys.current.delete(key);
+          commitCart(next);
+          ok = true;
           const undo = async () => {
             try {
-              const restored = await addItem({ id: item.id, quantity: item.quantity });
-              setCart(restored);
+              commitCart(await addItem({ id: item.id, quantity: item.quantity }));
             } catch (err) {
               toast({ type: 'error', message: friendlyCartError(err) });
             }
           };
           toast({ type: 'info', message: `${item.name} removed`, duration: 6000, action: { label: 'Undo', onClick: () => void undo() } });
+        } catch (err) {
+          removingKeys.current.delete(key);
+          // Put the line back, then resync with the server's truth.
+          const current = cartRef.current;
+          if (current && !current.items.some((i) => i.key === key)) {
+            const restored = withOptimisticItems(current, [...current.items, item]);
+            cartRef.current = restored;
+            setCart(restored);
+          }
+          toast({ type: 'error', message: friendlyCartError(err) });
+          void load();
+        } finally {
+          markPending(key, false);
         }
-        return true;
-      } catch (err) {
-        setCart(snapshot); // rollback, then resync with the server's truth
-        toast({ type: 'error', message: friendlyCartError(err) });
-        void load();
-        return false;
-      } finally {
-        markPending(key, false);
-      }
+      });
+      mutationChain.current = run;
+      await run;
+      return ok;
     },
-    [toast, markPending, load, mutationSeq],
+    [toast, markPending, load, mutationSeq, commitCart],
   );
 
   const clearCart = React.useCallback(async () => {
     try {
       const next = await clearCartRequest();
+      desiredQty.current.clear();
+      removingKeys.current.clear();
+      cartRef.current = next;
       setCart(next);
       return true;
     } catch (err) {
@@ -335,33 +439,30 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  /** Changes a line's quantity at once; the request follows when the taps stop (see flushQuantities). */
   const updateCartItem = React.useCallback(
     async (key: string, quantity: number) => {
-      const snapshot = cartRef.current;
-      if (!snapshot) return false;
-      const item = snapshot.items.find((i) => i.key === key);
-      if (!item) return false;
+      const current = cartRef.current;
+      if (!current || !current.items.some((i) => i.key === key)) return false;
       if (quantity <= 0) return removeCartItem(key);
 
       mutationSeq.bump();
-      // Optimistic update
-      setCart(withOptimisticItems(snapshot, snapshot.items.map((i) => (i.key === key ? scaleLine(i, quantity) : i))));
+      desiredQty.current.set(key, quantity);
+      const next = withOptimisticItems(current, current.items.map((i) => (i.key === key ? scaleLine(i, quantity) : i)));
+      cartRef.current = next;
+      setCart(next);
       markPending(key, true);
-      try {
-        const next = await updateItem({ key, quantity });
-        setCart(next);
-        return true;
-      } catch (err) {
-        setCart(snapshot); // rollback, then resync with the server's truth
-        toast({ type: 'error', message: friendlyCartError(err) });
-        void load();
-        return false;
-      } finally {
-        markPending(key, false);
-      }
+      // A provisional line has no server key yet; addToCart sends its quantity once the add lands.
+      if (!isOptimisticKey(key)) scheduleFlush();
+      return true;
     },
-    [toast, markPending, removeCartItem, load, mutationSeq],
+    [markPending, removeCartItem, mutationSeq, scheduleFlush],
   );
+
+  // Never leave a timer running after unmount.
+  React.useEffect(() => () => {
+    if (flushTimer.current) clearTimeout(flushTimer.current);
+  }, []);
 
   const itemCount = cart?.items_count ?? 0;
   const subtotalPence = cart ? sumPence(cart.totals.total_items, cart.totals.total_items_tax) : 0;

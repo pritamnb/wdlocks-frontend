@@ -124,7 +124,7 @@ export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
             <dd className="font-playfair text-2xl font-semibold tabular-nums text-near-black">{formatPrice(subtotalPence)}</dd>
           </dl>
           <p className="mt-1 text-xs text-charcoal/75">Royal Mail tracked delivery from {formatPrice(640)}, chosen at checkout.</p>
-          <ButtonLink href="/checkout" size="lg" className={`mt-4 w-full ${pendingKeys.size > 0 || !checkout.ok ? 'pointer-events-none opacity-50' : ''}`} aria-disabled={pendingKeys.size > 0 || !checkout.ok} onClick={closeCart}>
+          <ButtonLink href="/checkout" size="lg" className={`mt-4 w-full ${!checkout.ok ? 'pointer-events-none opacity-50' : ''}`} aria-disabled={!checkout.ok} onClick={closeCart}>
             Go to checkout
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
           </ButtonLink>

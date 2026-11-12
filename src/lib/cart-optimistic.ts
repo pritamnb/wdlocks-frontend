@@ -85,7 +85,7 @@ export function optimisticLine(preview: CartLinePreview): WooCartItem {
     id: preview.id,
     type: preview.variation?.length ? 'variation' : 'simple',
     quantity: preview.quantity,
-    quantity_limits: { minimum: 1, maximum: 99, multiple_of: 1, editable: false },
+    quantity_limits: { minimum: 1, maximum: 99, multiple_of: 1, editable: true },
     name: preview.name,
     short_description: '',
     description: '',

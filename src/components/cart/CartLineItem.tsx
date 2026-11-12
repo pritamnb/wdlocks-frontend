@@ -7,7 +7,7 @@ import { QuantityControl } from '@/components/cart/QuantityControl';
 import { formatPrice, sumPence, decodeEntities } from '@/lib/wdlocks-api';
 import { productHref } from '@/lib/product-helpers';
 import { MAX_CART_QUANTITY } from '@/lib/constants';
-import { cn } from '@/lib/cn';
+import { isOptimisticKey } from '@/lib/cart-optimistic';
 
 interface Props {
   item: WooCartItem;
@@ -25,7 +25,9 @@ export function CartLineItem({ item, pending, onQuantity, onRemove, onNavigate }
   const max = Math.min(item.quantity_limits.maximum || MAX_CART_QUANTITY, MAX_CART_QUANTITY);
 
   return (
-    <li className={cn('flex gap-4 py-4 transition-opacity duration-150', pending && 'opacity-60')} aria-busy={pending}>
+    // The controls stay live while a change is saving (useCart queues and coalesces them); only a line whose add is
+    // still in flight cannot be removed yet, as it has no server key.
+    <li className="flex gap-4 py-4" aria-busy={pending}>
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-cream">
         {image ? (
           <Image src={image.thumbnail || image.src} alt={image.alt || name} fill sizes="80px" className="object-contain p-1.5" />
@@ -55,14 +57,14 @@ export function CartLineItem({ item, pending, onQuantity, onRemove, onNavigate }
             value={item.quantity}
             min={1}
             max={item.sold_individually ? 1 : max}
-            disabled={pending || !item.quantity_limits.editable}
+            disabled={!item.quantity_limits.editable}
             itemName={name}
             onChange={(q) => onQuantity(item.key, q)}
           />
           <button
             type="button"
             onClick={() => onRemove(item.key)}
-            disabled={pending}
+            disabled={isOptimisticKey(item.key)}
             className="text-xs font-medium text-charcoal/75 underline-offset-2 transition-colors duration-150 hover:text-red hover:underline disabled:opacity-50"
             aria-label={`Remove ${name} from basket`}
           >

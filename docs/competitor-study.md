@@ -827,6 +827,16 @@ Pritam, two asks:
    header height is unchanged. Original kept in client-assets/brand. Verified live: header (desktop), mobile menu
    (light variant), product-page and Why Watchdog panels use the same component.
 
+### Pass 45 — 12 Nov 2026: basket +/− and checkout no longer wait for WooCommerce
+
+Pritam: "quite slow when you add product item subtract and trying to move to checkout". Measured on production: every Store API call takes 2–3 s (the wdlocks.co.uk host; `Server-Timing upstream` is almost the whole call), and the UI locked the +/− buttons and the checkout link until each reply, so every tap cost 2–3 s.
+
+- `useCart`: a +/− tap changes the line at once and the controls stay live. Taps are coalesced (350 ms after the last one) into one `/api/cart/update` carrying the final quantity; update/remove requests run one at a time so WooCommerce never saves the session twice at once; a server reply keeps any quantity changed since it was sent. +/− on the provisional line of an add still in flight is carried over to the real line when the add lands. Remove no longer waits for a pending update.
+- "Go to checkout" (drawer) and "Proceed to checkout" (basket) are no longer disabled while a change is saving; the basket lives in the layout, so the request carries on and the checkout page shows the new quantity at once. "Place order" still waits for unconfirmed lines (`busyLines`).
+- Lines no longer dim while saving (the dimming read as "frozen").
+- Verified live: add → drawer 107 ms; three fast taps → shown in 106 ms; +1 then "Go to checkout" → checkout form in 147 ms (was 2.5 s); four taps sent as one request and the server cart matched (quantity 4); basket e2e 5/5 on desktop and mobile.
+- The deeper fix (a basket held in the browser, priced on our side) is being built in its own branch `local-basket`.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

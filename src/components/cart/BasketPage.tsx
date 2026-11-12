@@ -109,7 +109,7 @@ export function BasketPage({ products = [] }: { products?: WooProduct[] }) {
                     {gate.reason} <a href={SITE.phoneHref} className="font-semibold text-near-black hover:text-red">{SITE.phone}</a>
                   </div>
                 )}
-                <ButtonLink href="/checkout" size="lg" className={`mt-5 w-full ${!gate.ok || pendingKeys.size > 0 ? 'pointer-events-none opacity-50' : ''}`} aria-disabled={!gate.ok || pendingKeys.size > 0}>
+                <ButtonLink href="/checkout" size="lg" className={`mt-5 w-full ${!gate.ok ? 'pointer-events-none opacity-50' : ''}`} aria-disabled={!gate.ok}>
                   Proceed to checkout
                 </ButtonLink>
                 <p className="mt-3 text-center text-xs text-charcoal/75">Payment is taken securely on wdlocks.co.uk.</p>
