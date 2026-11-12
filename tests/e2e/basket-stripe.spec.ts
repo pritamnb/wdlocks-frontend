@@ -4,6 +4,8 @@ import { test, expect, type Page } from '@playwright/test';
  * Payments rollout stage 1 (docs/stripe-checkout-plan.md §5): on a target with Stripe TEST keys the checkout shows the
  * real Payment Element. These tests pay with Stripe's test cards; nothing is ever charged. They skip on targets without
  * the "Test mode" banner (production runs the demo provider, and live keys must never be driven by a test).
+ * Stage 1 (no WooCommerce key): pretend orders `wc_order_demo…` / #9xxxxx. Stage 2: real WooCommerce orders, which must be
+ * cancelled afterwards in the WooCommerce admin (they are paid with test cards, no stock moves).
  */
 
 async function startCheckout(page: Page): Promise<boolean> {
@@ -64,9 +66,9 @@ test('stripe test mode: 4242 succeeds and lands on the confirmation', async ({ p
   if (!(await startCheckout(page))) return test.skip(true, 'No Stripe test-mode checkout on this target');
   await fillCard(page, '4242424242424242');
   await Promise.all([page.waitForResponse((r) => r.url().includes('/api/checkout/intent') && r.status() === 200), placeOrder(page)]);
-  await expect(page).toHaveURL(/\/checkout\/return\?order=\d+&key=wc_order_demo/, { timeout: 30_000 });
+  await expect(page).toHaveURL(/\/checkout\/return\?order=\d+&key=wc_order_/, { timeout: 30_000 });
   await expect(page.getByText('Thank you, your order is confirmed')).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText(/Order #9\d{5}/)).toBeVisible();
+  await expect(page.getByText(/Order #\d{3,}/)).toBeVisible();
   await page.goto('/basket');
   await expect(page.getByText('Your basket is currently empty')).toBeVisible();
 });
@@ -99,7 +101,7 @@ test('stripe test mode: 4000 0025 0000 3155 asks for 3-D Secure; completing it c
     if (!completed) await page.waitForTimeout(1000);
   }
   expect(completed, '3-D Secure challenge button found').toBe(true);
-  await expect(page).toHaveURL(/\/checkout\/return\?order=\d+&key=wc_order_demo/, { timeout: 40_000 });
+  await expect(page).toHaveURL(/\/checkout\/return\?order=\d+&key=wc_order_/, { timeout: 40_000 });
   await expect(page.getByText('Thank you, your order is confirmed')).toBeVisible({ timeout: 20_000 });
   await page.goto('/basket');
   await expect(page.getByText('Your basket is currently empty')).toBeVisible();

@@ -285,7 +285,7 @@ export interface VideoBarEntry {
 /** The 40 s manufacturer explainer, opened by the hero's "Watch full video" button. */
 export const EXPLAINER_FILM: VideoBarEntry = { id: 'explainer', title: 'How a Watchdog lock works', durationLabel: '00:40', poster: BRAND_VIDEO.film.poster, mp4: BRAND_VIDEO.film.mp4, aspect: '16/9', blurb: 'Manufacturer film. ' + BRAND_VIDEO.film.chapters };
 
-/** "See Watchdog in action", in display order. The 15 s drill cut was a repeat of the inside-the-lock film; the client replaced it with his YouTube fitting guide (Paramjit, 11 Nov): "clients get to understand it is simple to do". */
+/** "How to install Watchdog" (was "See Watchdog in action"), in display order. The 15 s drill cut was a repeat of the inside-the-lock film; the client replaced it with his YouTube fitting guide (Paramjit, 11 Nov): "clients get to understand it is simple to do". */
 export const VIDEO_BAR: ReadonlyArray<VideoBarEntry> = [
   { id: 'fitting', title: 'How to fit a Watchdog lock yourself', durationLabel: '02:18', poster: '/brand/video/fitting-poster.jpg', youtube: 'rqd_6g9LcFI', aspect: '16/9', blurb: 'Step by step: fitting the Watchdog 3 Star ALPS euro cylinder yourself. Measure to the face of the door furniture; cylinders come in 5 mm steps for a flush fit.' },
   { id: 'inside', title: 'Inside the lock', durationLabel: '00:38', poster: BRAND_VIDEO.insideFilm.poster, mp4: BRAND_VIDEO.insideFilm.mp4, aspect: '5/4', blurb: 'Manufacturer film. ' + BRAND_VIDEO.insideFilm.chapters },

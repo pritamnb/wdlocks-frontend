@@ -10,7 +10,7 @@ const MAX_SLOT_SECONDS = 20;
 const FADE_MS = 700;
 
 /**
- * "See Watchdog in action" (client, 11 Nov): an autoplaying carousel rather than a row of cards with a "Watch full
+ * "How to install Watchdog" (client, 11 Nov; renamed from "See Watchdog in action" 12 Nov): an autoplaying carousel rather than a row of cards with a "Watch full
  * video" button. One 16:9 stage plays each film muted in turn (crossfading when a film ends or after MAX_SLOT seconds),
  * with the other films as thumbnails below. It only plays while on screen and the tab is visible; reduced motion shows
  * the posters and lets the visitor step through by hand.
@@ -77,10 +77,10 @@ export function VideoBar() {
     <section className="border-b border-cream-dark bg-white py-16 lg:py-20" aria-labelledby="in-action-title">
       <div className="container-wd">
         <h2 id="in-action-title" className="heading-display text-center text-3xl sm:text-4xl">
-          See <span className="text-red">Watchdog</span> in action
+          How to install <span className="text-red">Watchdog</span>
         </h2>
 
-        <div ref={wrapRef} className="relative mt-10 overflow-hidden rounded-2xl bg-near-black shadow-card" role="region" aria-roledescription="carousel" aria-label="Watchdog films">
+        <div ref={wrapRef} className="relative mt-10 overflow-hidden rounded-2xl bg-near-black shadow-card" role="region" aria-roledescription="carousel" aria-label="Watchdog fitting films">
           <div className="relative aspect-video w-full">
             {VIDEO_BAR.map((v, i) =>
               v.youtube ? (
