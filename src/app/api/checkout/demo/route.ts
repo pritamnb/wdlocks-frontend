@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { errorResponse, readJson } from '@/lib/cart-proxy';
+import { errorResponse, readJson } from '@/lib/request-utils';
 import { isDemoCheckout, readDemoOrder, writeDemoOrder, toDemoStatus, type DemoOutcome } from '@/lib/demo-checkout';
 
 export const dynamic = 'force-dynamic';

@@ -23,11 +23,11 @@ function arrivalFor(rate: WooShippingRate, now: Date | null): string | null {
   return `Arrives ${formatDeliveryDate(est.standardFrom)} – ${formatDeliveryDate(est.standardTo)}`;
 }
 
-/** Radio list of the live WooCommerce shipping rates for the basket (one package for this shop). */
+/** Radio list of the delivery options (SHIPPING_OPTIONS, shaped as one Store API shipping package by the basket). */
 export function ShippingOptions({ packages, pending, onSelect, now }: Props) {
   const pkg = packages[0];
   const serverSelected = pkg?.shipping_rates.find((r) => r.selected)?.rate_id ?? null;
-  // The radio moves immediately; the Store API confirms (~2 s) and the server's choice wins when it arrives.
+  // The radio moves immediately; the basket's choice replaces it on the next render.
   const [optimistic, setOptimistic] = React.useState<string | null>(null);
   const lastServer = React.useRef(serverSelected);
   if (lastServer.current !== serverSelected) {
@@ -36,7 +36,7 @@ export function ShippingOptions({ packages, pending, onSelect, now }: Props) {
   }
   const selectedId = optimistic ?? serverSelected;
   if (!pkg || pkg.shipping_rates.length === 0) {
-    return <p className="text-sm text-charcoal/75">Enter your postcode above to see delivery options.</p>;
+    return <p className="text-sm text-charcoal/75">Add something to your basket to see delivery options.</p>;
   }
   return (
     <div role="radiogroup" aria-label="Delivery method" aria-busy={pending} className={cn('space-y-2', pending && 'opacity-60')}>

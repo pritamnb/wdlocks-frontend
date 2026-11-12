@@ -1,12 +1,9 @@
 'use client';
 
-import * as React from 'react';
 import Link from 'next/link';
 import type { WooCart } from '@/types';
 import { CartLineItem } from '@/components/cart/CartLineItem';
-import { Spinner } from '@/components/ui/Button';
 import { formatPrice, sumPence } from '@/lib/wdlocks-api';
-import { FIELD } from '@/lib/checkout-form';
 import { cn } from '@/lib/cn';
 
 interface Props {
@@ -14,17 +11,16 @@ interface Props {
   pendingKeys: ReadonlySet<string>;
   onQuantity: (key: string, qty: number) => void;
   onRemove: (key: string) => void;
-  onApplyCoupon: (code: string) => Promise<boolean>;
-  onRemoveCoupon: (code: string) => Promise<boolean>;
-  couponPending: boolean;
   /** Delivery line when no rate is selected yet. */
   deliveryFallback?: string;
 }
 
-/** Right-hand order summary: lines, coupon, subtotal, delivery, VAT, total. Totals come straight from the Store API. */
-export function OrderSummary({ cart, pendingKeys, onQuantity, onRemove, onApplyCoupon, onRemoveCoupon, couponPending, deliveryFallback = 'Chosen below' }: Props) {
-  const [code, setCode] = React.useState('');
-  const [showCoupon, setShowCoupon] = React.useState(cart.coupons.length > 0);
+/**
+ * Right-hand order summary: lines, subtotal, delivery, VAT, total, all computed from the local basket (src/lib/basket.ts).
+ * Coupons are not offered: the basket never talks to WooCommerce before "Place order", so a code could only be checked
+ * after the order exists; the shop runs no public coupons today.
+ */
+export function OrderSummary({ cart, pendingKeys, onQuantity, onRemove, deliveryFallback = 'Chosen below' }: Props) {
   const t = cart.totals;
   const subtotal = sumPence(t.total_items, t.total_items_tax);
   const discount = sumPence(t.total_discount, t.total_discount_tax);
@@ -34,14 +30,6 @@ export function OrderSummary({ cart, pendingKeys, onQuantity, onRemove, onApplyC
   const vat = Number.parseInt(t.total_tax, 10) || 0;
   const count = cart.items_count;
 
-  const submitCoupon = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const c = code.trim();
-    if (!c) return;
-    const ok = await onApplyCoupon(c);
-    if (ok) setCode('');
-  };
-
   return (
     <div className="rounded-2xl border border-black/10 bg-[#f7f7f7] p-5 sm:p-6">
       <h2 className="font-playfair text-xl font-semibold text-near-black">Order summary</h2>
@@ -50,35 +38,6 @@ export function OrderSummary({ cart, pendingKeys, onQuantity, onRemove, onApplyC
           <CartLineItem key={item.key} item={item} pending={pendingKeys.has(item.key)} onQuantity={onQuantity} onRemove={onRemove} onNavigate={() => undefined} />
         ))}
       </ul>
-
-      <div className="mt-3 border-t border-black/10 pt-3">
-        {!showCoupon ? (
-          <button type="button" onClick={() => setShowCoupon(true)} className="text-sm font-medium text-near-black underline-offset-2 hover:text-red hover:underline">
-            Got a coupon?
-          </button>
-        ) : (
-          <form onSubmit={(e) => void submitCoupon(e)} className="flex gap-2">
-            <label htmlFor="coupon" className="sr-only">Coupon code</label>
-            <input id="coupon" name="coupon" value={code} onChange={(e) => setCode(e.target.value)} placeholder="Coupon code" autoComplete="off" className={cn(FIELD, 'h-11 py-0')} />
-            <button type="submit" disabled={couponPending || !code.trim()} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-near-black px-4 text-sm font-semibold text-white transition-colors hover:bg-charcoal disabled:opacity-50">
-              {couponPending && <Spinner />}
-              Apply
-            </button>
-          </form>
-        )}
-        {cart.coupons.length > 0 && (
-          <ul className="mt-2 space-y-1">
-            {cart.coupons.map((c) => (
-              <li key={c.code} className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-black/10">
-                <span className="font-medium text-near-black">Coupon <span className="uppercase">{c.code}</span></span>
-                <button type="button" onClick={() => void onRemoveCoupon(c.code)} disabled={couponPending} className="text-xs font-medium text-charcoal/70 underline-offset-2 hover:text-red hover:underline">
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
 
       <dl className="mt-4 space-y-2.5 border-t border-black/10 pt-4 text-sm">
         <div className="flex justify-between">

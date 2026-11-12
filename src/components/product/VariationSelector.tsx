@@ -63,7 +63,7 @@ function Chevron() {
 
 export function VariationSelector({ product, onAdded, headingId, className, showUpsells = false }: Props) {
   const model = React.useMemo(() => getVariationModel(product), [product]);
-  const { addToCart, isAdding, warmSession } = useCart();
+  const { addToCart, isAdding } = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selected, setSelected] = React.useState<VariationOption | null>(() => {
@@ -123,11 +123,6 @@ export function VariationSelector({ product, onAdded, headingId, className, show
   React.useEffect(() => {
     if (siblingSlug) router.prefetch(`/products/${siblingSlug}${sizeQuery}`);
   }, [router, siblingSlug, sizeQuery]);
-
-  // A shopper looking at a configurator is likely to add, so establish the basket session now (one call, idempotent).
-  React.useEffect(() => {
-    warmSession();
-  }, [warmSession]);
 
   // Sticky total bar appears once the configurator has scrolled out of view (Ultion pattern).
   React.useEffect(() => {

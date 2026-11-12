@@ -287,29 +287,11 @@ export interface WooStoreError {
   data?: { status: number; [key: string]: unknown };
 }
 
-/** Request bodies accepted by our /api/cart/* proxy routes. */
-export interface AddToCartRequest {
-  /** Product ID for simple products, or the variation ID for variable products. */
-  id: number;
-  quantity: number;
-  /** Optional attribute map, e.g. [{ attribute: 'pa_locksize', value: '35-inside-35-outside' }]. */
-  variation?: Array<{ attribute: string; value: string }>;
-}
-
-export interface UpdateCartItemRequest {
-  key: string;
-  quantity: number;
-}
-
-export interface RemoveCartItemRequest {
-  key: string;
-}
-
 /* ---------------------------------------------------------------------------
  * Checkout on our domain (Stripe + WooCommerce REST order). See docs/stripe-checkout-plan.md.
  * ------------------------------------------------------------------------- */
 
-/** Address fields accepted by POST /api/cart/customer (Store API `update-customer`). */
+/** Checkout address (billing or delivery), validated server-side by parseAddress. */
 export interface CheckoutAddressInput {
   first_name: string;
   last_name: string;
@@ -324,30 +306,26 @@ export interface CheckoutAddressInput {
   email?: string;
 }
 
-export interface UpdateCustomerRequest {
-  billing_address: CheckoutAddressInput;
-  /** Omit to ship to the billing address. */
-  shipping_address?: CheckoutAddressInput;
+/** One basket line as the browser sends it: the server prices it from the Store API (src/lib/pricing.ts). */
+export interface BasketLineRequest {
+  /** Simple product id, or the variation id for variable products. */
+  id: number;
+  quantity: number;
 }
 
-export interface SelectShippingRateRequest {
-  package_id: number;
-  rate_id: string;
-}
-
-export interface CouponRequest {
-  code: string;
-}
-
-/** POST /api/checkout/intent — creates the WooCommerce order (pending) and a Stripe PaymentIntent for the current basket. */
+/**
+ * POST /api/checkout/intent — prices the client-held basket, creates the WooCommerce order (pending) and a Stripe
+ * PaymentIntent. This is the only call in the whole shopping flow that reaches WooCommerce.
+ */
 export interface CreatePaymentIntentRequest {
+  items: BasketLineRequest[];
+  /** SHIPPING_OPTIONS id of the chosen delivery rate. */
+  shipping_option: string;
   billing_address: CheckoutAddressInput;
   shipping_address?: CheckoutAddressInput;
   customer_note?: string;
-  /** Minor-unit total the shopper saw; the server refuses with 409 `total_mismatch` if the basket changed. */
+  /** Minor-unit total the shopper saw; the server refuses with 409 `total_mismatch` when its own pricing differs. */
   expected_total: string;
-  /** Idempotency: the same cart hash + total reuse the same order/intent. */
-  cart_hash?: string;
 }
 
 export interface CreatePaymentIntentResponse {

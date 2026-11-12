@@ -1,5 +1,12 @@
 # Stripe checkout — server-side notes (11 Nov 2026)
 
+> **Superseded in part on 12 Nov 2026 (client-held basket, Pass 45 in competitor-study.md §8).** The Store API cart
+> proxy (`src/lib/cart-proxy.ts`, `/api/cart/*`) is gone: the basket lives in the browser (`src/lib/basket.ts`,
+> `useCart`), the intent route receives ids + quantities + the delivery option and re-prices them from the Store API
+> products endpoint (`src/lib/pricing.ts`, cached 5 min) before creating the order. Validators moved to
+> `src/lib/request-utils.ts`; `cartHash` now fingerprints the priced basket. Coupons were dropped. The webhook,
+> status route and order reuse are unchanged. The table below describes the 11 Nov state.
+
 Implements the server half of approach (b) in `stripe-checkout-plan.md`. No UI files were touched
 (`src/components`, `src/app/checkout`, `src/hooks`, `src/app/page.tsx` are the other engineer's).
 

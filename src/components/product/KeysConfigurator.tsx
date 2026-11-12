@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
-import { previewFromProduct } from '@/lib/cart-optimistic';
+import { previewFromProduct } from '@/lib/basket';
 import { decodeEntities, formatPrice } from '@/lib/wdlocks-api';
 import { BRAND_RENDERS, PRODUCT_IDS } from '@/lib/constants';
 import { cn } from '@/lib/cn';

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { errorResponse } from '@/lib/cart-proxy';
+import { errorResponse } from '@/lib/request-utils';
 import { isWcRestConfigured, getOrder, isOrderPaid, toCheckoutStatus, WcRestError } from '@/lib/wc-rest';
 import { isDemoCheckout, isStripeSandbox, readDemoOrder, writeDemoOrder, toDemoStatus, type DemoOrder } from '@/lib/demo-checkout';
 import { getStripe, describeStripeError } from '@/lib/stripe-server';

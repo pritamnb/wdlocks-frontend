@@ -5,12 +5,13 @@
  * Auth: HTTP Basic with the Read/Write consumer key/secret over HTTPS (WooCommerce → Settings → Advanced
  * → REST API). Secrets are read via server-env.ts only and never logged. Timeouts: 15 s.
  *
- * Pricing is never computed here: line items carry only product/variation id + quantity and WooCommerce
- * prices them itself; the intent route then compares the REST order total with the Store API total.
+ * Pricing is never computed here: line items carry only product/variation id + quantity and WooCommerce prices them
+ * itself; the intent route then compares the REST order total with its own Store API pricing (src/lib/pricing.ts).
  */
-import { WC_BASE, VARIATIONS_BY_PRODUCT } from '@/lib/constants';
+import { WC_BASE } from '@/lib/constants';
 import { readServerEnv } from '@/lib/server-env';
-import type { WooCart, WooCartItem, CheckoutAddressInput, CheckoutOrderStatus } from '@/types';
+import type { PricedBasket } from '@/lib/pricing';
+import type { CheckoutAddressInput, CheckoutOrderStatus } from '@/types';
 
 const WC_REST = `${WC_BASE}/wp-json/wc/v3`;
 const TIMEOUT_MS = 15_000;
@@ -121,7 +122,7 @@ export interface WooRestOrderPatch {
 }
 
 export interface CreateOrderInput {
-  cart: WooCart;
+  basket: PricedBasket;
   billing: CheckoutAddressInput;
   shipping: CheckoutAddressInput;
   customerNote?: string;
@@ -205,27 +206,9 @@ async function wcFetch<T>(path: string, init: { method: 'GET' | 'POST' | 'PUT'; 
  * Mapping helpers (Store API cart → REST order payload)
  * ------------------------------------------------------------------------- */
 
-/** Parent product id for a known variation id, from the static catalogue. */
-export function parentProductId(variationId: number): number | null {
-  for (const [parent, variations] of Object.entries(VARIATIONS_BY_PRODUCT)) {
-    if (variations.includes(variationId)) return Number(parent);
-  }
-  return null;
-}
-
-/**
- * Store API cart item → REST line item. For variations `item.id` IS the variation id, so product_id must be
- * the parent. If the parent is not in our catalogue we pass the variation id as product_id with no
- * variation_id — WooCommerce resolves a variation passed that way to its parent product itself.
- */
-export function toLineItem(item: WooCartItem): LineItemInput {
-  if (item.type === 'variation') {
-    const parent = parentProductId(item.id);
-    return parent
-      ? { product_id: parent, variation_id: item.id, quantity: item.quantity }
-      : { product_id: item.id, quantity: item.quantity };
-  }
-  return { product_id: item.id, quantity: item.quantity };
+/** Priced basket line → REST line item. Variations carry the parent as product_id and the variation id separately. */
+export function toLineItem(line: PricedBasket['lines'][number]): LineItemInput {
+  return line.variationId ? { product_id: line.productId, variation_id: line.variationId, quantity: line.quantity } : { product_id: line.productId, quantity: line.quantity };
 }
 
 /** "1999" with minor unit 2 → "19.99". */
@@ -242,24 +225,10 @@ export function majorToMinor(major: string | number, minorUnit: number): number 
   return Math.round(n * 10 ** minorUnit);
 }
 
-/** The selected rate of each shipping package → REST shipping_lines. */
-export function toShippingLines(cart: WooCart): ShippingLineInput[] {
-  const unit = cart.totals.currency_minor_unit;
-  const lines: ShippingLineInput[] = [];
-  for (const pkg of cart.shipping_rates) {
-    const rate = pkg.shipping_rates.find((r) => r.selected);
-    if (!rate) continue;
-    const [idMethod, idInstance] = rate.rate_id.split(':');
-    const methodId = rate.method_id || idMethod || 'flat_rate';
-    const instanceId = Number.isInteger(rate.instance_id) ? rate.instance_id : Number(idInstance ?? 0);
-    lines.push({
-      method_id: methodId,
-      instance_id: String(instanceId),
-      method_title: rate.name,
-      total: minorToMajor(rate.price, unit),
-    });
-  }
-  return lines;
+/** The chosen delivery option → the one REST shipping line (ex-VAT total; WooCommerce adds the shipping tax itself). */
+export function toShippingLines(basket: PricedBasket): ShippingLineInput[] {
+  const o = basket.shipping;
+  return [{ method_id: o.methodId, instance_id: String(o.instanceId), method_title: o.methodTitle, total: minorToMajor(o.exVatPence, 2) }];
 }
 
 function toRestAddress(a: CheckoutAddressInput): WooRestAddress {
@@ -307,11 +276,11 @@ export const HEADLESS_CART_HASH_META = '_headless_cart_hash';
 export const STRIPE_INTENT_META = '_stripe_intent_id';
 
 /**
- * Creates a pending, unpaid order for the given Store API cart. Note: WooCommerce overwrites `created_via`
- * with "rest-api" for REST-created orders, so headless orders are identified by the `_headless_site` meta.
+ * Creates a pending, unpaid order for the priced basket. Note: WooCommerce overwrites `created_via` with "rest-api"
+ * for REST-created orders, so headless orders are identified by the `_headless_site` meta.
  */
 export function createOrder(input: CreateOrderInput): Promise<WooRestOrder> {
-  const { cart } = input;
+  const { basket } = input;
   return wcFetch<WooRestOrder>('/orders', {
     method: 'POST',
     body: {
@@ -320,12 +289,11 @@ export function createOrder(input: CreateOrderInput): Promise<WooRestOrder> {
       payment_method: 'stripe',
       payment_method_title: 'Card / wallet (Stripe)',
       created_via: 'headless',
-      currency: cart.totals.currency_code,
+      currency: 'GBP',
       billing: toRestBillingAddress(input.billing),
       shipping: toRestShippingAddress(input.shipping),
-      line_items: cart.items.map(toLineItem),
-      shipping_lines: toShippingLines(cart),
-      coupon_lines: cart.coupons.map((c) => ({ code: c.code })),
+      line_items: basket.lines.map(toLineItem),
+      shipping_lines: toShippingLines(basket),
       customer_note: input.customerNote ?? '',
       meta_data: [
         { key: HEADLESS_CART_HASH_META, value: input.cartHash },

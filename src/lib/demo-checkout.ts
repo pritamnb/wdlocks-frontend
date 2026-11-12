@@ -6,7 +6,7 @@
  */
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { isSecureRequest } from '@/lib/cart-proxy';
+import { isSecureRequest } from '@/lib/request-utils';
 import { isStripeConfigured } from '@/lib/stripe-server';
 import { isWcRestConfigured } from '@/lib/wc-rest';
 import type { CheckoutOrderStatus, CheckoutStatusResponse } from '@/types';
@@ -27,6 +27,11 @@ export interface DemoOrder {
   intentId?: string;
   /** The shopper's order notes (what becomes customer_note on a WooCommerce order). */
   customerNote?: string;
+  /** What was priced: id × quantity at the Store API unit price (pence), plus the chosen delivery rate. */
+  lines?: Array<{ id: number; q: number; unit: number }>;
+  shipping?: { id: string; pence: number };
+  /** Pence of VAT inside `total`. */
+  tax?: number;
 }
 
 export function isDemoCheckout(): boolean {
@@ -52,7 +57,7 @@ function sign(payload: string): string {
   return createHmac('sha256', signingKey()).update(payload).digest('base64url');
 }
 
-export function newDemoOrder(total: number, email: string, customerNote?: string): DemoOrder {
+export function newDemoOrder(total: number, email: string, customerNote?: string, detail?: Pick<DemoOrder, 'lines' | 'shipping' | 'tax'>): DemoOrder {
   const id = 900000 + Math.floor(Math.random() * 99999);
   return {
     id,
@@ -63,6 +68,7 @@ export function newDemoOrder(total: number, email: string, customerNote?: string
     status: 'pending',
     createdAt: Date.now(),
     ...(customerNote ? { customerNote } : {}),
+    ...(detail ?? {}),
   };
 }
 
