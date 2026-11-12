@@ -56,6 +56,13 @@ async function placeOrder(page: Page) {
   await page.getByRole('button', { name: 'Place order' }).click();
 }
 
+/** The return page clears the basket through the Store API (~2 s a call on shared hosting); give it time to settle. */
+async function expectEmptyBasket(page: Page) {
+  await page.waitForTimeout(3000);
+  await page.goto('/basket');
+  await expect(page.getByText('Your basket is currently empty')).toBeVisible({ timeout: 30_000 });
+}
+
 async function emptyBasket(page: Page) {
   await page.goto('/basket');
   const remove = page.getByRole('button', { name: /Remove .* from basket/ });
@@ -63,17 +70,18 @@ async function emptyBasket(page: Page) {
 }
 
 test('stripe test mode: 4242 succeeds and lands on the confirmation', async ({ page }) => {
+  test.slow(); // a WooCommerce order is created through the REST API on shared hosting: 10–20 s per step
   if (!(await startCheckout(page))) return test.skip(true, 'No Stripe test-mode checkout on this target');
   await fillCard(page, '4242424242424242');
   await Promise.all([page.waitForResponse((r) => r.url().includes('/api/checkout/intent') && r.status() === 200), placeOrder(page)]);
   await expect(page).toHaveURL(/\/checkout\/return\?order=\d+&key=wc_order_/, { timeout: 30_000 });
   await expect(page.getByText('Thank you, your order is confirmed')).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText(/Order #\d{3,}/)).toBeVisible();
-  await page.goto('/basket');
-  await expect(page.getByText('Your basket is currently empty')).toBeVisible();
+  await expectEmptyBasket(page);
 });
 
 test('stripe test mode: 4000 0000 0000 0002 is declined with a message, basket kept', async ({ page }) => {
+  test.slow(); // a WooCommerce order is created through the REST API on shared hosting: 10–20 s per step
   if (!(await startCheckout(page))) return test.skip(true, 'No Stripe test-mode checkout on this target');
   await fillCard(page, '4000000000000002');
   await placeOrder(page);
@@ -83,11 +91,13 @@ test('stripe test mode: 4000 0000 0000 0002 is declined with a message, basket k
 });
 
 test('stripe test mode: 4000 0025 0000 3155 asks for 3-D Secure; completing it confirms the order', async ({ page }) => {
+  test.slow(); // a WooCommerce order is created through the REST API on shared hosting: 10–20 s per step
   if (!(await startCheckout(page))) return test.skip(true, 'No Stripe test-mode checkout on this target');
   await fillCard(page, '4000002500003155');
   await placeOrder(page);
   // Stripe's test challenge is an iframe inside an iframe with a "Complete" button.
-  const deadline = Date.now() + 40_000;
+  // Order creation through the WooCommerce REST API can take 10 s or more before the challenge appears.
+  const deadline = Date.now() + 90_000;
   let completed = false;
   while (Date.now() < deadline && !completed) {
     for (const f of page.frames()) {
@@ -103,6 +113,5 @@ test('stripe test mode: 4000 0025 0000 3155 asks for 3-D Secure; completing it c
   expect(completed, '3-D Secure challenge button found').toBe(true);
   await expect(page).toHaveURL(/\/checkout\/return\?order=\d+&key=wc_order_/, { timeout: 40_000 });
   await expect(page.getByText('Thank you, your order is confirmed')).toBeVisible({ timeout: 20_000 });
-  await page.goto('/basket');
-  await expect(page.getByText('Your basket is currently empty')).toBeVisible();
+  await expectEmptyBasket(page);
 });

@@ -56,12 +56,25 @@ function money(amount: number, currency: string): string {
   return `${minorToMajor(amount, 2)} ${currency.toUpperCase()}`;
 }
 
+/** "card (visa •••• 4242)", "klarna", … — the method the shopper actually used, not every type the intent allowed. */
+async function usedMethod(intent: Stripe.PaymentIntent): Promise<string> {
+  const pm = intent.payment_method;
+  try {
+    const method = typeof pm === 'string' ? await getStripe().paymentMethods.retrieve(pm) : pm;
+    if (!method) return intent.payment_method_types.join(', ');
+    if (method.type === 'card' && method.card) return `card (${method.card.brand} •••• ${method.card.last4})`;
+    return method.type;
+  } catch {
+    return intent.payment_method_types.join(', ');
+  }
+}
+
 async function onPaymentSucceeded(intent: Stripe.PaymentIntent): Promise<void> {
   const order = await orderForIntent(intent);
   if (!order) return;
   if (isOrderPaid(order)) return; // replay or already handled
 
-  const methods = intent.payment_method_types.join(', ');
+  const methods = await usedMethod(intent);
   const orderMinor = Math.round(Number(order.total) * 100);
   if (intent.currency.toLowerCase() !== order.currency.toLowerCase() || intent.amount !== orderMinor) {
     // Paid, but not what WooCommerce expects — hold it for a human instead of marking it processing.
@@ -89,7 +102,7 @@ async function onPaymentProcessing(intent: Stripe.PaymentIntent): Promise<void> 
   const order = await orderForIntent(intent);
   if (!order || isOrderPaid(order)) return;
   if (order.status !== 'on-hold') await updateOrder(order.id, { status: 'on-hold', transaction_id: intent.id });
-  await addOrderNote(order.id, `Stripe payment processing (awaiting confirmation, e.g. bank transfer): ${intent.id} via ${intent.payment_method_types.join(', ')}.`);
+  await addOrderNote(order.id, `Stripe payment processing (awaiting confirmation, e.g. bank transfer): ${intent.id} via ${await usedMethod(intent)}.`);
 }
 
 async function onChargeRefunded(charge: Stripe.Charge): Promise<void> {
