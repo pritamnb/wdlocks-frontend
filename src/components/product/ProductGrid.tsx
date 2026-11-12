@@ -3,7 +3,6 @@
 import * as React from 'react';
 import type { WooProduct } from '@/types';
 import { ProductCard, ProductCardSkeleton } from '@/components/product/ProductCard';
-import { SizePicker } from '@/components/product/SizePicker';
 import { SITE } from '@/lib/constants';
 
 interface Props {
@@ -15,8 +14,6 @@ interface Props {
 }
 
 export function ProductGrid({ products, loading = false, limit, skeletonCount = 8 }: Props) {
-  const [picking, setPicking] = React.useState<WooProduct | null>(null);
-  const triggerRef = React.useRef<HTMLElement | null>(null);
   const visible = limit ? products.slice(0, limit) : products;
 
   if (!loading && products.length === 0) {
@@ -32,26 +29,16 @@ export function ProductGrid({ products, loading = false, limit, skeletonCount = 
   }
 
   return (
-    <>
-      <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy={loading}>
+    <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy={loading}>
         {loading
           ? Array.from({ length: skeletonCount }).map((_, i) => (
               <li key={i} className="grid grid-rows-subgrid row-span-5 gap-y-0"><ProductCardSkeleton /></li>
             ))
           : visible.map((p, i) => (
               <li key={p.id} className="grid grid-rows-subgrid row-span-5 gap-y-0">
-                <ProductCard
-                  product={p}
-                  priority={i < 4}
-                  onChooseOptions={(product, trigger) => {
-                    triggerRef.current = trigger;
-                    setPicking(product);
-                  }}
-                />
+                <ProductCard product={p} priority={i < 4} />
               </li>
             ))}
-      </ul>
-      <SizePicker product={picking} open={picking !== null} onClose={() => setPicking(null)} returnFocusTo={triggerRef} />
-    </>
+    </ul>
   );
 }

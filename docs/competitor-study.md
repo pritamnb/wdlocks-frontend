@@ -761,6 +761,21 @@ Pritam: "At payment gateway can we keep the colours of each payment gateway? to 
 - Checked locally on a demo-mode dev server (`.claude/launch.json` → `dev-demo`, Stripe key blanked, port 3001) at
   1280 px and 390 px, then on production after the push.
 
+### Pass 40 — 12 Nov 2026: grid "Buy now" opens the product page; keyed-alike to 2nd place
+- Pritam (screenshot of the size-picker modal): "instead of showing this modal please navigate to product details page
+  directly". On the product grid, "Buy now" on a variable product (3 Star Cylinder, Thumb Turn, Rim Cylinder) is now a
+  link to the product page, where the size/finish is chosen with the sizing guide; simple products still add straight
+  to the basket and open the drawer. The grid no longer mounts `SizePicker` (the component stays for the product page).
+- "Product listing: replace this with the 2nd place — Keyed-Alike Service": the catalogue order is now 1 cylinder ·
+  2 keyed-alike · 3 thumb turn · 4 half cylinder · 5 3 Star keys · 6 1 Star keys · 7 rim cylinder · 8 lubricant ·
+  9 Bruno Teddy.
+- Verified on production; desktop + mobile + basket e2e green (one demo-checkout run timed out on a slow Store API add
+  and passed on rerun).
+- Pritam asked why the basket says "Our checkout currently accepts one product line at a time". That is the
+  WooCommerce hand-off rule (`canCheckout` in src/lib/checkout.ts): without the `wd-cart-handoff.php` mu-plugin the
+  native `?add-to-cart=` URL carries one line. Production runs the on-site demo checkout, which takes any number of
+  lines, yet the basket and drawer still apply the hand-off gate — a leftover to fix (gate only in handoff mode).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

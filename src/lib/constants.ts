@@ -507,7 +507,7 @@ export interface CatalogueEntry {
 
 /**
  * Static catalogue used for navigation, static params and fallbacks. Its order is the shop order (grid, homepage,
- * footer, mobile menu). Pritam, 12 Nov: rim cylinder moved from 3rd to 7th, the keyed-alike service up to 3rd.
+ * footer, mobile menu). Pritam, 12 Nov: rim cylinder moved from 3rd to 7th, the keyed-alike service up to 3rd, then to 2nd.
  * Slugs match the live WooCommerce slugs so canonical URLs stay stable.
  * NOTE: the brief listed EXTRA_KEYS_3 (4266) as variable; the live store has it as simple.
  */
@@ -524,6 +524,16 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
     popular: true,
   },
   {
+    key: 'KEYED_ALIKE',
+    id: 5642,
+    slug: 'watchdog-keyed-a-like',
+    name: 'Watchdog Keyed-a-like Service, Same Key, Different Locks',
+    shortName: 'Keyed-Alike Service',
+    type: 'simple',
+    category: 'Keys and Aftercare',
+    blurb: 'One key for every lock you order.',
+  },
+  {
     key: 'THUMB_TURN',
     id: 5077,
     slug: '3-star-alps-euro-cylinder-thumb-turn-lock',
@@ -533,16 +543,6 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
     category: 'Euro Thumb Turn Cylinder Lock',
     blurb: 'Key outside, thumb turn inside. 12 sizes.',
     popular: true,
-  },
-  {
-    key: 'KEYED_ALIKE',
-    id: 5642,
-    slug: 'watchdog-keyed-a-like',
-    name: 'Watchdog Keyed-a-like Service, Same Key, Different Locks',
-    shortName: 'Keyed-Alike Service',
-    type: 'simple',
-    category: 'Keys and Aftercare',
-    blurb: 'One key for every lock you order.',
   },
   {
     key: 'HALF_CYLINDER',

@@ -15,12 +15,10 @@ import { cn } from '@/lib/cn';
 
 interface Props {
   product: WooProduct;
-  /** Called when a variable product's CTA is pressed; the grid owns the SizePicker. */
-  onChooseOptions?: (product: WooProduct, trigger: HTMLButtonElement) => void;
   priority?: boolean;
 }
 
-export function ProductCard({ product, onChooseOptions, priority = false }: Props) {
+export function ProductCard({ product, priority = false }: Props) {
   const { addToCart, warmSession } = useCart();
   const [busy, setBusy] = React.useState(false);
   const image = primaryImage(product);
@@ -30,11 +28,7 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
   const isVariable = product.type === 'variable';
   const externalOnly = isExternalOnly(product);
 
-  const onCta = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isVariable) {
-      onChooseOptions?.(product, e.currentTarget);
-      return;
-    }
+  const onCta = async () => {
     setBusy(true);
     // The drawer opens instantly with a provisional line (see useCart); the server cart replaces it.
     await addToCart({ id: product.id, quantity: 1, name, preview: previewFromProduct(product, 1, entry?.shortName ?? name) });
@@ -85,15 +79,18 @@ export function ProductCard({ product, onChooseOptions, priority = false }: Prop
         {productPriceLabel(product)}
       </p>
       <div className="px-5 pb-6 pt-5">
-        {externalOnly ? (
-          <Link href={`/products/${CATALOGUE_BY_ID[product.id]?.slug ?? product.slug}`} className={cta} aria-label={`${ctaLabel(product)}: ${name}`}>
+        {/* Variable products (cylinders, thumb turn): Buy now opens the product page, where the size is chosen with the
+            sizing guide (Pritam, 12 Nov: "instead of showing this modal please navigate to product details page").
+            Simple products add straight to the basket. */}
+        {externalOnly || isVariable ? (
+          <Link href={href} className={cta} aria-label={`${ctaLabel(product)}: ${name}`}>
             {ctaLabel(product)}
           </Link>
         ) : (
           <button
             type="button"
             className={cta}
-            onClick={(e) => void onCta(e)}
+            onClick={() => void onCta()}
             onPointerEnter={warmSession}
             onFocus={warmSession}
             disabled={!product.is_in_stock || !product.is_purchasable || busy}
