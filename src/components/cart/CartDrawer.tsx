@@ -13,7 +13,7 @@ import { useCart } from '@/hooks/useCart';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { canCheckout } from '@/lib/checkout';
 import { CATALOGUE_BY_ID, CHECKOUT_MODE, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
-import { previewFromProduct } from '@/lib/cart-optimistic';
+import { previewFromProduct } from '@/lib/basket';
 
 export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
   const { cart, status, error, isOpen, closeCart, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, addToCart, isAdding } = useCart();

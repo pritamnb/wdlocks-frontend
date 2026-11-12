@@ -1,10 +1,24 @@
 'use client';
 
 import * as React from 'react';
-import type { WooCart, WooCartItem } from '@/types';
-import { fetchCart, addItem, updateItem, removeItem, clearCart as clearCartRequest, friendlyCartError } from '@/lib/cart-client';
-import { emptyCart, isOptimisticKey, optimisticLine, type CartLinePreview } from '@/lib/cart-optimistic';
-import { sumPence } from '@/lib/wdlocks-api';
+import type { WooCart, WooProduct } from '@/types';
+import {
+  buildCart,
+  describeLine,
+  emptyBasket,
+  lineKey,
+  readBasket,
+  shippingOptionById,
+  toLineInputs,
+  writeBasket,
+  BASKET_STORAGE_KEY,
+  MAX_BASKET_LINES,
+  type BasketLine,
+  type BasketLineInput,
+  type BasketLineSnapshot,
+  type BasketState,
+} from '@/lib/basket';
+import { MAX_CART_QUANTITY } from '@/lib/constants';
 import { useToast } from '@/components/ui/Toast';
 
 export type CartStatus = 'loading' | 'ready' | 'error';
@@ -13,16 +27,17 @@ export interface AddToCartInput {
   /** Simple product ID, or variation ID for variable products. */
   id: number;
   quantity?: number;
+  /** WooCommerce attribute pair for variations (kept on the line for the order). */
   variation?: Array<{ attribute: string; value: string }>;
   /** Used for the success toast. */
   name?: string;
   /** If false, the drawer won't auto-open after adding. */
   openDrawer?: boolean;
   /**
-   * What the line will look like, so the drawer can open instantly with a provisional line while the Store API
-   * round trip (1–3 s on shared hosting) completes. Without it the drawer waits for the server.
+   * How the line should look (name, inc-VAT unit price, image, human variation label), taken from the product data
+   * on screen. Falls back to the catalogue + the layout's product list when omitted.
    */
-  preview?: Omit<CartLinePreview, 'id' | 'quantity'>;
+  preview?: BasketLineSnapshot;
 }
 
 export interface CartContextValue {
@@ -33,26 +48,29 @@ export interface CartContextValue {
   itemCount: number;
   /** Items subtotal including VAT, in pence — matches the inc-VAT prices shown on cards. */
   subtotalPence: number;
-  /** Cart keys with a change the server has not confirmed yet (checkout waits for these; the controls stay live). */
+  /**
+   * Cart keys currently being mutated. The basket is local, so this is always empty; it stays in the contract so
+   * the line components keep their `pending` prop.
+   */
   pendingKeys: ReadonlySet<string>;
   isAdding: boolean;
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  /** Re-fetches the basket, showing the loading state. */
+  /** Re-reads the basket from storage. */
   refresh: () => Promise<void>;
-  /**
-   * Establishes the Store API session in the background (sets the cart cookie) so the first add needs one
-   * upstream call instead of two. Safe to call often; only the first call does anything.
-   */
-  warmSession: () => void;
   addToCart: (input: AddToCartInput) => Promise<boolean>;
   updateCartItem: (key: string, quantity: number) => Promise<boolean>;
   removeCartItem: (key: string) => Promise<boolean>;
-  /** Empties the basket (after handing it to the WooCommerce checkout). Never throws. */
+  /** Empties the basket (after an order, or when handing it to the WooCommerce checkout). Never throws. */
   clearCart: () => Promise<boolean>;
-  /** Replaces the basket with a cart returned by another proxy call (address, delivery rate, coupon). */
-  replaceCart: (cart: WooCart) => void;
+  /** SHIPPING_OPTIONS id of the chosen delivery rate (the first option by default). */
+  shippingOptionId: string;
+  setShippingOption: (id: string) => void;
+  /** Ids and quantities for POST /api/checkout/intent. */
+  lineInputs: BasketLineInput[];
+  /** Server-confirmed unit prices (pence by id) after a 409 total_mismatch: the basket shows them from now on. */
+  applyPrices: (prices: Record<string, number>) => void;
 }
 
 const CartContext = React.createContext<CartContextValue | null>(null);
@@ -63,431 +81,187 @@ export function useCart(): CartContextValue {
   return ctx;
 }
 
-/** Set by the proxy next to the httpOnly token so the client can tell whether a basket session exists at all. */
-export const CART_MARKER_COOKIE = 'wd_cart';
+const NO_PENDING: ReadonlySet<string> = new Set();
 
-function hasCartSession(): boolean {
-  if (typeof document === 'undefined') return false;
-  return document.cookie.split(';').some((c) => c.trim().startsWith(`${CART_MARKER_COOKIE}=`));
+function clampQuantity(q: number): number {
+  return Math.min(MAX_CART_QUANTITY, Math.max(1, Math.round(q)));
 }
 
-/** Recomputes the cheap derived fields after an optimistic item change so the UI stays coherent. */
-function withOptimisticItems(cart: WooCart, items: WooCartItem[]): WooCart {
-  const total_items = items.reduce((n, i) => n + Number.parseInt(i.totals.line_subtotal, 10), 0);
-  const total_items_tax = items.reduce((n, i) => n + Number.parseInt(i.totals.line_subtotal_tax, 10), 0);
-  return {
-    ...cart,
-    items,
-    items_count: items.reduce((n, i) => n + i.quantity, 0),
-    totals: { ...cart.totals, total_items: String(total_items), total_items_tax: String(total_items_tax) },
-  };
-}
-
-function scaleLine(item: WooCartItem, quantity: number): WooCartItem {
-  const unitSub = Number.parseInt(item.totals.line_subtotal, 10) / Math.max(item.quantity, 1);
-  const unitTax = Number.parseInt(item.totals.line_subtotal_tax, 10) / Math.max(item.quantity, 1);
-  const sub = String(Math.round(unitSub * quantity));
-  const tax = String(Math.round(unitTax * quantity));
-  return {
-    ...item,
-    quantity,
-    totals: { ...item.totals, line_subtotal: sub, line_subtotal_tax: tax, line_total: sub, line_total_tax: tax },
-  };
-}
-
-/** Monotonic counter kept in a closure (not a ref) so hook callbacks may bump it without mutating hook arguments. */
-function createSequence() {
-  let n = 0;
-  return { get: () => n, bump: () => { n += 1; } };
-}
-
-const REFOCUS_REFRESH_MS = 5 * 60_000;
-/** Warm the session shortly after load when the page is idle, so the first click is fast even without a hover. */
-const IDLE_WARM_MS = 4_000;
-/** How long after the last +/− tap the new quantity is sent (one request per burst of taps). */
-const QUANTITY_DEBOUNCE_MS = 350;
-
-export function CartProvider({ children }: { children: React.ReactNode }) {
+/**
+ * The basket lives in the browser (localStorage, see src/lib/basket.ts): every add, quantity change and removal is a
+ * synchronous state update, so the drawer, badge and totals respond at once and nothing waits on wdlocks.co.uk.
+ * `products` (the layout's ISR catalogue) keeps displayed prices current and fills in lines added without a preview.
+ */
+export function CartProvider({ children, products = [] }: { children: React.ReactNode; products?: WooProduct[] }) {
   const { toast } = useToast();
-  const [cart, setCart] = React.useState<WooCart | null>(null);
-  const [status, setStatus] = React.useState<CartStatus>('loading');
-  const [error, setError] = React.useState<string | null>(null);
+  const [basket, setBasket] = React.useState<BasketState | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [isAdding, setIsAdding] = React.useState(false);
-  const [pendingKeys, setPendingKeys] = React.useState<ReadonlySet<string>>(new Set());
-  // Every mutation bumps this; a GET that started before a mutation must not overwrite the mutation's result
-  // (a shopper who clicks "Add" while the session is still being fetched would otherwise see an empty basket).
-  const [mutationSeq] = React.useState(createSequence);
-
-  // Latest cart for optimistic snapshots without stale closures.
-  const cartRef = React.useRef<WooCart | null>(null);
+  // Latest basket for callbacks without stale closures.
+  const basketRef = React.useRef<BasketState | null>(null);
   React.useEffect(() => {
-    cartRef.current = cart;
-  }, [cart]);
+    basketRef.current = basket;
+  }, [basket]);
 
-  const openCart = React.useCallback(() => setIsOpen(true), []);
-  const replaceCart = React.useCallback((next: WooCart) => {
-    mutationSeq.bump();
-    cartRef.current = next;
-    setCart(next);
-    setStatus('ready');
-    setError(null);
-  }, [mutationSeq]);
-  const closeCart = React.useCallback(() => setIsOpen(false), []);
-
-  /** Fetches the basket; all state updates happen after the await (never synchronously in an effect). */
-  const load = React.useCallback(async () => {
-    try {
-      const next = await fetchCart();
-      setCart(next);
-      setError(null);
-      setStatus('ready');
-    } catch (err) {
-      setError(friendlyCartError(err));
-      setStatus('error');
-    }
-  }, []);
-
-  const refresh = React.useCallback(async () => {
-    setStatus('loading');
-    await load();
-  }, [load]);
-
-  const applyFetched = React.useCallback((seqAtStart: number, next: WooCart) => {
-    if (seqAtStart !== mutationSeq.get()) return;
-    if (cartRef.current && cartRef.current.items.some((i) => isOptimisticKey(i.key))) return;
-    cartRef.current = next;
-    setCart(next);
-    setError(null);
-    setStatus('ready');
-  }, [mutationSeq]);
-
-  // One session bootstrap at most. The GET is the same call as a refresh, so it also fills the cart. Mutations wait
-  // for an in-flight warm-up so the add reuses that session instead of racing it for the cookie.
-  const warmed = React.useRef(false);
-  const warmPromise = React.useRef<Promise<void> | null>(null);
-  const warmSession = React.useCallback(() => {
-    if (warmed.current || hasCartSession()) return;
-    warmed.current = true;
-    const seq = mutationSeq.get();
-    warmPromise.current = fetchCart()
-      .then((next) => applyFetched(seq, next))
-      .catch(() => {
-        warmed.current = false; // allow a later retry
-      })
-      .finally(() => {
-        warmPromise.current = null;
-      });
-  }, [applyFetched, mutationSeq]);
-
-  // On mount: shoppers with a basket session get it fetched; everyone else starts with an empty basket and no
-  // network call on the critical path (the session is warmed when idle or on the first hover over a buy button).
+  // Load once on mount (after hydration, so the server and first client render agree), then follow other tabs.
   React.useEffect(() => {
     let active = true;
-    let idleTimer: ReturnType<typeof setTimeout> | undefined;
-    if (hasCartSession()) {
-      warmed.current = true;
-      const seq = mutationSeq.get();
-      warmPromise.current = fetchCart()
-        .then((next) => {
-          if (!active) return;
-          applyFetched(seq, next);
-        })
-        .catch((err: unknown) => {
-          if (!active) return;
-          setError(friendlyCartError(err));
-          setStatus('error');
-        })
-        .finally(() => {
-          warmPromise.current = null;
-        });
-    } else {
-      // No session cookie → the basket is empty; settle without a network call (deferred past the effect body).
-      queueMicrotask(() => {
-        if (!active) return;
-        setCart((c) => c ?? emptyCart());
-        setStatus('ready');
-      });
-      idleTimer = setTimeout(warmSession, IDLE_WARM_MS);
-    }
-
-    let last = Date.now();
-    const onVisible = () => {
-      if (document.visibilityState === 'visible' && Date.now() - last > REFOCUS_REFRESH_MS && hasCartSession()) {
-        last = Date.now();
-        void load();
-      }
+    queueMicrotask(() => {
+      if (!active) return;
+      const initial = readBasket();
+      basketRef.current = initial;
+      setBasket(initial);
+    });
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== null && e.key !== BASKET_STORAGE_KEY) return;
+      const next = readBasket();
+      basketRef.current = next;
+      setBasket(next);
     };
-    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('storage', onStorage);
     return () => {
       active = false;
-      if (idleTimer) clearTimeout(idleTimer);
-      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('storage', onStorage);
     };
-  }, [load, warmSession, applyFetched, mutationSeq]);
-
-  const markPending = React.useCallback((key: string, on: boolean) => {
-    setPendingKeys((prev) => {
-      if (on === prev.has(key)) return prev;
-      const next = new Set(prev);
-      if (on) next.add(key);
-      else next.delete(key);
-      return next;
-    });
   }, []);
 
-  // Quantity changes (Pritam, 12 Nov: "+/− and checkout feel slow"). Every tap changes the line at once and the
-  // controls never lock. The Store API (2–3 s a call) gets one request per burst of taps, carrying the final
-  // quantity, and update/remove requests run one at a time so WooCommerce never saves the same session twice at
-  // once. A server reply only fills in what the shopper has not changed since it was sent.
-  const desiredQty = React.useRef(new Map<string, number>());
-  const removingKeys = React.useRef(new Set<string>());
-  const flushTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const flushing = React.useRef(false);
-  const mutationChain = React.useRef<Promise<void>>(Promise.resolve());
-
-  /**
-   * Stores a cart from the server, keeping the shopper's unsent quantities, lines being removed and provisional
-   * lines from adds still in flight (except `settledTemp`, the provisional line this reply replaces).
-   */
-  const commitCart = React.useCallback((next: WooCart, settledTemp?: string) => {
-    const temps = (cartRef.current?.items ?? []).filter((i) => isOptimisticKey(i.key) && i.key !== settledTemp);
-    let merged = next;
-    if (desiredQty.current.size > 0 || removingKeys.current.size > 0 || temps.length > 0) {
-      const items = next.items
-        .filter((i) => !removingKeys.current.has(i.key))
-        .map((i) => {
-          const q = desiredQty.current.get(i.key);
-          return q === undefined || q === i.quantity ? i : scaleLine(i, q);
-        });
-      merged = withOptimisticItems(next, [...items, ...temps]);
-    }
-    cartRef.current = merged;
-    setCart(merged);
-    setStatus('ready');
-    setError(null);
+  /** Applies a change to the basket, persists it and returns the new state. */
+  const commit = React.useCallback((update: (prev: BasketState) => BasketState): BasketState => {
+    const prev = basketRef.current ?? readBasket();
+    const next = { ...update(prev), updatedAt: Date.now() };
+    basketRef.current = next;
+    writeBasket(next);
+    setBasket(next);
+    return next;
   }, []);
 
-  /** Sends queued quantities one request at a time until none are left (taps during a request queue the next). */
-  const flushQuantities = React.useCallback(() => {
-    if (flushTimer.current) {
-      clearTimeout(flushTimer.current);
-      flushTimer.current = null;
-    }
-    if (flushing.current) return; // the running loop picks up whatever was queued
-    flushing.current = true;
-    mutationChain.current = mutationChain.current.then(async () => {
-      try {
-        for (;;) {
-          const entry = [...desiredQty.current].find(([k]) => !isOptimisticKey(k));
-          if (!entry) break;
-          const [key, quantity] = entry;
-          try {
-            const next = await updateItem({ key, quantity });
-            if (desiredQty.current.get(key) === quantity) desiredQty.current.delete(key);
-            commitCart(next);
-            if (!desiredQty.current.has(key) && !removingKeys.current.has(key)) markPending(key, false);
-          } catch (err) {
-            // Drop every unsent change and show the server's basket again.
-            for (const k of [...desiredQty.current.keys()]) {
-              if (isOptimisticKey(k)) continue;
-              desiredQty.current.delete(k);
-              if (!removingKeys.current.has(k)) markPending(k, false);
-            }
-            toast({ type: 'error', message: friendlyCartError(err) });
-            void load();
-          }
-        }
-      } finally {
-        flushing.current = false;
-      }
-    });
-  }, [commitCart, markPending, toast, load]);
+  const openCart = React.useCallback(() => setIsOpen(true), []);
+  const closeCart = React.useCallback(() => setIsOpen(false), []);
 
-  const scheduleFlush = React.useCallback(() => {
-    if (flushTimer.current) clearTimeout(flushTimer.current);
-    flushTimer.current = setTimeout(flushQuantities, QUANTITY_DEBOUNCE_MS);
-  }, [flushQuantities]);
+  const refresh = React.useCallback(async () => {
+    const next = readBasket();
+    basketRef.current = next;
+    setBasket(next);
+  }, []);
 
   const addToCart = React.useCallback(
     async ({ id, quantity = 1, variation, name, openDrawer = true, preview }: AddToCartInput) => {
-      setIsAdding(true);
-      warmed.current = true;
-      mutationSeq.bump();
-      // Optimistic: show the line and open the drawer immediately; the server cart replaces it when it arrives.
-      const snapshot = cartRef.current;
-      const knownKeys = new Set((snapshot?.items ?? []).map((i) => i.key));
-      let tempKey: string | null = null;
-      if (preview) {
-        const base = snapshot ?? emptyCart();
-        const line = optimisticLine({ ...preview, id, quantity });
-        tempKey = line.key;
-        const next = withOptimisticItems(base, [...base.items, line]);
-        cartRef.current = next;
-        setCart(next);
-        setStatus('ready');
-        setError(null);
-        markPending(tempKey, true);
-        if (openDrawer) setIsOpen(true);
-      }
-      try {
-        // Let an in-flight session fetch finish first so the add joins that session (one cookie, one basket).
-        if (warmPromise.current) await warmPromise.current.catch(() => undefined);
-        const next = await addItem({ id, quantity, variation });
-        // +/− pressed on the provisional line while the add was in flight: carry the change over to the real line.
-        const tempWanted = tempKey ? desiredQty.current.get(tempKey) : undefined;
-        if (tempKey) desiredQty.current.delete(tempKey);
-        if (tempWanted !== undefined && tempWanted !== quantity) {
-          const real = next.items.find((i) => i.id === id && !knownKeys.has(i.key)) ?? next.items.find((i) => i.id === id);
-          if (real) {
-            desiredQty.current.set(real.key, Math.max(1, real.quantity + tempWanted - quantity));
-            markPending(real.key, true);
-            scheduleFlush();
-          }
-        }
-        commitCart(next, tempKey ?? undefined);
-        toast({
-          type: 'success',
-          message: name ? `${name} added to basket ✓` : 'Added to basket ✓',
-          action: openDrawer ? undefined : { label: 'View basket', onClick: openCart },
-        });
-        if (openDrawer) setIsOpen(true);
-        return true;
-      } catch (err) {
-        if (tempKey) {
-          desiredQty.current.delete(tempKey);
-          // Roll the provisional line back (keep anything else that landed meanwhile).
-          const current = cartRef.current;
-          if (current) {
-            const rolled = withOptimisticItems(current, current.items.filter((i) => i.key !== tempKey));
-            cartRef.current = rolled;
-            setCart(rolled);
-          }
-        }
-        toast({ type: 'error', message: friendlyCartError(err) });
+      const qty = clampQuantity(quantity);
+      const prev = basketRef.current ?? readBasket();
+      const existing = prev.lines.find((l) => l.id === id);
+      if (!existing && prev.lines.length >= MAX_BASKET_LINES) {
+        toast({ type: 'error', message: `Your basket can hold ${MAX_BASKET_LINES} different items. Please remove one first.` });
         return false;
-      } finally {
-        if (tempKey) markPending(tempKey, false);
-        setIsAdding(false);
       }
+      const snapshot: BasketLineSnapshot = preview ?? describeLine(id, products);
+      commit((state) => {
+        const found = state.lines.find((l) => l.id === id);
+        if (found) {
+          return {
+            ...state,
+            lines: state.lines.map((l) =>
+              l.id === id
+                ? { ...l, quantity: clampQuantity(l.quantity + qty), name: snapshot.name || l.name, pricePence: snapshot.pricePence || l.pricePence, image: snapshot.image ?? l.image, variation: snapshot.variation ?? l.variation }
+                : l,
+            ),
+          };
+        }
+        const line: BasketLine = { id, quantity: qty, ...snapshot, ...(variation ? { attributes: variation } : {}), addedAt: Date.now() };
+        return { ...state, lines: [...state.lines, line] };
+      });
+      toast({
+        type: 'success',
+        message: name ? `${name} added to basket ✓` : 'Added to basket ✓',
+        action: openDrawer ? undefined : { label: 'View basket', onClick: openCart },
+      });
+      if (openDrawer) setIsOpen(true);
+      return true;
     },
-    [toast, openCart, markPending, mutationSeq, commitCart, scheduleFlush],
+    [commit, openCart, products, toast],
   );
 
   const removeCartItem = React.useCallback(
     async (key: string) => {
-      const snapshot = cartRef.current;
-      if (!snapshot || isOptimisticKey(key)) return false;
-      const item = snapshot.items.find((i) => i.key === key);
-      if (!item) return false;
-      mutationSeq.bump();
-      desiredQty.current.delete(key);
-      removingKeys.current.add(key);
-      // Optimistic removal
-      const without = withOptimisticItems(snapshot, snapshot.items.filter((i) => i.key !== key));
-      cartRef.current = without;
-      setCart(without);
-      markPending(key, true);
-      let ok = false;
-      const run = mutationChain.current.then(async () => {
-        try {
-          const next = await removeItem({ key });
-          removingKeys.current.delete(key);
-          commitCart(next);
-          ok = true;
-          const undo = async () => {
-            try {
-              commitCart(await addItem({ id: item.id, quantity: item.quantity }));
-            } catch (err) {
-              toast({ type: 'error', message: friendlyCartError(err) });
-            }
-          };
-          toast({ type: 'info', message: `${item.name} removed`, duration: 6000, action: { label: 'Undo', onClick: () => void undo() } });
-        } catch (err) {
-          removingKeys.current.delete(key);
-          // Put the line back, then resync with the server's truth.
-          const current = cartRef.current;
-          if (current && !current.items.some((i) => i.key === key)) {
-            const restored = withOptimisticItems(current, [...current.items, item]);
-            cartRef.current = restored;
-            setCart(restored);
-          }
-          toast({ type: 'error', message: friendlyCartError(err) });
-          void load();
-        } finally {
-          markPending(key, false);
-        }
-      });
-      mutationChain.current = run;
-      await run;
-      return ok;
+      const prev = basketRef.current ?? readBasket();
+      const line = prev.lines.find((l) => lineKey(l.id) === key);
+      if (!line) return false;
+      commit((state) => ({ ...state, lines: state.lines.filter((l) => lineKey(l.id) !== key) }));
+      const undo = () => {
+        commit((state) => (state.lines.some((l) => l.id === line.id) ? state : { ...state, lines: [...state.lines, line] }));
+      };
+      toast({ type: 'info', message: `${line.name} removed`, duration: 6000, action: { label: 'Undo', onClick: undo } });
+      return true;
     },
-    [toast, markPending, load, mutationSeq, commitCart],
+    [commit, toast],
+  );
+
+  const updateCartItem = React.useCallback(
+    async (key: string, quantity: number) => {
+      const prev = basketRef.current ?? readBasket();
+      if (!prev.lines.some((l) => lineKey(l.id) === key)) return false;
+      if (quantity <= 0) return removeCartItem(key);
+      const qty = clampQuantity(quantity);
+      commit((state) => ({ ...state, lines: state.lines.map((l) => (lineKey(l.id) === key ? { ...l, quantity: qty } : l)) }));
+      return true;
+    },
+    [commit, removeCartItem],
   );
 
   const clearCart = React.useCallback(async () => {
-    try {
-      const next = await clearCartRequest();
-      desiredQty.current.clear();
-      removingKeys.current.clear();
-      cartRef.current = next;
-      setCart(next);
-      return true;
-    } catch (err) {
-      console.error('[cart] clear failed', err);
-      return false;
-    }
-  }, []);
+    commit((state) => ({ ...emptyBasket(), shippingOptionId: state.shippingOptionId }));
+    return true;
+  }, [commit]);
 
-  /** Changes a line's quantity at once; the request follows when the taps stop (see flushQuantities). */
-  const updateCartItem = React.useCallback(
-    async (key: string, quantity: number) => {
-      const current = cartRef.current;
-      if (!current || !current.items.some((i) => i.key === key)) return false;
-      if (quantity <= 0) return removeCartItem(key);
-
-      mutationSeq.bump();
-      desiredQty.current.set(key, quantity);
-      const next = withOptimisticItems(current, current.items.map((i) => (i.key === key ? scaleLine(i, quantity) : i)));
-      cartRef.current = next;
-      setCart(next);
-      markPending(key, true);
-      // A provisional line has no server key yet; addToCart sends its quantity once the add lands.
-      if (!isOptimisticKey(key)) scheduleFlush();
-      return true;
+  const setShippingOption = React.useCallback(
+    (id: string) => {
+      commit((state) => ({ ...state, shippingOptionId: shippingOptionById(id).id }));
     },
-    [markPending, removeCartItem, mutationSeq, scheduleFlush],
+    [commit],
   );
 
-  // Never leave a timer running after unmount.
-  React.useEffect(() => () => {
-    if (flushTimer.current) clearTimeout(flushTimer.current);
-  }, []);
+  const applyPrices = React.useCallback(
+    (prices: Record<string, number>) => {
+      const now = Date.now();
+      commit((state) => ({
+        ...state,
+        lines: state.lines.map((l) => {
+          const p = prices[String(l.id)];
+          return typeof p === 'number' && Number.isFinite(p) && p > 0 ? { ...l, pricePence: Math.round(p), verifiedAt: now } : l;
+        }),
+      }));
+    },
+    [commit],
+  );
 
+  const cart = React.useMemo(() => (basket ? buildCart(basket, products) : null), [basket, products]);
+  const status: CartStatus = basket ? 'ready' : 'loading';
   const itemCount = cart?.items_count ?? 0;
-  const subtotalPence = cart ? sumPence(cart.totals.total_items, cart.totals.total_items_tax) : 0;
+  const subtotalPence = cart ? Number(cart.totals.total_items) + Number(cart.totals.total_items_tax) : 0;
+  const shippingOptionId = basket?.shippingOptionId ?? shippingOptionById(null).id;
+  const lineInputs = React.useMemo(() => (basket ? toLineInputs(basket) : []), [basket]);
 
   const value = React.useMemo<CartContextValue>(
     () => ({
       cart,
       status,
-      error,
+      error: null,
       itemCount,
       subtotalPence,
-      pendingKeys,
-      isAdding,
+      pendingKeys: NO_PENDING,
+      isAdding: false,
       isOpen,
       openCart,
       closeCart,
       refresh,
-      warmSession,
       addToCart,
       updateCartItem,
       removeCartItem,
       clearCart,
-      replaceCart,
+      shippingOptionId,
+      setShippingOption,
+      lineInputs,
+      applyPrices,
     }),
-    [cart, status, error, itemCount, subtotalPence, pendingKeys, isAdding, isOpen, openCart, closeCart, refresh, warmSession, addToCart, updateCartItem, removeCartItem, clearCart, replaceCart],
+    [cart, status, itemCount, subtotalPence, isOpen, openCart, closeCart, refresh, addToCart, updateCartItem, removeCartItem, clearCart, shippingOptionId, setShippingOption, lineInputs, applyPrices],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

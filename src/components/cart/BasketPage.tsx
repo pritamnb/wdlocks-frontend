@@ -8,10 +8,10 @@ import { Button, ButtonLink } from '@/components/ui/Button';
 import { CartLineItem } from '@/components/cart/CartLineItem';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useCart } from '@/hooks/useCart';
-import { previewFromProduct } from '@/lib/cart-optimistic';
+import { previewFromProduct } from '@/lib/basket';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { canCheckout } from '@/lib/checkout';
-import { CATALOGUE_BY_ID, SHIPPING_OPTIONS, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
+import { CATALOGUE_BY_ID, CHECKOUT_MODE, SHIPPING_OPTIONS, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
 
 /** Ultion-style cart page: trust bar, line table, "Don't forget", totals, proceed to checkout. */
 export function BasketPage({ products = [] }: { products?: WooProduct[] }) {
@@ -93,7 +93,6 @@ export function BasketPage({ products = [] }: { products?: WooProduct[] }) {
                 </div>
               )}
 
-              <p className="mt-6 text-sm text-charcoal/75">Have a coupon? You can enter it on the secure checkout page.</p>
             </div>
 
             <aside className="lg:col-span-4">
@@ -112,7 +111,7 @@ export function BasketPage({ products = [] }: { products?: WooProduct[] }) {
                 <ButtonLink href="/checkout" size="lg" className={`mt-5 w-full ${!gate.ok ? 'pointer-events-none opacity-50' : ''}`} aria-disabled={!gate.ok}>
                   Proceed to checkout
                 </ButtonLink>
-                <p className="mt-3 text-center text-xs text-charcoal/75">Payment is taken securely on wdlocks.co.uk.</p>
+                <p className="mt-3 text-center text-xs text-charcoal/75">{CHECKOUT_MODE === 'handoff' ? 'Payment is taken securely on wdlocks.co.uk.' : 'Delivery is chosen and payment taken on the next page.'}</p>
               </div>
               <Link href="/#products" className="mt-4 inline-block text-sm font-medium text-charcoal/75 hover:text-red">← Continue shopping</Link>
             </aside>

@@ -10,7 +10,7 @@ import { useCart } from '@/hooks/useCart';
 import { productPriceLabel, decodeEntities } from '@/lib/wdlocks-api';
 import { primaryImage, ctaLabel, isExternalOnly } from '@/lib/product-helpers';
 import { CATALOGUE_BY_ID } from '@/lib/constants';
-import { previewFromProduct } from '@/lib/cart-optimistic';
+import { previewFromProduct } from '@/lib/basket';
 import { cn } from '@/lib/cn';
 
 interface Props {
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export function ProductCard({ product, priority = false }: Props) {
-  const { addToCart, warmSession } = useCart();
+  const { addToCart } = useCart();
   const [busy, setBusy] = React.useState(false);
   const image = primaryImage(product);
   const name = decodeEntities(product.name);
@@ -30,7 +30,7 @@ export function ProductCard({ product, priority = false }: Props) {
 
   const onCta = async () => {
     setBusy(true);
-    // The drawer opens instantly with a provisional line (see useCart); the server cart replaces it.
+    // The basket is local (see useCart): the drawer opens at once with the line in it.
     await addToCart({ id: product.id, quantity: 1, name, preview: previewFromProduct(product, 1, entry?.shortName ?? name) });
     setBusy(false);
   };
@@ -91,8 +91,6 @@ export function ProductCard({ product, priority = false }: Props) {
             type="button"
             className={cta}
             onClick={() => void onCta()}
-            onPointerEnter={warmSession}
-            onFocus={warmSession}
             disabled={!product.is_in_stock || !product.is_purchasable || busy}
             aria-busy={busy || undefined}
             aria-label={`${ctaLabel(product)}: ${name}`}

@@ -90,11 +90,33 @@ export const GUARANTEE = {
   blurb: 'Once your Watchdog lock is fitted, register it with us. Registration switches on key-copy protection and activates your £5,000 security guarantee.',
 } as const;
 
-/** Shipping options as configured on the live WooCommerce store (read from its checkout on 2026-11-10). Pence. */
-export const SHIPPING_OPTIONS = [
-  { id: 'rm-signed', label: 'Royal Mail 1st Class Signed For', eta: '3–5 working days', pricePence: 640, transitDays: [3, 5] as const },
-  { id: 'rm-24', label: 'Royal Mail Special Delivery 24hr', eta: 'next working day', pricePence: 1000, transitDays: [1, 1] as const },
-  { id: 'saturday', label: 'Saturday Delivery', eta: 'Saturday', pricePence: 2880, transitDays: [1, 1] as const },
+export interface ShippingOption {
+  id: string;
+  /** Store API rate id (`method:instance`) and its parts, as the live store reports them. */
+  rateId: string;
+  methodId: string;
+  instanceId: number;
+  label: string;
+  /** The rate's name on the live store, used as the order's shipping method title. */
+  methodTitle: string;
+  eta: string;
+  /** Inc-VAT price in pence (what the shopper sees). */
+  pricePence: number;
+  /** The same price split the way WooCommerce stores it: ex-VAT shipping line + 20 % shipping tax. */
+  exVatPence: number;
+  taxPence: number;
+  transitDays: readonly [number, number];
+}
+
+/**
+ * Delivery options as configured on the live WooCommerce store. Rate ids, names and the ex-VAT/tax split were read
+ * from the Store API cart for a UB6 address on 12 Nov 2026 (flat_rate:1 533+107, flat_rate:2 833+167, flat_rate:3
+ * 2400+480). The basket prices delivery itself; the order carries the matching shipping line.
+ */
+export const SHIPPING_OPTIONS: readonly ShippingOption[] = [
+  { id: 'rm-signed', rateId: 'flat_rate:1', methodId: 'flat_rate', instanceId: 1, label: 'Royal Mail 1st Class Signed For', methodTitle: 'Royal Mail 1st Class Signed For (3–5 working days)', eta: '3–5 working days', pricePence: 640, exVatPence: 533, taxPence: 107, transitDays: [3, 5] },
+  { id: 'rm-24', rateId: 'flat_rate:2', methodId: 'flat_rate', instanceId: 2, label: 'Royal Mail Special Delivery 24hr', methodTitle: 'Royal Mail Special Delivery 24hr', eta: 'next working day', pricePence: 1000, exVatPence: 833, taxPence: 167, transitDays: [1, 1] },
+  { id: 'saturday', rateId: 'flat_rate:3', methodId: 'flat_rate', instanceId: 3, label: 'Saturday Delivery', methodTitle: 'Saturday Delivery', eta: 'Saturday', pricePence: 2880, exVatPence: 2400, taxPence: 480, transitDays: [1, 1] },
 ] as const;
 
 /** Dispatch cut-off: orders before 14:00 Europe/London Mon–Fri ship the same day. */

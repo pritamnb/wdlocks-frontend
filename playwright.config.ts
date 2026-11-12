@@ -20,8 +20,8 @@ export default defineConfig({
   projects: [
     { name: 'desktop', testIgnore: /basket/, use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 900 } } },
     { name: 'mobile', testIgnore: /basket/, use: { ...devices['Pixel 7'] } },
-    // The live basket flow talks to the real Store API through the proxy; run it alone, after everything else.
-    // Each proxied Store API call takes ~2 s on shared hosting; the checkout flows chain six or more, so allow 90 s.
+    // The basket is client-held (localStorage); only "Place order" reaches the store (Store API pricing + WooCommerce
+    // REST + Stripe on shared hosting), so the checkout specs still get 90 s and run one at a time.
     { name: 'basket-desktop', testMatch: /basket/, dependencies: ['desktop', 'mobile'], fullyParallel: false, timeout: 90_000, use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 900 } } },
     { name: 'basket-mobile', testMatch: /basket/, dependencies: ['basket-desktop'], fullyParallel: false, timeout: 90_000, use: { ...devices['Pixel 7'] } },
   ],

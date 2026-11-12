@@ -126,7 +126,7 @@ export function DemoPayment({ amount, prepare, returnUrl, disabled, onError, chi
       }
       await finish(order, method === 'card' && digits === '4000000000000002' ? 'declined' : 'succeeded');
     } catch (err) {
-      onError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      onError(err instanceof CartClientError ? friendlyCartError(err) : err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setBusy('idle');
     }
   };

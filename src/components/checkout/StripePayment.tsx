@@ -6,6 +6,7 @@ import { Elements, ExpressCheckoutElement, PaymentElement, useElements, useStrip
 import type { CreatePaymentIntentResponse } from '@/types';
 import { Spinner } from '@/components/ui/Button';
 import { STRIPE_PUBLISHABLE_KEY } from '@/lib/constants';
+import { friendlyCartError, CartClientError } from '@/lib/cart-client';
 
 let stripePromise: Promise<Stripe | null> | null = null;
 function getStripePromise() {
@@ -78,7 +79,7 @@ function PaymentForm({ prepare, returnUrl, billingDetails, disabled, onError, ch
       // No redirect was needed (card without 3DS, wallet): the intent is confirmed — go to the return page to finish.
       window.location.assign(returnUrl(order));
     } catch (err) {
-      onError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      onError(err instanceof CartClientError ? friendlyCartError(err) : err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setBusy(false);
     }

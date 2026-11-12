@@ -837,6 +837,59 @@ Pritam: "quite slow when you add product item subtract and trying to move to che
 - Verified live: add → drawer 107 ms; three fast taps → shown in 106 ms; +1 then "Go to checkout" → checkout form in 147 ms (was 2.5 s); four taps sent as one request and the server cart matched (quantity 4); basket e2e 5/5 on desktop and mobile.
 - The deeper fix (a basket held in the browser, priced on our side) is being built in its own branch `local-basket`.
 
+### Pass 46 — 12 Nov 2026: the basket moves into the browser; wdlocks.co.uk is touched once, at "Place order"
+Brief from the main session (the interim fix in Pass 45 keeps the Store API cart and coalesces taps; this pass replaces the mechanism): add, +/−, remove and "Go to checkout" must never wait on wdlocks.co.uk (every Store API
+cart call takes 1.1–1.6 s from the UK and 2–3 s through the Vercel function; nothing may change on the WordPress host).
+1. **Client-held basket** (`src/lib/basket.ts`, `useCart`). Lines (product/variation id, quantity, the WooCommerce
+   attribute pair, a display snapshot: name, inc-VAT unit price, image, size/finish label) live in `localStorage`
+   (`wd:basket`, 30-day TTL, other tabs follow via the `storage` event). `buildCart` turns them into the Store API
+   `WooCart` shape the drawer, basket page, checkout and order summary already render, so those components kept
+   their props. Totals are computed locally: prices include 20 % VAT and the split mirrors WooCommerce's
+   (ex = round(inc / 1.2)), checked line by line against a live Store API cart (3 × £19.99 → 49.98 + 9.99,
+   2 × £34.99 → 58.32 + 11.66, 3 × £12.95 → 32.38 + 6.47). No cookie and no signature: the server only ever
+   acts on ids and quantities, which it re-prices itself. The displayed unit price follows the layout's ISR
+   catalogue (60 s), falling back to the snapshot. `pendingKeys` is always empty; `isAdding` is always false;
+   `warmSession` is gone (there is no session). Removal keeps its Undo toast.
+2. **Delivery** is chosen in the basket (`SHIPPING_OPTIONS` now carry the live rate ids and the ex-VAT/tax split read
+   from the Store API on 12 Nov: `flat_rate:1` 533 + 107, `flat_rate:2` 833 + 167, `flat_rate:3` 2400 + 480). The
+   cheapest Royal Mail rate is preselected, the three options show before any address is typed, and the choice is
+   part of the stored basket (survives a reload).
+3. **Coupons dropped.** The basket never talks to WooCommerce before "Place order", so a code could only be
+   validated after the order exists, i.e. the shopper would learn the total was wrong at the very end; the shop runs
+   no public coupons today. If the client wants them, the route can send `coupon_lines` and re-quote from the
+   created order before the payment step; the field, `/api/cart/coupon` and the Store API coupon calls are removed.
+4. **`/api/checkout/intent`** now receives `items` (ids + quantities), `shipping_option`, addresses, note and
+   `expected_total`. It prices every line from the Store API products endpoint (`src/lib/pricing.ts`: simple ids and
+   variation ids in two parallel list calls, memoised 5 min per id plus Next's data cache; a mismatch refetches once
+   bypassing the memo), checks `is_purchasable`, `is_in_stock`, `add_to_cart.maximum` / `low_stock_remaining`, adds the
+   chosen rate and refuses with `409 total_mismatch` (carrying the server's prices, which the checkout applies to the
+   basket and shows) when the shopper's total differs. 4266 (3 Star extra keys, needs the key number) is rejected
+   server-side. Demo and sandbox orders record the priced lines, delivery and VAT in the signed cookie; the real path
+   creates the WooCommerce order with `line_items` (parent + variation id) and one `shipping_lines` entry
+   (`flat_rate`, instance id, the live method title, ex-VAT total) and still cancels the order if WooCommerce's total
+   disagrees. Verified against the live store from a local full-env build: order 6219 (2 × 5168, 5642, 3 × 4384,
+   Special Delivery) came back at £123.83 with £20.63 VAT, shipping 8.33 + 1.67, the note and the Stripe intent id;
+   cancelled afterwards with a staff note, the test-mode PaymentIntent cancelled too. Pricing from a warm cache: 2 ms;
+   cold: 1.3–2.6 s (one Store API round trip).
+5. **Removed**: `/api/cart/*` (8 routes), `src/lib/cart-proxy.ts`, `src/lib/cart-optimistic.ts`, the cart request
+   types and the proxy calls in `cart-client.ts`. Validators (`readJson`, `errorResponse`, `parseAddress`,
+   `parseProductId`, `parseQuantity`, `isSecureRequest`) moved to `src/lib/request-utils.ts`. The hand-off path
+   (`CHECKOUT_MODE` 'handoff', `buildCheckoutUrl`, single line) works unchanged from the local basket; production
+   does not use it.
+6. **Tests**: `basket.spec` asserts the drawer opens in well under 700 ms, +/− and the delivery switch apply in the same
+   frame (MutationObserver in the page, < 200 ms), no `aria-busy`, no disabled interval, zero Store API / `/api/cart`
+   requests during the whole flow, the basket survives a hard reload, the intent body carries ids/option/total/note
+   and the demo order is £26.39 (Bruno £19.99 + £6.40). `basket-stripe.spec` no longer waits on cart calls. Local
+   demo build: 62 passed, 6 skipped. Staging (Stripe test keys, stage 1, my deployment `…-6qvoj3eje`): basket + Stripe specs green on desktop and mobile (4242 confirmed at £26.39 and the basket emptied, 0002 declined with the basket kept, 3-D Secure completed); staging was then redeployed with main by the Pass 45 session, so it serves the Store API cart again. Production: **not deployed** — the production `vercel deploy` was refused by the session's permission layer; the branch is on PR for Pritam to deploy or merge (a `git push origin main` auto-deploys).
+7. **Timings** (local production build, Chromium; click → first DOM change measured in the page with a MutationObserver;
+   "Go to checkout" and the hard load measured from the test runner, three runs each): add → drawer line 13–14 ms;
+   + 2.1–2.3 ms; − 1.3–1.5 ms; remove 1.9–2.1 ms; delivery switch 4.8–5.1 ms; "Go to checkout" (click → order summary on
+   screen) 80–92 ms; checkout hard load 56–59 ms to the order summary (TTFB 5–8 ms locally; on Vercel add the edge round
+   trip, ~100–300 ms from the UK, none of it wdlocks.co.uk). Zero Store API / `/api/cart` requests in the whole flow.
+   Clicking "Go to checkout" within the same second as the add measured ≈950 ms (the click competes with the drawer's
+   own route prefetch); after a one-second pause it is the 80–92 ms above. Previous Store-API basket on production
+   (12 Nov): add 2.9 s, each +/− 2.1–2.4 s, checkout hard load 2.9 s.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

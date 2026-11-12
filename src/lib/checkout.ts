@@ -2,21 +2,19 @@ import { CHECKOUT_MODE, CHECKOUT_URL, HANDOFF_PLUGIN_INSTALLED } from '@/lib/con
 import type { WooCart } from '@/types';
 
 /**
- * Hands the basket over to the WooCommerce checkout on wdlocks.co.uk.
+ * Hands the basket over to the WooCommerce checkout on wdlocks.co.uk (CHECKOUT_MODE 'handoff'; production runs the
+ * on-site checkout instead).
  *
- * The basket lives in a Store API session held by our proxy (Cart-Token). The shopper's browser
- * has NO WooCommerce session cookie for wdlocks.co.uk, so linking to /checkout/ alone shows an
- * empty basket. Two handoff modes:
+ * The basket is held in the browser (src/lib/basket.ts); the shopper has NO WooCommerce session cookie for
+ * wdlocks.co.uk, so linking to /checkout/ alone shows an empty basket. Two handoff modes:
  *
  *  1. PLUGIN mode (NEXT_PUBLIC_CART_HANDOFF_PLUGIN=true — requires backend/wd-cart-handoff.php on
- *     WordPress):  /checkout/?wd_items=<id>:<qty>,<id>:<qty>
- *     The plugin EMPTIES the WooCommerce basket, adds every line, then redirects to a clean
- *     /checkout/ URL, so refresh / back / a second visit can never double-add. Any number of lines.
+ *     WordPress, which will not be installed):  /checkout/?wd_items=<id>:<qty>,<id>:<qty>
  *
  *  2. NATIVE mode (default, no backend change): /checkout/?add-to-cart=<id>&quantity=<n>
  *     WooCommerce core handles exactly ONE line per request and does not clean the URL, so a
  *     refresh re-adds it. Therefore native mode only permits single-line baskets (see canCheckout)
- *     and we clear the headless basket on handoff so returning shoppers can't re-send it.
+ *     and we clear the local basket on handoff so returning shoppers can't re-send it.
  */
 /**
  * The one-line rule only matters when the basket is handed to wdlocks.co.uk. The on-site checkout (demo or Stripe)

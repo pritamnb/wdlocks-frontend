@@ -10,12 +10,11 @@ import { ShippingOptions } from '@/components/checkout/ShippingOptions';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/Toast';
-import { updateCustomer, selectShippingRate, applyCoupon, removeCoupon, createPaymentIntent, friendlyCartError } from '@/lib/cart-client';
+import { createPaymentIntent, CartClientError } from '@/lib/cart-client';
 import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
 import { EMAIL, EMPTY_ADDRESS, FIELD, isAddressComplete, toApiAddress, validateAddress, type AddressForm } from '@/lib/checkout-form';
-import { isOptimisticKey } from '@/lib/cart-optimistic';
 import { estimateDelivery, formatCountdown, formatDeliveryDate } from '@/lib/delivery';
-import { CHECKOUT_MODE, SITE, STRIPE_TEST_MODE } from '@/lib/constants';
+import { CHECKOUT_MODE, SHIPPING_OPTIONS, SITE, STRIPE_TEST_MODE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import type { CreatePaymentIntentResponse } from '@/types';
 
@@ -42,13 +41,14 @@ interface Saved {
 
 /**
  * Checkout on our own domain (Ultion pattern: one page, details on the left, order summary on the right).
- * Address and delivery choices are saved to the WooCommerce basket as the shopper types, so the totals on the right
- * are always the live Store API figures. Payment is Stripe (cards, Apple Pay, Google Pay, Klarna, Clearpay, PayPal as
- * enabled in the client's Dashboard) when the publishable key is configured; otherwise the page runs in preview mode
- * and the final step hands the basket to wdlocks.co.uk as before.
+ * Everything on this page is local: the basket, the VAT split and the three Royal Mail options come from
+ * src/lib/basket.ts, so the page renders at once and nothing here waits on wdlocks.co.uk. The store is contacted
+ * exactly once, when the shopper places the order (POST /api/checkout/intent re-prices every line from the Store API,
+ * creates the WooCommerce order and the Stripe PaymentIntent). Payment is Stripe when the publishable key is
+ * configured, the demo provider in demo mode; otherwise the page runs in preview mode and hands off to wdlocks.co.uk.
  */
 export function CheckoutPage({ preview = false }: { preview?: boolean }) {
-  const { cart, status, error, pendingKeys, updateCartItem, removeCartItem, refresh, replaceCart, clearCart } = useCart();
+  const { cart, status, pendingKeys, updateCartItem, removeCartItem, clearCart, shippingOptionId, setShippingOption, lineInputs, applyPrices } = useCart();
   const { toast } = useToast();
   const [email, setEmail] = React.useState('');
   const [phone, setPhone] = React.useState('');
@@ -58,9 +58,6 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   const [note, setNote] = React.useState('');
   const [terms, setTerms] = React.useState(false);
   const [showErrors, setShowErrors] = React.useState(false);
-  const [savingAddress, setSavingAddress] = React.useState(false);
-  const [savingRate, setSavingRate] = React.useState(false);
-  const [couponPending, setCouponPending] = React.useState(false);
   const [handingOff, setHandingOff] = React.useState(false);
   const [payError, setPayError] = React.useState<string | null>(null);
   const isClient = React.useSyncExternalStore(() => () => {}, () => true, () => false);
@@ -93,64 +90,18 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
     }
   }, [email, phone, shipping, billingSame, billing]);
 
-  // Save the address to the basket (debounced) once it is complete: the Store API recalculates delivery rates/VAT.
   const shippingErrors = validateAddress(shipping);
   const billingErrors = billingSame ? {} : validateAddress(billing);
   const emailOk = EMAIL.test(email.trim());
   const phoneOk = phone.trim().length >= 7;
   const addressReady = isAddressComplete(shipping) && (billingSame || isAddressComplete(billing));
-  const savedSignature = React.useRef('');
-  const signature = JSON.stringify([toApiAddress(shipping), billingSame ? null : toApiAddress(billing), emailOk ? email.trim() : '', phoneOk ? phone.trim() : '']);
-  React.useEffect(() => {
-    if (!addressReady || !cart || cart.items.length === 0) return;
-    if (signature === savedSignature.current) return;
-    const timer = setTimeout(async () => {
-      savedSignature.current = signature;
-      setSavingAddress(true);
-      try {
-        const contact = { email: emailOk ? email : '', phone: phoneOk ? phone : '' };
-        const next = await updateCustomer({
-          billing_address: toApiAddress(billingSame ? shipping : billing, contact),
-          shipping_address: toApiAddress(shipping, { email: '', phone: contact.phone }),
-        });
-        replaceCart(next);
-      } catch (err) {
-        savedSignature.current = '';
-        toast({ type: 'error', message: friendlyCartError(err) });
-      } finally {
-        setSavingAddress(false);
-      }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [signature, addressReady, cart, billingSame, shipping, billing, email, phone, emailOk, phoneOk, replaceCart, toast]);
 
-  const onSelectRate = async (packageId: number, rateId: string) => {
-    setSavingRate(true);
-    try {
-      replaceCart(await selectShippingRate({ package_id: packageId, rate_id: rateId }));
-    } catch (err) {
-      toast({ type: 'error', message: friendlyCartError(err) });
-    } finally {
-      setSavingRate(false);
-    }
-  };
-
-  const onCoupon = (apply: boolean) => async (code: string) => {
-    setCouponPending(true);
-    try {
-      replaceCart(apply ? await applyCoupon({ code }) : await removeCoupon({ code }));
-      toast({ type: 'success', message: apply ? 'Coupon applied' : 'Coupon removed' });
-      return true;
-    } catch (err) {
-      toast({ type: 'error', message: friendlyCartError(err) });
-      return false;
-    } finally {
-      setCouponPending(false);
-    }
+  const onSelectRate = (_packageId: number, rateId: string) => {
+    const option = SHIPPING_OPTIONS.find((o) => o.rateId === rateId);
+    if (option) setShippingOption(option.id);
   };
 
   const items = cart?.items ?? [];
-  const busyLines = Array.from(pendingKeys).length > 0 || items.some((i) => isOptimisticKey(i.key));
   const selectedRate = cart?.shipping_rates[0]?.shipping_rates.find((r) => r.selected) ?? null;
   const total = cart ? Number.parseInt(cart.totals.total_price, 10) || 0 : 0;
   const formValid = emailOk && phoneOk && addressReady && terms && (!cart?.needs_shipping || !!selectedRate);
@@ -166,16 +117,31 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
     return true;
   };
 
+  /**
+   * The one call that reaches the store. A 409 means the Store API prices differ from what the basket shows: the
+   * server's prices are applied to the basket (so the summary updates) and the shopper is asked to look again.
+   */
   const prepare = React.useCallback(async (): Promise<CreatePaymentIntentResponse | null> => {
     if (!cart) return null;
     const contact = { email: email.trim(), phone: phone.trim() };
-    return createPaymentIntent({
-      billing_address: toApiAddress(billingSame ? shipping : billing, contact),
-      shipping_address: toApiAddress(shipping, { email: '', phone: contact.phone }),
-      customer_note: note.trim() || undefined,
-      expected_total: cart.totals.total_price,
-    });
-  }, [cart, email, phone, billingSame, shipping, billing, note]);
+    try {
+      return await createPaymentIntent({
+        items: lineInputs,
+        shipping_option: shippingOptionId,
+        billing_address: toApiAddress(billingSame ? shipping : billing, contact),
+        shipping_address: toApiAddress(shipping, { email: '', phone: contact.phone }),
+        customer_note: note.trim() || undefined,
+        expected_total: cart.totals.total_price,
+      });
+    } catch (err) {
+      if (err instanceof CartClientError && err.code === 'total_mismatch') {
+        const prices = (err.data?.prices ?? null) as Record<string, number> | null;
+        if (prices) applyPrices(prices);
+        toast({ type: 'info', message: 'Prices were updated from the store. Please check the total and try again.' });
+      }
+      throw err;
+    }
+  }, [cart, email, phone, billingSame, shipping, billing, note, lineInputs, shippingOptionId, applyPrices, toast]);
 
   const returnUrl = React.useCallback((order: CreatePaymentIntentResponse) => {
     const u = new URL('/checkout/return', window.location.origin);
@@ -218,17 +184,6 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
       </div>
     );
   }
-  if (status === 'error' && !cart) {
-    return (
-      <div className="container-wd py-10 sm:py-14">
-        <h1 className="heading-display text-3xl sm:text-4xl">Checkout</h1>
-        <div role="alert" className="mt-8 rounded-2xl border border-black/10 bg-[#f7f7f7] p-8 text-center">
-          <p className="text-sm text-charcoal/80">{error ?? 'We couldn’t load your basket.'}</p>
-          <Button variant="secondary" size="sm" className="mt-4" onClick={() => void refresh()}>Try again</Button>
-        </div>
-      </div>
-    );
-  }
   if (!cart || items.length === 0) {
     return (
       <div className="container-wd py-10 sm:py-14">
@@ -243,6 +198,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
 
   const stripeLive = CHECKOUT_MODE === 'stripe';
   const demo = CHECKOUT_MODE === 'demo';
+  const onPayError = (m: string) => setPayError(m);
 
   return (
     <div className="container-wd py-10 sm:py-14">
@@ -259,12 +215,11 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
       )}
       {preview && !stripeLive && !demo && (
         <p role="status" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
-          Preview of the on-site checkout. Address, delivery and coupons are live; card payment appears here once the Stripe keys are added, until then the last step pays on wdlocks.co.uk.
+          Preview of the on-site checkout. Card payment appears here once the Stripe keys are added; until then the last step pays on wdlocks.co.uk.
         </p>
       )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-12">
-        {/* The summary's coupon form must not nest inside this form (browsers drop nested forms). */}
         <form className="space-y-8 lg:col-span-7" onSubmit={(e) => e.preventDefault()} noValidate>
           {/* 1 Contact */}
           <section aria-labelledby="co-contact">
@@ -291,7 +246,6 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
             <h2 id="co-address" className="flex items-center gap-3 text-lg font-semibold text-near-black">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-near-black text-xs font-semibold text-white" aria-hidden="true">2</span>
               Delivery address
-              {savingAddress && <span className="text-xs font-normal text-charcoal/60">Saving…</span>}
             </h2>
             <div className="mt-4">
               <AddressFields idPrefix="ship" section="shipping" value={shipping} errors={shippingErrors} showErrors={showErrors} onChange={setShipping} />
@@ -320,7 +274,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
               {est?.shipsToday ? `Order within ${formatCountdown(est.minutesToCutoff)} and we dispatch today.` : est ? `Dispatched ${formatDeliveryDate(est.dispatchDate)}.` : `Orders before ${SITE.dispatchCutoff} Monday to Friday are dispatched the same day.`}
             </p>
             <div className="mt-4">
-              <ShippingOptions packages={cart.shipping_rates} pending={savingRate || savingAddress} onSelect={(p, r) => void onSelectRate(p, r)} now={now} />
+              <ShippingOptions packages={cart.shipping_rates} pending={false} onSelect={onSelectRate} now={now} />
             </div>
             {showErrors && cart.needs_shipping && !selectedRate && <p className="mt-2 text-xs font-medium text-red">Choose a delivery method</p>}
             {/* Always shown (Pritam, 12 Nov: "order notes at payment is missing" — it sat behind an "Add a delivery note"
@@ -349,13 +303,13 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
                   prepare={async () => (validate() ? prepare() : null)}
                   returnUrl={returnUrl}
                   billingDetails={billingDetails}
-                  disabled={busyLines || savingAddress || savingRate}
-                  onError={(m) => setPayError(m)}
+                  disabled={false}
+                  onError={onPayError}
                 >
                   <TermsCheckbox checked={terms} onChange={setTerms} invalid={showErrors && !terms} />
                 </StripePayment>
               ) : demo ? (
-                <DemoPayment amount={total} prepare={async () => (validate() ? prepare() : null)} returnUrl={returnUrl} disabled={busyLines || savingAddress || savingRate} onError={(m) => setPayError(m)}>
+                <DemoPayment amount={total} prepare={async () => (validate() ? prepare() : null)} returnUrl={returnUrl} disabled={false} onError={onPayError}>
                   <TermsCheckbox checked={terms} onChange={setTerms} invalid={showErrors && !terms} />
                 </DemoPayment>
               ) : (
@@ -370,7 +324,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
                     </ul>
                   </div>
                   <TermsCheckbox checked={terms} onChange={setTerms} invalid={showErrors && !terms} />
-                  <Button size="lg" className="h-14 w-full rounded-xl text-base" onClick={() => void handoff()} loading={handingOff} disabled={busyLines || savingAddress}>
+                  <Button size="lg" className="h-14 w-full rounded-xl text-base" onClick={() => void handoff()} loading={handingOff}>
                     Continue to secure payment
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
                   </Button>
@@ -386,7 +340,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
 
         <aside className="lg:col-span-5">
           <div className="lg:sticky lg:top-28">
-            <OrderSummary cart={cart} pendingKeys={pendingKeys} onQuantity={(k, q) => void updateCartItem(k, q)} onRemove={(k) => void removeCartItem(k)} onApplyCoupon={onCoupon(true)} onRemoveCoupon={onCoupon(false)} couponPending={couponPending} />
+            <OrderSummary cart={cart} pendingKeys={pendingKeys} onQuantity={(k, q) => void updateCartItem(k, q)} onRemove={(k) => void removeCartItem(k)} />
             <ul className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] text-charcoal/75">
               <li className="rounded-lg bg-[#f7f7f7] px-2 py-2">🔒 Secure checkout</li>
               <li className="rounded-lg bg-[#f7f7f7] px-2 py-2">📦 Same-day dispatch</li>

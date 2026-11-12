@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
-import {
-  proxyCartRequest,
-  upstreamDownResponse,
-  errorResponse,
-  readJson,
-  parseAddress,
-  isSecureRequest,
-} from '@/lib/cart-proxy';
-import { cartHash, selectedRateIds } from '@/lib/checkout-cart-hash';
+import { errorResponse, isSecureRequest, parseAddress, parseProductId, parseQuantity, readJson } from '@/lib/request-utils';
+import { cartHash } from '@/lib/checkout-cart-hash';
+import { MAX_BASKET_LINES, shippingOptionById, type BasketLineInput } from '@/lib/basket';
+import { priceBasket, PricingError, type PricedBasket } from '@/lib/pricing';
+import { EXTERNAL_ONLY_PRODUCT_IDS, SHIPPING_OPTIONS } from '@/lib/constants';
 import { getStripe, isStripeConfigured, describeStripeError } from '@/lib/stripe-server';
 import {
   isWcRestConfigured,
@@ -25,8 +21,8 @@ import {
   type WooRestOrder,
 } from '@/lib/wc-rest';
 import { RateLimiter, clientIp } from '@/lib/rate-limit';
-import { isDemoCheckout, isStripeSandbox, newDemoOrder, writeDemoOrder } from '@/lib/demo-checkout';
-import type { WooCart, CheckoutAddressInput, CreatePaymentIntentResponse } from '@/types';
+import { isDemoCheckout, isStripeSandbox, newDemoOrder, writeDemoOrder, type DemoOrder } from '@/lib/demo-checkout';
+import type { CheckoutAddressInput, CreatePaymentIntentResponse } from '@/types';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -35,50 +31,68 @@ export const runtime = 'nodejs';
 export const CHECKOUT_ORDER_COOKIE = 'wd_checkout_order';
 const CHECKOUT_ORDER_COOKIE_TTL = 60 * 60 * 24; // 1 day
 const CUSTOMER_NOTE_MAX = 500;
-const CART_HASH_MAX = 64;
 /** Stripe's minimum charge for GBP is 30p. */
 const MIN_AMOUNT_MINOR = 30;
 
 const limiter = new RateLimiter(10, 60_000);
 
 interface ValidBody {
+  items: BasketLineInput[];
+  shippingOptionId: string;
   billing: CheckoutAddressInput;
   shipping: CheckoutAddressInput;
   customerNote: string | undefined;
-  expectedTotal: string;
+  expectedTotal: number;
 }
 
-function parseBody(body: Record<string, unknown>): { ok: true; value: ValidBody } | { ok: false; message: string } {
+/** Basket lines: allow-listed ids, 1–99 each, at most MAX_BASKET_LINES, duplicates merged. */
+function parseItems(value: unknown): BasketLineInput[] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_BASKET_LINES) return null;
+  const byId = new Map<number, number>();
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object') return null;
+    const { id, quantity } = raw as Record<string, unknown>;
+    const pid = parseProductId(id);
+    const qty = parseQuantity(quantity);
+    // 4266 (3 Star extra keys) needs the key number WooCommerce collects on its own product page; it is never sold here.
+    if (pid === null || EXTERNAL_ONLY_PRODUCT_IDS.has(pid) || qty === null || qty < 1) return null;
+    byId.set(pid, Math.min(99, (byId.get(pid) ?? 0) + qty));
+  }
+  return Array.from(byId, ([id, quantity]) => ({ id, quantity }));
+}
+
+function parseBody(body: Record<string, unknown>): { ok: true; value: ValidBody } | { ok: false; code: string; message: string } {
+  const items = parseItems(body.items);
+  if (!items) return { ok: false, code: 'empty_cart', message: 'Your basket is empty or contains an item we no longer sell.' };
+
+  if (typeof body.shipping_option !== 'string' || !SHIPPING_OPTIONS.some((o) => o.id === body.shipping_option)) {
+    return { ok: false, code: 'shipping_required', message: 'Choose a delivery option before paying.' };
+  }
+
   const billing = parseAddress(body.billing_address);
-  if (!billing) return { ok: false, message: 'Check the billing address: name, address, town, postcode and country are required.' };
+  if (!billing) return { ok: false, code: 'invalid_request', message: 'Check the billing address: name, address, town, postcode and country are required.' };
 
   let shipping: CheckoutAddressInput = billing;
   if (body.shipping_address !== undefined && body.shipping_address !== null) {
     const parsed = parseAddress(body.shipping_address);
-    if (!parsed) return { ok: false, message: 'Check the delivery address: name, address, town, postcode and country are required.' };
+    if (!parsed) return { ok: false, code: 'invalid_request', message: 'Check the delivery address: name, address, town, postcode and country are required.' };
     shipping = parsed;
   }
+  if (shipping.country !== 'GB') return { ok: false, code: 'invalid_request', message: 'We deliver within the UK only.' };
 
   let customerNote: string | undefined;
   if (body.customer_note !== undefined && body.customer_note !== null) {
     if (typeof body.customer_note !== 'string' || body.customer_note.length > CUSTOMER_NOTE_MAX) {
-      return { ok: false, message: `Order notes must be ${CUSTOMER_NOTE_MAX} characters or fewer.` };
+      return { ok: false, code: 'invalid_request', message: `Order notes must be ${CUSTOMER_NOTE_MAX} characters or fewer.` };
     }
     customerNote = body.customer_note.trim() || undefined;
   }
 
   if (typeof body.expected_total !== 'string' || !/^\d{1,12}$/.test(body.expected_total)) {
-    return { ok: false, message: 'expected_total must be the basket total in pence.' };
+    return { ok: false, code: 'invalid_request', message: 'expected_total must be the basket total in pence.' };
   }
 
-  if (body.cart_hash !== undefined && body.cart_hash !== null) {
-    if (typeof body.cart_hash !== 'string' || body.cart_hash.length > CART_HASH_MAX || !/^[A-Za-z0-9_-]*$/.test(body.cart_hash)) {
-      return { ok: false, message: 'Invalid cart_hash.' };
-    }
-    // Accepted for the contract's sake; the server recomputes its own hash from the live cart below.
-  }
-
-  return { ok: true, value: { billing, shipping, customerNote, expectedTotal: body.expected_total } };
+  return { ok: true, value: { items, shippingOptionId: body.shipping_option, billing, shipping, customerNote, expectedTotal: Number(body.expected_total) } };
 }
 
 function readOrderCookie(req: Request): { orderId: number; orderKey: string; hash: string } | null {
@@ -94,12 +108,12 @@ function readOrderCookie(req: Request): { orderId: number; orderKey: string; has
   return null;
 }
 
-function orderTotalMinor(order: WooRestOrder, cart: WooCart): number {
-  return majorToMinor(order.total, cart.totals.currency_minor_unit);
+function orderTotalMinor(order: WooRestOrder): number {
+  return majorToMinor(order.total, 2);
 }
 
-/** Reuses the pending order named in the cookie when it still matches this cart; refreshes its addresses. */
-async function findReusableOrder(req: Request, cart: WooCart, hash: string, body: ValidBody): Promise<WooRestOrder | null> {
+/** Reuses the pending order named in the cookie when it still matches this basket; refreshes its addresses. */
+async function findReusableOrder(req: Request, basket: PricedBasket, hash: string, body: ValidBody): Promise<WooRestOrder | null> {
   const cookie = readOrderCookie(req);
   if (!cookie || cookie.hash !== hash) return null;
   let order: WooRestOrder;
@@ -109,7 +123,7 @@ async function findReusableOrder(req: Request, cart: WooCart, hash: string, body
     return null;
   }
   if (order.order_key !== cookie.orderKey || order.status !== 'pending') return null;
-  if (orderTotalMinor(order, cart) !== Number(cart.totals.total_price)) return null;
+  if (orderTotalMinor(order) !== basket.totalPence) return null;
   try {
     return await updateOrder(order.id, {
       billing: toRestBillingAddress(body.billing),
@@ -124,25 +138,35 @@ async function findReusableOrder(req: Request, cart: WooCart, hash: string, body
 function toStripeShipping(address: CheckoutAddressInput): Stripe.PaymentIntentCreateParams.Shipping {
   return {
     name: `${address.first_name} ${address.last_name}`.trim(),
-    ...(address.phone ? { phone: address.phone } : {}),
+    phone: address.phone,
     address: {
       line1: address.address_1,
-      ...(address.address_2 ? { line2: address.address_2 } : {}),
+      line2: address.address_2,
       city: address.city,
-      ...(address.state ? { state: address.state } : {}),
+      state: address.state,
       postal_code: address.postcode,
       country: address.country,
     },
   };
 }
 
+/** The priced basket as the demo order remembers it (what a WooCommerce order would carry). */
+function demoDetail(basket: PricedBasket): Pick<DemoOrder, 'lines' | 'shipping' | 'tax'> {
+  return {
+    lines: basket.lines.map((l) => ({ id: l.id, q: l.quantity, unit: l.unitPence })),
+    shipping: { id: basket.shipping.id, pence: basket.shipping.pricePence },
+    tax: basket.totalTaxPence,
+  };
+}
+
 /**
- * POST /api/checkout/intent   body: CreatePaymentIntentRequest
- * 1. Re-reads the basket by Cart-Token (never trusts client totals), 2. creates/reuses a pending WooCommerce
- * order priced by WooCommerce itself and checks it equals the Store API total, 3. creates/reuses a Stripe
- * PaymentIntent for that amount and records it on the order.
- * Responses: 200 CreatePaymentIntentResponse · 400 invalid · 409 total_mismatch / already_paid ·
- * 429 rate_limited · 502 upstream failure · 503 not-configured.
+ * POST /api/checkout/intent
+ * Body: CreatePaymentIntentRequest (ids + quantities, delivery option, addresses, note, expected_total in pence).
+ * The ONE call in the shopping flow that reaches wdlocks.co.uk: prices the basket from the Store API products
+ * endpoint (cached a few minutes), then — depending on the rollout stage — writes a pretend order (demo / sandbox) or
+ * creates the pending WooCommerce order and the Stripe PaymentIntent.
+ * Responses: 200 CreatePaymentIntentResponse · 400 invalid / stock · 404 unknown product · 409 total_mismatch ·
+ * 429 · 502 upstream · 503 not-configured.
  */
 export async function POST(req: Request) {
   if (!limiter.allow(clientIp(req))) {
@@ -158,44 +182,39 @@ export async function POST(req: Request) {
   const raw = await readJson(req);
   if (!raw) return errorResponse(400, 'invalid_request', 'Request body must be a JSON object.');
   const parsed = parseBody(raw);
-  if (!parsed.ok) return errorResponse(400, 'invalid_request', parsed.message);
+  if (!parsed.ok) return errorResponse(400, parsed.code, parsed.message);
   const body = parsed.value;
 
-  // 1. Live basket
-  let cart: WooCart;
+  // 1. Price the basket from the live Store API (the only basket truth the server accepts).
+  let basket: PricedBasket;
   try {
-    const result = await proxyCartRequest(req, '/cart', { method: 'GET' });
-    if (result.status < 200 || result.status >= 300 || !('items' in result.body)) {
-      return errorResponse(502, 'upstream_unavailable', 'Could not read your basket. Please try again.');
-    }
-    cart = result.body;
+    basket = await priceBasket(body.items, body.shippingOptionId, body.expectedTotal);
   } catch (err) {
-    return upstreamDownResponse(err);
-  }
-
-  if (cart.items.length === 0) return errorResponse(400, 'empty_cart', 'Your basket is empty.');
-  if (cart.totals.currency_code !== 'GBP') return errorResponse(400, 'unsupported_currency', 'Only GBP baskets can be paid here.');
-  if (cart.needs_shipping) {
-    const rates = selectedRateIds(cart);
-    if (cart.shipping_rates.length === 0 || rates.length !== cart.shipping_rates.length) {
-      return errorResponse(400, 'shipping_required', 'Choose a delivery option before paying.');
+    if (err instanceof PricingError) {
+      if (err.status >= 500) console.error('[checkout/intent] pricing failed', { code: err.code, message: err.message });
+      return errorResponse(err.status, err.code, err.message);
     }
-  }
-  if (!/^\d+$/.test(cart.totals.total_price)) {
-    return errorResponse(502, 'upstream_unavailable', 'Could not read your basket total. Please try again.');
-  }
-  const totalMinor = Number(cart.totals.total_price);
-  if (totalMinor < MIN_AMOUNT_MINOR) return errorResponse(400, 'amount_too_small', 'The basket total is too small to pay by card.');
-  if (cart.totals.total_price !== body.expectedTotal) {
-    return errorResponse(409, 'total_mismatch', 'Your basket total has changed. Please review it and try again.');
+    console.error('[checkout/intent] pricing failed', err instanceof Error ? err.message : 'unknown error');
+    return errorResponse(502, 'upstream_unavailable', 'Could not price your basket. Please try again.');
   }
 
-  const hash = cartHash(cart);
+  const totalMinor = basket.totalPence;
+  if (totalMinor < MIN_AMOUNT_MINOR) return errorResponse(400, 'amount_too_small', 'The basket total is too small to pay by card.');
+  if (totalMinor !== body.expectedTotal) {
+    // The client re-prices from this payload and shows the new total before the shopper tries again.
+    return errorResponse(409, 'total_mismatch', 'Prices have changed since you added these items. Please check your basket and try again.', {
+      total: String(totalMinor),
+      prices: Object.fromEntries(basket.lines.map((l) => [String(l.id), l.unitPence])),
+    });
+  }
+
+  const hash = cartHash(basket);
+  const shippingOption = shippingOptionById(body.shippingOptionId);
 
   // Sandbox stage: a real Stripe PaymentIntent (test mode) for a pretend order held in the signed cookie. The return
   // page reads the intent's outcome through /api/checkout/status; WooCommerce is never touched.
   if (sandbox) {
-    const order = newDemoOrder(totalMinor, body.billing.email ?? '', body.customerNote);
+    const order = newDemoOrder(totalMinor, body.billing.email ?? '', body.customerNote, demoDetail(basket));
     let intent: Stripe.PaymentIntent;
     try {
       intent = await getStripe().paymentIntents.create(
@@ -232,7 +251,7 @@ export async function POST(req: Request) {
   // Demo mode: a pretend order in a signed cookie; the client "pays" via POST /api/checkout/demo. Nothing is charged
   // and nothing reaches WooCommerce or Stripe.
   if (demo) {
-    const order = newDemoOrder(totalMinor, body.billing.email ?? '', body.customerNote);
+    const order = newDemoOrder(totalMinor, body.billing.email ?? '', body.customerNote, demoDetail(basket));
     const payload: CreatePaymentIntentResponse = {
       clientSecret: `demo_${order.key}_secret`,
       paymentIntentId: `pi_demo_${order.id}`,
@@ -250,18 +269,18 @@ export async function POST(req: Request) {
   let order: WooRestOrder;
   try {
     order =
-      (await findReusableOrder(req, cart, hash, body)) ??
-      (await createOrder({ cart, billing: body.billing, shipping: body.shipping, customerNote: body.customerNote, cartHash: hash }));
+      (await findReusableOrder(req, basket, hash, body)) ??
+      (await createOrder({ basket, billing: body.billing, shipping: body.shipping, customerNote: body.customerNote, cartHash: hash }));
   } catch (err) {
     logWcError('create order', err);
     return errorResponse(502, 'order_create_failed', 'We could not start your order. Please try again in a moment.');
   }
 
-  if (orderTotalMinor(order, cart) !== totalMinor) {
-    console.error('[checkout/intent] order total mismatch', { orderId: order.id, orderTotal: order.total, cartTotal: cart.totals.total_price });
+  if (orderTotalMinor(order) !== totalMinor) {
+    console.error('[checkout/intent] order total mismatch', { orderId: order.id, orderTotal: order.total, basketTotal: totalMinor });
     try {
       await updateOrder(order.id, { status: 'cancelled' });
-      await addOrderNote(order.id, `Cancelled by headless checkout: WooCommerce total ${order.total} did not match the basket total ${cart.totals.total_price} (minor units). No payment was taken.`);
+      await addOrderNote(order.id, `Cancelled by headless checkout: WooCommerce total ${order.total} did not match the basket total ${totalMinor}p (${shippingOption.methodTitle}). No payment was taken.`);
     } catch (err) {
       logWcError('cancel mismatched order', err);
     }
