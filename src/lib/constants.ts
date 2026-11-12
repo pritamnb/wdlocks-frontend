@@ -506,7 +506,8 @@ export interface CatalogueEntry {
 }
 
 /**
- * Static catalogue used for navigation, static params and fallbacks.
+ * Static catalogue used for navigation, static params and fallbacks. Its order is the shop order (grid, homepage,
+ * footer, mobile menu). Pritam, 12 Nov: rim cylinder moved from 3rd to 7th, the keyed-alike service up to 3rd.
  * Slugs match the live WooCommerce slugs so canonical URLs stay stable.
  * NOTE: the brief listed EXTRA_KEYS_3 (4266) as variable; the live store has it as simple.
  */
@@ -534,14 +535,14 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
     popular: true,
   },
   {
-    key: 'RIM_CYLINDER',
-    id: 5112,
-    slug: 'watchdog-rim-cylinder',
-    name: 'Watchdog Rim Cylinder Lock',
-    shortName: 'Rim Cylinder',
-    type: 'variable',
-    category: 'Rim Cylinder Lock',
-    blurb: 'For nightlatches. Brass or nickel finish.',
+    key: 'KEYED_ALIKE',
+    id: 5642,
+    slug: 'watchdog-keyed-a-like',
+    name: 'Watchdog Keyed-a-like Service, Same Key, Different Locks',
+    shortName: 'Keyed-Alike Service',
+    type: 'simple',
+    category: 'Keys and Aftercare',
+    blurb: 'One key for every lock you order.',
   },
   {
     key: 'HALF_CYLINDER',
@@ -574,14 +575,14 @@ export const CATALOGUE: readonly CatalogueEntry[] = [
     blurb: 'Spare keys for 1 Star cylinders.',
   },
   {
-    key: 'KEYED_ALIKE',
-    id: 5642,
-    slug: 'watchdog-keyed-a-like',
-    name: 'Watchdog Keyed-a-like Service, Same Key, Different Locks',
-    shortName: 'Keyed-Alike Service',
-    type: 'simple',
-    category: 'Keys and Aftercare',
-    blurb: 'One key for every lock you order.',
+    key: 'RIM_CYLINDER',
+    id: 5112,
+    slug: 'watchdog-rim-cylinder',
+    name: 'Watchdog Rim Cylinder Lock',
+    shortName: 'Rim Cylinder',
+    type: 'variable',
+    category: 'Rim Cylinder Lock',
+    blurb: 'For nightlatches. Brass or nickel finish.',
   },
   {
     key: 'LUBRICANT',

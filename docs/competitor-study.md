@@ -731,6 +731,13 @@ Three client asks in one go, each verified on production before the push:
   `YouTubeEmbed` (privacy-enhanced domain, player loaded only once in view, muted autoplay, reduced motion = no
   autoplay) now serves both this panel and the Sky Sports block; the dimple-key chapter loop stays on the key pages.
 
+### Pass 38 — 12 Nov 2026: rim cylinder to 7th place
+Pritam: "move this product Rim Cylinder to 7th place and replace 3rd place with 7th". The shop order is `CATALOGUE`
+in constants.ts (the grid on /products and the homepage, the footer product list and the mobile menu all follow it),
+so the rim cylinder and keyed-alike entries swapped places: 1 cylinder · 2 thumb turn · 3 keyed-alike · 4 half
+cylinder · 5 3 Star keys · 6 1 Star keys · 7 rim cylinder · 8 lubricant · 9 Bruno Teddy. Verified on production;
+desktop + mobile e2e green (52).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).
