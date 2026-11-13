@@ -88,13 +88,13 @@ export function HeroBackdrop() {
           {(i === 0 || (reduced && i === shown)) && (
             // The first poster is the hero's LCP: fetch it first so the headline has its backdrop before the film plays.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={f.poster} alt="" fetchPriority="high" loading="eager" decoding="async" className={cn('absolute inset-0 h-full w-full object-cover transition-opacity duration-300', f.dim && 'brightness-[.55] contrast-[1.05]', reduced && i !== shown && 'opacity-0')} />
+            <img src={f.poster} alt="" fetchPriority="high" loading="eager" decoding="async" className={cn('absolute inset-0 h-full w-full object-cover transition-opacity duration-300', f.dim && 'brightness-[.75] contrast-[1.05]', reduced && i !== shown && 'opacity-0')} />
           )}
         <video
           ref={(el) => {
             refs.current[i] = el;
           }}
-          className={cn('absolute inset-0 h-full w-full object-cover transition-opacity ease-in-out', f.dim && 'brightness-[.55] contrast-[1.05]', i === active ? 'opacity-100' : 'opacity-0')}
+          className={cn('absolute inset-0 h-full w-full object-cover transition-opacity ease-in-out', f.dim && 'brightness-[.75] contrast-[1.05]', i === active ? 'opacity-100' : 'opacity-0')}
           style={{ transitionDuration: `${FADE_MS}ms` }}
           muted
           playsInline

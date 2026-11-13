@@ -890,6 +890,10 @@ cart call takes 1.1–1.6 s from the UK and 2–3 s through the Vercel function;
    own route prefetch); after a one-second pause it is the 80–92 ms above. Previous Store-API basket on production
    (12 Nov): add 2.9 s, each +/− 2.1–2.4 s, checkout hard load 2.9 s.
 
+### Pass 47 — 13 Nov 2026: brighter hero films
+
+Pritam: the hero background was too dark to see the films. The two films shot on white now play at 75% brightness instead of 55%, and the left-to-right overlay goes from 90% black behind the copy to clear on the right (was 95% → 70% → 10%); the bottom fade is shorter and lighter (h-28, 80%). A soft text shadow on the copy column keeps the headline readable over the brighter frames. Checked live on all three films (desktop) and on the phone poster: the cylinder, pins and laser read clearly on the right, the films' own captions stay hidden behind the copy except a faint "Excess Discharge Vents" above the eyebrow on the third film.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

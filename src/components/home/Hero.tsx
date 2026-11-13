@@ -20,11 +20,12 @@ export function Hero() {
   return (
     <section className="relative isolate overflow-hidden bg-near-black text-white" aria-labelledby="hero-title">
       <HeroBackdrop />
-      <div className="absolute inset-0 bg-gradient-to-r from-near-black/95 via-near-black/70 to-near-black/10" aria-hidden="true" />
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-near-black to-transparent" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-r from-near-black/90 via-near-black/55 to-transparent" aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-near-black/80 to-transparent" aria-hidden="true" />
 
       <div className="container-wd relative grid min-h-[78vh] items-center gap-10 py-20 lg:grid-cols-12 lg:py-28">
-        <div className="lg:col-span-8">
+        {/* Pritam, 13 Nov: films brighter (75% instead of 55%) and the overlay fades out to the right, so the films read clearly there; a soft shadow keeps the copy readable. */}
+        <div className="lg:col-span-8 [text-shadow:0_2px_18px_rgb(0_0_0/0.5)]">
           <p className="text-sm font-semibold uppercase tracking-[0.14em] text-red">Watchdog lock protection</p>
           <h1 id="hero-title" className="heading-display mt-4 text-[2.75rem] leading-[1.02] text-white sm:text-6xl lg:text-[4.75rem]">
             A snapped lock takes <span className="text-red">seconds</span>.
