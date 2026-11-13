@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { CATALOGUE, CONTACT, SITE, TRUST_SIGNALS, BROCHURE } from '@/lib/constants';
+import { CookieSettingsLink } from '@/components/layout/CookieSettingsLink';
 
 const helpLinks = [
   { label: 'Sizing guide', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
@@ -19,8 +20,10 @@ const companyLinks = [
   { label: 'Contact', href: '/contact' },
 ];
 
+const footerLinkClass = 'text-sm text-white/75 transition-colors duration-150 hover:text-red';
+
 function FooterLink({ href, label, external }: { href: string; label: string; external?: boolean }) {
-  const cls = 'text-sm text-white/75 transition-colors duration-150 hover:text-red';
+  const cls = footerLinkClass;
   return external ? (
     <a href={href} className={cls} rel="noopener">{label}</a>
   ) : (
@@ -54,6 +57,7 @@ export function Footer() {
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Help</h2>
           <ul className="space-y-2.5">
             {helpLinks.map((l) => <li key={l.label}><FooterLink {...l} /></li>)}
+            <li><CookieSettingsLink className={footerLinkClass} /></li>
           </ul>
         </div>
         <div>
