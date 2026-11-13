@@ -894,6 +894,18 @@ cart call takes 1.1–1.6 s from the UK and 2–3 s through the Vercel function;
 
 Pritam: the hero background was too dark to see the films. The two films shot on white now play at 75% brightness instead of 55%, and the left-to-right overlay goes from 90% black behind the copy to clear on the right (was 95% → 70% → 10%); the bottom fade is shorter and lighter (h-28, 80%). A soft text shadow on the copy column keeps the headline readable over the brighter frames. Checked live on all three films (desktop) and on the phone poster: the cylinder, pins and laser read clearly on the right, the films' own captions stay hidden behind the copy except a faint "Excess Discharge Vents" above the eyebrow on the third film.
 
+### Pass 48 — 13 Nov 2026: builds survive a Store API 429
+Deployment dpl_H7U3KsXA8Tk7hjSbZKVbtmFTkR35 (00:01) failed: prerendering the half-cylinder page got `Store API responded
+with 429` from wdlocks.co.uk after four deploys in twenty minutes, and one non-404 error aborts the whole export. The
+three deploys after it succeeded; production was never affected.
+- `storeFetch` (src/lib/wdlocks-api.ts) now retries 429 / 502 / 503 / 504 and network errors twice (1 s, 3 s, or the
+  host's `Retry-After` up to 10 s) and throws at once on anything else. Checked with a stubbed fetch: 429→200 succeeds
+  on attempt two, 404 throws after one call, three 503s give up with the last error, a network error then 200 passes.
+- `getProductBySlugSSR` (src/lib/api.ts): if the single-product call still fails, the product is taken from the
+  catalogue list call (one URL cached across the build and the homepage) with live prices, images and variations, so a
+  rate-limited build still renders every product page; only a 404 returns null and only a double failure rethrows.
+- Local build clean; e2e page suites run against production after the deploy.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

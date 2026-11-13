@@ -35,13 +35,47 @@ async function parseError(res: Response): Promise<StoreApiError> {
   );
 }
 
+/** Upstream answers worth a second try: the host's rate limiter (429) and gateway/overload errors. */
+const RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
+/** Back-off before attempt 2 and 3 (ms); a Retry-After header wins when the host sends one (capped at 10 s). */
+const RETRY_DELAYS_MS = [1000, 3000];
+
+function retryDelay(res: Response | null, attempt: number): number {
+  const header = res?.headers.get('retry-after');
+  const seconds = header ? Number.parseFloat(header) : Number.NaN;
+  if (Number.isFinite(seconds) && seconds > 0) return Math.min(seconds * 1000, 10_000);
+  return RETRY_DELAYS_MS[attempt] ?? RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1];
+}
+
+/**
+ * GET helper with a short retry: wdlocks.co.uk's shared host rate-limits bursts (a build prerendering nine product
+ * pages after a run of deploys got a 429 on 13 Nov and the whole deploy failed), and a network blip or 502 from the
+ * CDN front is just as transient. Non-retryable statuses (404, 400…) throw at once.
+ */
 export async function storeFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${STORE_API}${path}`, {
-    ...init,
-    headers: { Accept: 'application/json', ...(init?.headers ?? {}) },
-  });
-  if (!res.ok) throw await parseError(res);
-  return (await res.json()) as T;
+  let lastError: StoreApiError | Error | null = null;
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    let res: Response | null = null;
+    try {
+      res = await fetch(`${STORE_API}${path}`, {
+        ...init,
+        headers: { Accept: 'application/json', ...(init?.headers ?? {}) },
+      });
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
+    if (res) {
+      if (res.ok) return (await res.json()) as T;
+      lastError = await parseError(res);
+      if (!RETRYABLE_STATUS.has(res.status)) throw lastError;
+    }
+    if (attempt < RETRY_DELAYS_MS.length) {
+      const wait = retryDelay(res, attempt);
+      console.warn(`[store-api] ${path} → ${res ? res.status : 'network error'}; retrying in ${wait} ms (attempt ${attempt + 2})`);
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw lastError ?? new StoreApiError(0, 'upstream_error', 'Store API unreachable');
 }
 
 /* ---------------------------------------------------------------------------
