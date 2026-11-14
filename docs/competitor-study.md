@@ -941,7 +941,7 @@ Pritam: "please fix the image resolutions it doesn't look good". The pixel count
 - Footer: `footerLinkClass` used directly. README structure lines list the new files.
 - Tests: `consentRecord()` helper in `tests/e2e/consent.ts`; new spec at 375×667 that opens the settings and checks the card top is at or below the header bottom and "Save settings" is still reachable. Local demo build: desktop + mobile 60 passed; basket projects 10 passed, 6 skipped.
 - **Open item for Pritam (WordPress side, not this project):** the live `privacy-policy` page's "Cookies" section reads "please see [LINK TO YOUR COOKIE POLICY]" and an earlier paragraph "cookie policy [LINK]" — template placeholders. They could point at the footer's Cookie settings or a cookie policy page once one exists.
-- Branch `cookie-consent-review`, PR opened from it; not merged.
+- Branch `cookie-consent-review`, PR [#10](https://github.com/pritamnb/wdlocks-frontend/pull/10); not merged.
 
 ## 9. Independent review
 
