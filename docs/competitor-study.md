@@ -926,6 +926,13 @@ Pritam: "add a column for promotional code at payment" (phone screenshot of the 
 - **Guarantee image** (`BRAND_RENDERS.guaranteeKeytags`, `public/brand/product/guarantee-keytags-pair.png` 1087×1268): the pair of key tags on a ring (care tips + £5,000 guarantee) from Pritam's WhatsApp image of 13 Nov, white page cut out with a sharp flood-fill (threshold 3, ring interior seeded, 5 px halo trim); shown at 290/340/420 px. The single red tag stays on the product pages.
 - Verified live on production (desktop 1366 and Pixel 7/iPhone 13): image is the pair on the dark panel; promo field in the Payment step; a made-up code refused with WooCommerce's message in ~6 s; applied state (our coupon route stubbed in the browser, since the shop has no coupons) takes £2.92 off: £41.39 → £38.47, VAT £6.90 → £6.41, "Pay £38.47"; Place order sent `coupon_code` with `expected_total=3847`, the server re-checked it with WooCommerce and answered 400 `coupon_invalid`, and the page removed the code with the reason; cookie popup shows on a first visit; no horizontal overflow. e2e on production: `desktop` 29 passed, `basket-desktop` 5 passed / 3 skipped, the updated checkout test passes on both basket projects.
 
+### Pass 51 — 14 Nov 2026: key-tag image looks clean
+
+Pritam: "please fix the image resolutions it doesn't look good". The pixel count was never the problem (retina already got a 1024 px file for the 420 px slot). The source is a soft WhatsApp JPEG, and cutting it out of its white page left jagged, white-fringed outlines, the black tag disappeared into the near-black panel, and Next re-encoded it at q75. No sharper copy exists (WP media library and Downloads checked). Smoother cut-outs were tried (2× anti-aliased mask, edge recolouring) but still frayed, so:
+- The photo keeps its own white page: upscaled 2× (lanczos), 3 px median against the JPEG blocks, unsharp mask, back to 1200×1313, WebP q92 (`public/brand/product/guarantee-keytags-pair.webp`, 175 KB; the PNG cut-out is gone).
+- Shown in a white rounded-3xl card with a deep shadow on the dark panel (290 / 340 / 420 px), served at `quality={85}`.
+- Verified live: crisp edges at 2× (1024 px variant, q85), desktop and iPhone 13 screenshots, no horizontal overflow.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

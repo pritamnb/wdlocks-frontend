@@ -1,7 +1,10 @@
 import Image from 'next/image';
 import { BRAND_RENDERS, GUARANTEE } from '@/lib/constants';
 
-/** Ultion's "Register your £5,000 guarantee" on a dark panel with the pair of key tags (Pritam, 14 Nov: replaces the single red tag). */
+/**
+ * Ultion's "Register your £5,000 guarantee" on a dark panel with the pair of key tags (Pritam, 14 Nov: replaces the single
+ * red tag; then "fix the image resolutions": the photo now sits on its own white page in a card instead of a cut-out).
+ */
 export function Guarantee() {
   return (
     <section className="relative overflow-hidden bg-near-black text-white" aria-labelledby="guarantee-title" id="guarantee">
@@ -17,15 +20,18 @@ export function Guarantee() {
           </a>
         </div>
         <div className="relative lg:col-span-5">
-          {/* The photo is already tilted, so no CSS rotation; the drop shadow lifts it off the panel. */}
-          <Image
-            src={BRAND_RENDERS.guaranteeKeytags.src}
-            alt={BRAND_RENDERS.guaranteeKeytags.alt}
-            width={BRAND_RENDERS.guaranteeKeytags.width}
-            height={BRAND_RENDERS.guaranteeKeytags.height}
-            sizes="(max-width: 640px) 290px, (max-width: 1024px) 340px, 420px"
-            className="mx-auto h-auto w-[290px] drop-shadow-[0_40px_60px_rgb(0_0_0/0.7)] sm:w-[340px] lg:w-[420px]"
-          />
+          {/* The photo keeps its white studio page, so the card is white too; quality 85 keeps the small print crisp. */}
+          <div className="mx-auto w-[290px] overflow-hidden rounded-3xl bg-white p-2 shadow-[0_40px_80px_-24px_rgb(0_0_0/0.8)] ring-1 ring-white/10 sm:w-[340px] lg:w-[420px]">
+            <Image
+              src={BRAND_RENDERS.guaranteeKeytags.src}
+              alt={BRAND_RENDERS.guaranteeKeytags.alt}
+              width={BRAND_RENDERS.guaranteeKeytags.width}
+              height={BRAND_RENDERS.guaranteeKeytags.height}
+              sizes="(max-width: 640px) 274px, (max-width: 1024px) 324px, 404px"
+              quality={85}
+              className="h-auto w-full"
+            />
+          </div>
         </div>
       </div>
     </section>

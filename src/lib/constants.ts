@@ -205,8 +205,12 @@ export const BRAND_RENDERS = {
   keySingle: { src: '/brand/product/key-single.png', width: 734, height: 1000, alt: 'A single Watchdog dimple key with the Watchdog Stays Locked bow' },
   /** Key tag: Stays Locked, £5000 guarantee, activate at wdlocks.co.uk. Red straight-edge render from the client (Watchdog_Red_Straight_Edge.pdf, 11 Nov), cut out of its white page. */
   guaranteeKeytag: { src: '/brand/product/guarantee-keytag-red.png', width: 900, height: 1321, alt: 'Watchdog key tag: if a burglar snaps your lock and breaks in, £5,000 guarantee, activate for free at wdlocks.co.uk' },
-  /** The pair of key tags on a ring (care tips + £5,000 guarantee), from Pritam on WhatsApp 13 Nov; white page cut out (scratchpad cutout.mjs). Homepage guarantee section. */
-  guaranteeKeytags: { src: '/brand/product/guarantee-keytags-pair.png', width: 1087, height: 1268, alt: 'Two Watchdog key tags on a ring: care tips with a link to genuine keys, and the £5,000 guarantee, activate for free at wdlocks.co.uk' },
+  /**
+   * The pair of key tags on a ring (care tips + £5,000 guarantee), from Pritam on WhatsApp 13 Nov. Kept on its own white
+   * page (a cut-out of this soft JPEG left ragged edges on the dark panel); upscaled 2× lanczos, light 3 px median to
+   * soften the JPEG blocks, unsharp mask, back to 1200 px, WebP q92. Shown inside a white card in the guarantee section.
+   */
+  guaranteeKeytags: { src: '/brand/product/guarantee-keytags-pair.webp', width: 1200, height: 1313, alt: 'Two Watchdog key tags on a ring: care tips with a link to genuine keys, and the £5,000 guarantee, activate for free at wdlocks.co.uk' },
 } as const;
 
 /** Manufacturer turntable animation (10 s, silent, black background). Encoded from client-assets/wetransfer-2026-11-10. */
