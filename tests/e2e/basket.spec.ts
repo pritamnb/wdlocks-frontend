@@ -140,7 +140,7 @@ test('buy now: direct wdlocks.co.uk checkout URL in hand-off mode, or our own ch
   }
 });
 
-test('checkout: delivery options and VAT are local; the total follows the chosen rate; no coupon field', async ({ page }) => {
+test('checkout: delivery options and VAT are local; the total follows the chosen rate; promo code field in the Payment step', async ({ page }) => {
   await page.goto('/products/bruno-teddy-protection-car-key-signal-blocker');
   await page.waitForLoadState('networkidle');
   await page.getByRole('button', { name: 'Add to basket' }).click();
@@ -166,8 +166,12 @@ test('checkout: delivery options and VAT are local; the total follows the chosen
   await expect(summary).toContainText('£29.99');
   await expect(summary).toContainText('includes £5.00 VAT');
 
-  await expect(page.getByRole('button', { name: 'Got a coupon?' })).toHaveCount(0);
-  await expect(page.getByLabel('Coupon code')).toHaveCount(0);
+  // Promo code (Pass 50): a visible field in the Payment step; a code WooCommerce does not know is refused with its reason.
+  const promo = page.locator('section[aria-labelledby="co-payment"]').getByLabel(/Promo code/);
+  await expect(promo).toBeVisible();
+  await promo.fill('no-such-code-e2e');
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await expect(page.locator('#co-promo-error')).toContainText(/does not exist|not valid|could not check/i, { timeout: 25_000 });
 
   // The choice is part of the basket: it survives a reload.
   await page.reload();

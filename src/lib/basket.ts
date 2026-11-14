@@ -20,7 +20,7 @@
  *   order summary already render, so those components needed no rewrite. Prices on the site include 20 % VAT; the
  *   split mirrors WooCommerce's (ex = round(inc / 1.2), tax = inc − ex), verified line by line against the live cart.
  */
-import type { WooCart, WooCartItem, WooCurrency, WooProduct, WooShippingPackage, WooShippingRate } from '@/types';
+import type { CouponQuote, WooCart, WooCartItem, WooCurrency, WooProduct, WooShippingPackage, WooShippingRate } from '@/types';
 import { CATALOGUE_BY_ID, CYLINDER_SIZES, MAX_CART_QUANTITY, PURCHASABLE_IDS, RIM_COLOURS, SHIPPING_OPTIONS, THUMB_SIZES, VARIATIONS_BY_PRODUCT, type ShippingOption } from '@/lib/constants';
 
 export const BASKET_STORAGE_KEY = 'wd:basket';
@@ -330,6 +330,31 @@ export function buildCart(state: BasketState, products: readonly WooProduct[] = 
     errors: [],
     payment_methods: [],
     extensions: {},
+  };
+}
+
+/**
+ * The cart with a promo code taken off, using the discount WooCommerce quoted for these exact lines (the checkout
+ * re-asks whenever the lines change). Never below zero; the server re-checks the code at Place order.
+ */
+export function withCoupon(cart: WooCart, quote: CouponQuote): WooCart {
+  const t = cart.totals;
+  const discountEx = Math.min(quote.discountExPence, Number(t.total_items));
+  const discountTax = Math.min(quote.discountTaxPence, Number(t.total_items_tax));
+  const total_price = Math.max(0, Number(t.total_price) - discountEx - discountTax);
+  const total_tax = Math.max(0, Number(t.total_tax) - discountTax);
+  return {
+    ...cart,
+    coupons: [{ code: quote.code, discount_type: quote.discountType, totals: { currency_code: GBP.currency_code, total_discount: String(discountEx), total_discount_tax: String(discountTax) } }],
+    totals: {
+      ...t,
+      total_discount: String(discountEx),
+      total_discount_tax: String(discountTax),
+      total_price: String(total_price),
+      total_tax: String(total_tax),
+      tax_lines: total_tax > 0 ? [{ name: 'VAT', price: String(total_tax), rate: '20%' }] : [],
+    },
+    needs_payment: total_price > 0,
   };
 }
 

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
-import { errorResponse, isSecureRequest, parseAddress, parseProductId, parseQuantity, readJson } from '@/lib/request-utils';
+import { errorResponse, isSecureRequest, parseAddress, parseBasketItems, readJson } from '@/lib/request-utils';
+import { CouponError, normaliseCouponCode } from '@/lib/coupon';
 import { cartHash } from '@/lib/checkout-cart-hash';
-import { MAX_BASKET_LINES, shippingOptionById, type BasketLineInput } from '@/lib/basket';
+import { shippingOptionById, type BasketLineInput } from '@/lib/basket';
 import { priceBasket, PricingError, type PricedBasket } from '@/lib/pricing';
-import { EXTERNAL_ONLY_PRODUCT_IDS, SHIPPING_OPTIONS } from '@/lib/constants';
+import { SHIPPING_OPTIONS } from '@/lib/constants';
 import { getStripe, isStripeConfigured, describeStripeError } from '@/lib/stripe-server';
 import {
   isWcRestConfigured,
@@ -43,26 +44,11 @@ interface ValidBody {
   shipping: CheckoutAddressInput;
   customerNote: string | undefined;
   expectedTotal: number;
-}
-
-/** Basket lines: allow-listed ids, 1–99 each, at most MAX_BASKET_LINES, duplicates merged. */
-function parseItems(value: unknown): BasketLineInput[] | null {
-  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_BASKET_LINES) return null;
-  const byId = new Map<number, number>();
-  for (const raw of value) {
-    if (!raw || typeof raw !== 'object') return null;
-    const { id, quantity } = raw as Record<string, unknown>;
-    const pid = parseProductId(id);
-    const qty = parseQuantity(quantity);
-    // 4266 (3 Star extra keys) needs the key number WooCommerce collects on its own product page; it is never sold here.
-    if (pid === null || EXTERNAL_ONLY_PRODUCT_IDS.has(pid) || qty === null || qty < 1) return null;
-    byId.set(pid, Math.min(99, (byId.get(pid) ?? 0) + qty));
-  }
-  return Array.from(byId, ([id, quantity]) => ({ id, quantity }));
+  couponCode: string | undefined;
 }
 
 function parseBody(body: Record<string, unknown>): { ok: true; value: ValidBody } | { ok: false; code: string; message: string } {
-  const items = parseItems(body.items);
+  const items = parseBasketItems(body.items);
   if (!items) return { ok: false, code: 'empty_cart', message: 'Your basket is empty or contains an item we no longer sell.' };
 
   if (typeof body.shipping_option !== 'string' || !SHIPPING_OPTIONS.some((o) => o.id === body.shipping_option)) {
@@ -92,7 +78,14 @@ function parseBody(body: Record<string, unknown>): { ok: true; value: ValidBody 
     return { ok: false, code: 'invalid_request', message: 'expected_total must be the basket total in pence.' };
   }
 
-  return { ok: true, value: { items, shippingOptionId: body.shipping_option, billing, shipping, customerNote, expectedTotal: Number(body.expected_total) } };
+  let couponCode: string | undefined;
+  if (body.coupon_code !== undefined && body.coupon_code !== null && body.coupon_code !== '') {
+    const code = normaliseCouponCode(body.coupon_code);
+    if (!code) return { ok: false, code: 'coupon_invalid', message: 'That promo code is not valid.' };
+    couponCode = code;
+  }
+
+  return { ok: true, value: { items, shippingOptionId: body.shipping_option, billing, shipping, customerNote, expectedTotal: Number(body.expected_total), couponCode } };
 }
 
 function readOrderCookie(req: Request): { orderId: number; orderKey: string; hash: string } | null {
@@ -151,17 +144,18 @@ function toStripeShipping(address: CheckoutAddressInput): Stripe.PaymentIntentCr
 }
 
 /** The priced basket as the demo order remembers it (what a WooCommerce order would carry). */
-function demoDetail(basket: PricedBasket): Pick<DemoOrder, 'lines' | 'shipping' | 'tax'> {
+function demoDetail(basket: PricedBasket): Pick<DemoOrder, 'lines' | 'shipping' | 'tax' | 'coupon'> {
   return {
     lines: basket.lines.map((l) => ({ id: l.id, q: l.quantity, unit: l.unitPence })),
     shipping: { id: basket.shipping.id, pence: basket.shipping.pricePence },
     tax: basket.totalTaxPence,
+    ...(basket.coupon ? { coupon: { code: basket.coupon.code, pence: basket.coupon.discountPence } } : {}),
   };
 }
 
 /**
  * POST /api/checkout/intent
- * Body: CreatePaymentIntentRequest (ids + quantities, delivery option, addresses, note, expected_total in pence).
+ * Body: CreatePaymentIntentRequest (ids + quantities, delivery option, addresses, note, promo code, expected_total in pence).
  * The ONE call in the shopping flow that reaches wdlocks.co.uk: prices the basket from the Store API products
  * endpoint (cached a few minutes), then — depending on the rollout stage — writes a pretend order (demo / sandbox) or
  * creates the pending WooCommerce order and the Stripe PaymentIntent.
@@ -188,8 +182,13 @@ export async function POST(req: Request) {
   // 1. Price the basket from the live Store API (the only basket truth the server accepts).
   let basket: PricedBasket;
   try {
-    basket = await priceBasket(body.items, body.shippingOptionId, body.expectedTotal);
+    basket = await priceBasket(body.items, body.shippingOptionId, body.expectedTotal, body.couponCode);
   } catch (err) {
+    // The code stopped applying since the shopper added it (expired, used up): the client drops it and says why.
+    if (err instanceof CouponError) {
+      if (err.status >= 500) console.error('[checkout/intent] promo code check failed', { code: err.code, message: err.message });
+      return errorResponse(err.status, err.code, err.message);
+    }
     if (err instanceof PricingError) {
       if (err.status >= 500) console.error('[checkout/intent] pricing failed', { code: err.code, message: err.message });
       return errorResponse(err.status, err.code, err.message);
@@ -205,6 +204,7 @@ export async function POST(req: Request) {
     return errorResponse(409, 'total_mismatch', 'Prices have changed since you added these items. Please check your basket and try again.', {
       total: String(totalMinor),
       prices: Object.fromEntries(basket.lines.map((l) => [String(l.id), l.unitPence])),
+      coupon: basket.coupon,
     });
   }
 
@@ -273,6 +273,10 @@ export async function POST(req: Request) {
       (await createOrder({ basket, billing: body.billing, shipping: body.shipping, customerNote: body.customerNote, cartHash: hash }));
   } catch (err) {
     logWcError('create order', err);
+    // WooCommerce re-checks the promo code when it builds the order (per-customer limits need the email); pass its reason on.
+    if (err instanceof WcRestError && body.couponCode && /coupon/i.test(err.code)) {
+      return errorResponse(400, 'coupon_invalid', err.message.replace(/<[^>]*>/g, '').replace(/&quot;/g, '"') || 'That promo code cannot be used on this order.');
+    }
     return errorResponse(502, 'order_create_failed', 'We could not start your order. Please try again in a moment.');
   }
 

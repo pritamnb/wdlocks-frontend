@@ -294,6 +294,8 @@ export function createOrder(input: CreateOrderInput): Promise<WooRestOrder> {
       shipping: toRestShippingAddress(input.shipping),
       line_items: basket.lines.map(toLineItem),
       shipping_lines: toShippingLines(basket),
+      // WooCommerce applies the code itself; the intent route then checks its total against ours.
+      ...(basket.coupon ? { coupon_lines: [{ code: basket.coupon.code }] } : {}),
       customer_note: input.customerNote ?? '',
       meta_data: [
         { key: HEADLESS_CART_HASH_META, value: input.cartHash },

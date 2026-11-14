@@ -326,6 +326,18 @@ export interface CreatePaymentIntentRequest {
   customer_note?: string;
   /** Minor-unit total the shopper saw; the server refuses with 409 `total_mismatch` when its own pricing differs. */
   expected_total: string;
+  /** Promo code the shopper applied (checked again by WooCommerce at Place order). */
+  coupon_code?: string;
+}
+
+/** What a promo code takes off the basket, as WooCommerce worked it out (pence). */
+export interface CouponQuote {
+  code: string;
+  discountType: string;
+  /** Inc-VAT discount = discountExPence + discountTaxPence. */
+  discountPence: number;
+  discountExPence: number;
+  discountTaxPence: number;
 }
 
 export interface CreatePaymentIntentResponse {

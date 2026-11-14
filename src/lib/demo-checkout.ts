@@ -32,6 +32,8 @@ export interface DemoOrder {
   shipping?: { id: string; pence: number };
   /** Pence of VAT inside `total`. */
   tax?: number;
+  /** Promo code and its inc-VAT discount (pence), when one was applied. */
+  coupon?: { code: string; pence: number };
 }
 
 export function isDemoCheckout(): boolean {

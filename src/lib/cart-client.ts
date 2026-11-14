@@ -3,7 +3,8 @@
  * OUR /api/checkout/* routes, which price the basket from the Store API and talk to WooCommerce REST + Stripe. There
  * is no cart proxy any more: wdlocks.co.uk is touched once, at "Place order".
  */
-import type { WooStoreError, CreatePaymentIntentRequest, CreatePaymentIntentResponse, CheckoutStatusResponse } from '@/types';
+import type { WooStoreError, CreatePaymentIntentRequest, CreatePaymentIntentResponse, CheckoutStatusResponse, CouponQuote } from '@/types';
+import type { BasketLineInput } from '@/lib/basket';
 export class CartClientError extends Error {
   readonly status: number;
   readonly code: string;
@@ -74,6 +75,11 @@ export function createPaymentIntent(body: CreatePaymentIntentRequest): Promise<C
 export function getCheckoutStatus(orderId: number, orderKey: string): Promise<CheckoutStatusResponse> {
   const q = new URLSearchParams({ order: String(orderId), key: orderKey });
   return checkoutRequest<CheckoutStatusResponse>(`/status?${q.toString()}`, { method: 'GET' });
+}
+
+/** Asks WooCommerce (through our server) what a promo code takes off the basket. 400 `coupon_invalid` carries its reason. */
+export function checkPromoCode(items: BasketLineInput[], code: string): Promise<CouponQuote> {
+  return checkoutRequest<CouponQuote>('/coupon', { method: 'POST', body: JSON.stringify({ items, code }) });
 }
 
 /** Demo mode only: pretend to pay. 200 = paid, 402 = declined (demo). */

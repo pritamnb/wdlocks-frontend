@@ -9,7 +9,8 @@
 import { STORE_API, MAX_CART_QUANTITY } from '@/lib/constants';
 import { parentProductIdOf, shippingOptionById, splitVat, type BasketLineInput } from '@/lib/basket';
 import type { ShippingOption } from '@/lib/constants';
-import type { WooProduct } from '@/types';
+import { quoteCoupon } from '@/lib/coupon';
+import type { CouponQuote, WooProduct } from '@/types';
 
 export const PRICE_CACHE_SECONDS = 300;
 const UPSTREAM_TIMEOUT_MS = 12_000;
@@ -38,6 +39,8 @@ export interface PricedBasket {
   itemsTaxPence: number;
   totalTaxPence: number;
   totalPence: number;
+  /** Promo code WooCommerce accepted for these lines (its inc-VAT discount is already taken off the totals). */
+  coupon: CouponQuote | null;
 }
 
 export class PricingError extends Error {
@@ -146,19 +149,20 @@ function priceLine(input: BasketLineInput, product: WooProduct | undefined): Pri
  * When `expectedTotalPence` is given and the first pass disagrees, the prices are fetched again bypassing the memo
  * before the mismatch is reported, so a price change on the store is never masked by our own cache.
  */
-export async function priceBasket(items: readonly BasketLineInput[], shippingOptionId: string, expectedTotalPence?: number): Promise<PricedBasket> {
+export async function priceBasket(items: readonly BasketLineInput[], shippingOptionId: string, expectedTotalPence?: number, couponCode?: string): Promise<PricedBasket> {
   const shipping = shippingOptionById(shippingOptionId);
   const ids = items.map((i) => i.id);
-  let products = await getProductsForIds(ids);
-  let priced = assemble(items, products, shipping);
+  // The promo code is checked by WooCommerce in parallel with the price lookup (CouponError 400 when it no longer applies).
+  const [first, coupon] = await Promise.all([getProductsForIds(ids), couponCode ? quoteCoupon(items, couponCode) : Promise.resolve(null)]);
+  let priced = assemble(items, first, shipping, coupon);
   if (expectedTotalPence !== undefined && priced.totalPence !== expectedTotalPence) {
-    products = await getProductsForIds(ids, true);
-    priced = assemble(items, products, shipping);
+    const fresh = await getProductsForIds(ids, true);
+    priced = assemble(items, fresh, shipping, coupon);
   }
   return priced;
 }
 
-function assemble(items: readonly BasketLineInput[], products: Map<number, WooProduct>, shipping: ShippingOption): PricedBasket {
+function assemble(items: readonly BasketLineInput[], products: Map<number, WooProduct>, shipping: ShippingOption, coupon: CouponQuote | null): PricedBasket {
   const lines = items.map((i) => priceLine(i, products.get(i.id)));
   const itemsPence = lines.reduce((n, l) => n + l.linePence, 0);
   const itemsExPence = lines.reduce((n, l) => n + l.lineExPence, 0);
@@ -169,7 +173,8 @@ function assemble(items: readonly BasketLineInput[], products: Map<number, WooPr
     itemsPence,
     itemsExPence,
     itemsTaxPence,
-    totalTaxPence: itemsTaxPence + shipping.taxPence,
-    totalPence: itemsPence + shipping.pricePence,
+    totalTaxPence: itemsTaxPence + shipping.taxPence - (coupon?.discountTaxPence ?? 0),
+    totalPence: itemsPence + shipping.pricePence - (coupon?.discountPence ?? 0),
+    coupon,
   };
 }

@@ -4,7 +4,8 @@
  * client-held basket made redundant.)
  */
 import { NextResponse } from 'next/server';
-import { PURCHASABLE_IDS, MAX_CART_QUANTITY } from '@/lib/constants';
+import { PURCHASABLE_IDS, MAX_CART_QUANTITY, EXTERNAL_ONLY_PRODUCT_IDS } from '@/lib/constants';
+import { MAX_BASKET_LINES, type BasketLineInput } from '@/lib/basket';
 import type { WooStoreError, CheckoutAddressInput } from '@/types';
 
 export function isSecureRequest(req: Request): boolean {
@@ -102,4 +103,20 @@ export function parseAddress(value: unknown): CheckoutAddressInput | null {
   if (phone !== undefined) out.phone = phone;
   if (email !== undefined) out.email = email;
   return out;
+}
+
+/** Basket lines from the browser: allow-listed ids, 1–99 each, at most MAX_BASKET_LINES, duplicates merged. */
+export function parseBasketItems(value: unknown): BasketLineInput[] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_BASKET_LINES) return null;
+  const byId = new Map<number, number>();
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object') return null;
+    const { id, quantity } = raw as Record<string, unknown>;
+    const pid = parseProductId(id);
+    const qty = parseQuantity(quantity);
+    // 4266 (3 Star extra keys) needs the key number WooCommerce collects on its own product page; it is never sold here.
+    if (pid === null || EXTERNAL_ONLY_PRODUCT_IDS.has(pid) || qty === null || qty < 1) return null;
+    byId.set(pid, Math.min(99, (byId.get(pid) ?? 0) + qty));
+  }
+  return Array.from(byId, ([id, quantity]) => ({ id, quantity }));
 }

@@ -8,15 +8,17 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { AddressFields } from '@/components/checkout/AddressFields';
 import { ShippingOptions } from '@/components/checkout/ShippingOptions';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
+import { PromoCode } from '@/components/checkout/PromoCode';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/Toast';
-import { createPaymentIntent, CartClientError } from '@/lib/cart-client';
+import { createPaymentIntent, checkPromoCode, friendlyCartError, CartClientError } from '@/lib/cart-client';
+import { withCoupon } from '@/lib/basket';
 import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
 import { EMAIL, EMPTY_ADDRESS, FIELD, isAddressComplete, toApiAddress, validateAddress, type AddressForm } from '@/lib/checkout-form';
 import { estimateDelivery, formatCountdown, formatDeliveryDate } from '@/lib/delivery';
 import { CHECKOUT_MODE, SHIPPING_OPTIONS, SITE, STRIPE_TEST_MODE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
-import type { CreatePaymentIntentResponse } from '@/types';
+import type { CouponQuote, CreatePaymentIntentResponse } from '@/types';
 
 const StripePayment = dynamic(() => import('@/components/checkout/StripePayment').then((m) => m.StripePayment), {
   ssr: false,
@@ -37,6 +39,8 @@ interface Saved {
   shipping: AddressForm;
   billingSame: boolean;
   billing: AddressForm;
+  /** Applied promo code, re-checked when the shopper comes back. */
+  promo?: string;
 }
 
 /**
@@ -60,6 +64,11 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   const [showErrors, setShowErrors] = React.useState(false);
   const [handingOff, setHandingOff] = React.useState(false);
   const [payError, setPayError] = React.useState<string | null>(null);
+  /** The promo code WooCommerce accepted, and the basket lines (`sig`) its discount was worked out for. */
+  const [promo, setPromo] = React.useState<{ quote: CouponQuote; sig: string } | null>(null);
+  const [promoChecking, setPromoChecking] = React.useState(false);
+  const [promoError, setPromoError] = React.useState<string | null>(null);
+  const [savedPromo, setSavedPromo] = React.useState('');
   const isClient = React.useSyncExternalStore(() => () => {}, () => true, () => false);
   const now = isClient ? new Date() : null;
   const est = now ? estimateDelivery(now) : null;
@@ -76,6 +85,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
         if (saved.shipping) setShipping({ ...EMPTY_ADDRESS, ...saved.shipping, country: 'GB' });
         if (typeof saved.billingSame === 'boolean') setBillingSame(saved.billingSame);
         if (saved.billing) setBilling({ ...EMPTY_ADDRESS, ...saved.billing, country: 'GB' });
+        if (typeof saved.promo === 'string' && saved.promo) setSavedPromo(saved.promo);
       });
     } catch {
       /* ignore */
@@ -83,12 +93,51 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   }, []);
   React.useEffect(() => {
     try {
-      const data: Saved = { email, phone, shipping, billingSame, billing };
+      const data: Saved = { email, phone, shipping, billingSame, billing, promo: promo?.quote.code };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch {
       /* ignore */
     }
-  }, [email, phone, shipping, billingSame, billing]);
+  }, [email, phone, shipping, billingSame, billing, promo]);
+
+  // Promo code: WooCommerce works the discount out for these exact lines, so it is asked again whenever they change.
+  const lineSig = React.useMemo(() => JSON.stringify(lineInputs), [lineInputs]);
+  const promoRequest = React.useRef(0);
+  const applyPromo = React.useCallback(
+    async (code: string) => {
+      if (lineInputs.length === 0) return;
+      const ticket = ++promoRequest.current;
+      const sig = lineSig;
+      setPromoChecking(true);
+      setPromoError(null);
+      try {
+        const quote = await checkPromoCode(lineInputs, code);
+        if (ticket !== promoRequest.current) return;
+        setPromo({ quote, sig });
+      } catch (err) {
+        if (ticket !== promoRequest.current) return;
+        setPromo(null);
+        setPromoError(err instanceof CartClientError && err.code === 'coupon_invalid' ? err.message : friendlyCartError(err));
+      } finally {
+        if (ticket === promoRequest.current) setPromoChecking(false);
+      }
+    },
+    [lineInputs, lineSig],
+  );
+  const removePromo = () => {
+    promoRequest.current++;
+    setPromo(null);
+    setPromoChecking(false);
+    setPromoError(null);
+    setSavedPromo('');
+  };
+  React.useEffect(() => {
+    if (promo && promo.sig !== lineSig && !promoChecking) queueMicrotask(() => void applyPromo(promo.quote.code));
+  }, [promo, lineSig, promoChecking, applyPromo]);
+  React.useEffect(() => {
+    if (savedPromo && !promo && !promoChecking && !promoError && lineInputs.length > 0) queueMicrotask(() => void applyPromo(savedPromo));
+  }, [savedPromo, promo, promoChecking, promoError, lineInputs.length, applyPromo]);
+  const pricedCart = React.useMemo(() => (cart && promo && promo.sig === lineSig ? withCoupon(cart, promo.quote) : cart), [cart, promo, lineSig]);
 
   const shippingErrors = validateAddress(shipping);
   const billingErrors = billingSame ? {} : validateAddress(billing);
@@ -103,7 +152,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
 
   const items = cart?.items ?? [];
   const selectedRate = cart?.shipping_rates[0]?.shipping_rates.find((r) => r.selected) ?? null;
-  const total = cart ? Number.parseInt(cart.totals.total_price, 10) || 0 : 0;
+  const total = pricedCart ? Number.parseInt(pricedCart.totals.total_price, 10) || 0 : 0;
   const formValid = emailOk && phoneOk && addressReady && terms && (!cart?.needs_shipping || !!selectedRate);
 
   /** Shared gate for both payment paths: show errors and refuse until the form is complete. */
@@ -114,6 +163,10 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
       setPayError(!terms ? 'Please accept the terms and conditions to continue.' : 'Please complete the highlighted fields.');
       return false;
     }
+    if (promoChecking || (promo && promo.sig !== lineSig)) {
+      setPayError('One moment: your promo code is being checked.');
+      return false;
+    }
     return true;
   };
 
@@ -122,7 +175,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
    * server's prices are applied to the basket (so the summary updates) and the shopper is asked to look again.
    */
   const prepare = React.useCallback(async (): Promise<CreatePaymentIntentResponse | null> => {
-    if (!cart) return null;
+    if (!pricedCart) return null;
     const contact = { email: email.trim(), phone: phone.trim() };
     try {
       return await createPaymentIntent({
@@ -131,17 +184,26 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
         billing_address: toApiAddress(billingSame ? shipping : billing, contact),
         shipping_address: toApiAddress(shipping, { email: '', phone: contact.phone }),
         customer_note: note.trim() || undefined,
-        expected_total: cart.totals.total_price,
+        expected_total: pricedCart.totals.total_price,
+        ...(promo ? { coupon_code: promo.quote.code } : {}),
       });
     } catch (err) {
       if (err instanceof CartClientError && err.code === 'total_mismatch') {
         const prices = (err.data?.prices ?? null) as Record<string, number> | null;
         if (prices) applyPrices(prices);
+        const coupon = (err.data?.coupon ?? null) as CouponQuote | null;
+        // The server's own WooCommerce quote replaces ours (same lines, so the same key).
+        if (coupon && promo) setPromo({ quote: coupon, sig: lineSig });
         toast({ type: 'info', message: 'Prices were updated from the store. Please check the total and try again.' });
+      }
+      if (err instanceof CartClientError && err.code === 'coupon_invalid') {
+        setPromo(null);
+        setSavedPromo('');
+        setPromoError(err.message);
       }
       throw err;
     }
-  }, [cart, email, phone, billingSame, shipping, billing, note, lineInputs, shippingOptionId, applyPrices, toast]);
+  }, [pricedCart, email, phone, billingSame, shipping, billing, note, lineInputs, shippingOptionId, applyPrices, toast, promo, lineSig]);
 
   const returnUrl = React.useCallback((order: CreatePaymentIntentResponse) => {
     const u = new URL('/checkout/return', window.location.origin);
@@ -291,6 +353,9 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-near-black text-xs font-semibold text-white" aria-hidden="true">4</span>
               Payment
             </h2>
+            <div className="mt-4">
+              <PromoCode applied={promo?.quote ?? null} checking={promoChecking} error={promoError} onApply={(c) => void applyPromo(c)} onRemove={removePromo} initialCode={savedPromo} />
+            </div>
             <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4 sm:p-5">
               {payError && (
                 <p role="alert" className="mb-4 rounded-xl border border-red/30 bg-red/5 px-3 py-2 text-sm text-charcoal">
@@ -340,7 +405,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
 
         <aside className="lg:col-span-5">
           <div className="lg:sticky lg:top-28">
-            <OrderSummary cart={cart} pendingKeys={pendingKeys} onQuantity={(k, q) => void updateCartItem(k, q)} onRemove={(k) => void removeCartItem(k)} />
+            <OrderSummary cart={pricedCart ?? cart} pendingKeys={pendingKeys} onQuantity={(k, q) => void updateCartItem(k, q)} onRemove={(k) => void removeCartItem(k)} />
             <ul className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] text-charcoal/75">
               <li className="rounded-lg bg-[#f7f7f7] px-2 py-2">🔒 Secure checkout</li>
               <li className="rounded-lg bg-[#f7f7f7] px-2 py-2">📦 Same-day dispatch</li>

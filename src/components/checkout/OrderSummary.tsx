@@ -17,8 +17,8 @@ interface Props {
 
 /**
  * Right-hand order summary: lines, subtotal, delivery, VAT, total, all computed from the local basket (src/lib/basket.ts).
- * Coupons are not offered: the basket never talks to WooCommerce before "Place order", so a code could only be checked
- * after the order exists; the shop runs no public coupons today.
+ * A promo code applied in the Payment step arrives here already taken off (CheckoutPage → withCoupon) and shows as
+ * its own line.
  */
 export function OrderSummary({ cart, pendingKeys, onQuantity, onRemove, deliveryFallback = 'Chosen below' }: Props) {
   const t = cart.totals;
@@ -46,7 +46,7 @@ export function OrderSummary({ cart, pendingKeys, onQuantity, onRemove, delivery
         </div>
         {discount > 0 && (
           <div className="flex justify-between">
-            <dt className="text-charcoal/80">Discount</dt>
+            <dt className="text-charcoal/80">Promo code{cart.coupons[0] && <span className="block text-xs uppercase tracking-wide text-charcoal/60">{cart.coupons[0].code}</span>}</dt>
             <dd className="font-semibold tabular-nums text-red">−{formatPrice(discount)}</dd>
           </div>
         )}
