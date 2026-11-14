@@ -6,7 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { CloseButton } from '@/components/ui/Modal';
 import { useCart } from '@/hooks/useCart';
-import { ACCEPT_ALL, ESSENTIAL_ONLY, useConsent, type ConsentChoice } from '@/hooks/useConsent';
+import { useConsent } from '@/hooks/useConsent';
+import { ACCEPT_ALL, ESSENTIAL_ONLY, type ConsentChoice } from '@/lib/consent';
 import { cn } from '@/lib/cn';
 
 /**
@@ -16,25 +17,26 @@ import { cn } from '@/lib/cn';
  * (z-60). The choice itself is handled by useConsent (localStorage `wd:consent`, re-asked after 12 months).
  */
 
-interface Category {
-  key: keyof ConsentChoice | 'essential';
-  name: string;
-  detail: string;
-}
+type Category =
+  | { key: 'essential'; locked: true; name: string; detail: string }
+  | { key: keyof ConsentChoice; locked: false; name: string; detail: string };
 
 const CATEGORIES: Category[] = [
   {
     key: 'essential',
+    locked: true,
     name: 'Essential',
-    detail: 'Keep your basket, the checkout form and your order working, and let Stripe protect the payment page from fraud. Always on.',
+    detail: 'Keep your basket (saved in this browser), the checkout form and your order working, and let Stripe protect the payment page from fraud. Always on.',
   },
   {
     key: 'analytics',
+    locked: false,
     name: 'Analytics',
     detail: 'Would tell us which pages help and which do not. We run no analytics today; your choice is saved for when we do.',
   },
   {
     key: 'marketing',
+    locked: false,
     name: 'Marketing',
     detail: 'Would let advertising partners measure their ads. None are used on this site today.',
   },
@@ -51,7 +53,6 @@ function Switch({ id, checked, onChange, label }: { id: string; checked: boolean
       onClick={() => onChange(!checked)}
       className={cn(
         'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors duration-150',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red',
         checked ? 'border-red bg-red' : 'border-charcoal/25 bg-cream-mid',
       )}
     >
@@ -112,6 +113,7 @@ function Panel({ openedFromSettings, initial, save, close }: { openedFromSetting
   };
 
   return (
+    // 10rem of headroom keeps the card below the sticky header (100–136px tall) even with the settings open on a short phone.
     <div
       ref={dialogRef}
       role="dialog"
@@ -119,7 +121,7 @@ function Panel({ openedFromSettings, initial, save, close }: { openedFromSetting
       aria-describedby="cookie-consent-desc"
       tabIndex={-1}
       onKeyDown={onKeyDown}
-      className="pointer-events-auto mx-auto max-h-[calc(100dvh-5rem)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-black/10 bg-white p-5 text-charcoal shadow-[0_2px_4px_rgb(41_39_52/0.08),0_20px_48px_-16px_rgb(41_39_52/0.35)] outline-none sm:p-6"
+      className="pointer-events-auto mx-auto max-h-[calc(100dvh-10rem)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-black/10 bg-white p-5 text-charcoal shadow-card-hover outline-none sm:p-6"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -129,7 +131,7 @@ function Panel({ openedFromSettings, initial, save, close }: { openedFromSetting
           <p id="cookie-consent-desc" className="mt-1.5 text-sm leading-relaxed text-charcoal/80">
             Essential cookies and browser storage keep your basket and checkout working. Analytics and marketing
             cookies stay off until you say yes.{' '}
-            <Link href="/privacy" className="font-medium text-charcoal underline underline-offset-2 hover:text-red">
+            <Link href="/privacy" prefetch={false} className="font-medium text-charcoal underline underline-offset-2 hover:text-red">
               Privacy policy
             </Link>
           </p>
@@ -140,19 +142,18 @@ function Panel({ openedFromSettings, initial, save, close }: { openedFromSetting
       {expanded && (
         <ul id="cookie-consent-settings" className="mt-4 divide-y divide-black/10 rounded-xl border border-black/10">
           {CATEGORIES.map((c) => {
-            const on = c.key === 'essential' ? true : draft[c.key];
             return (
               <li key={c.key} className="flex items-start justify-between gap-4 p-3.5 sm:p-4">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">{c.name}</p>
                   <p className="mt-0.5 text-xs leading-relaxed text-charcoal/70">{c.detail}</p>
                 </div>
-                {c.key === 'essential' ? (
+                {c.locked ? (
                   <span className="shrink-0 pt-0.5 text-xs font-semibold uppercase tracking-[0.08em] text-charcoal/60">Always on</span>
                 ) : (
                   <Switch
                     id={`cookie-switch-${c.key}`}
-                    checked={on}
+                    checked={draft[c.key]}
                     label={`${c.name} cookies`}
                     onChange={(next) => setDraft((d) => ({ ...d, [c.key]: next }))}
                   />

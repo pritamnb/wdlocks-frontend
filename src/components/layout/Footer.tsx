@@ -23,11 +23,10 @@ const companyLinks = [
 const footerLinkClass = 'text-sm text-white/75 transition-colors duration-150 hover:text-red';
 
 function FooterLink({ href, label, external }: { href: string; label: string; external?: boolean }) {
-  const cls = footerLinkClass;
   return external ? (
-    <a href={href} className={cls} rel="noopener">{label}</a>
+    <a href={href} className={footerLinkClass} rel="noopener">{label}</a>
   ) : (
-    <Link href={href} className={cls}>{label}</Link>
+    <Link href={href} className={footerLinkClass}>{label}</Link>
   );
 }
 

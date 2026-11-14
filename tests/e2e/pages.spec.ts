@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { CONSENT_KEY, presetConsent } from './consent';
+import { CONSENT_KEY, consentRecord, presetConsent } from './consent';
 
 // Every spec but the cookie-consent block below starts with the popup already answered (Essential only).
 test.beforeEach(({ page }) => presetConsent(page));
@@ -253,8 +253,9 @@ test.describe('cookie consent', () => {
 
     // Non-modal, bottom of the viewport, clear of the header, no horizontal overflow (Pixel 7 included), one h1.
     const vp = page.viewportSize()!;
+    // The card slides up over 300 ms; poll until its bottom edge has settled inside the viewport before measuring.
+    await expect.poll(async () => (await dialog.boundingBox())!.y + (await dialog.boundingBox())!.height, { message: 'popup bottom edge' }).toBeLessThanOrEqual(vp.height + 1);
     const box = (await dialog.boundingBox())!;
-    expect(box.y + box.height, 'popup bottom edge').toBeLessThanOrEqual(vp.height + 1);
     expect(box.y, 'popup leaves the header clear').toBeGreaterThan(vp.height / 3);
     expect(box.x, 'popup inside the viewport').toBeGreaterThanOrEqual(0);
     expect(box.x + box.width, 'popup inside the viewport').toBeLessThanOrEqual(vp.width + 1);
@@ -306,7 +307,7 @@ test.describe('cookie consent', () => {
   test('"Accept all" turns both optional categories on; a choice older than 12 months is asked again', async ({ page }) => {
     await page.addInitScript(
       ([key, value]) => localStorage.setItem(key, value),
-      [CONSENT_KEY, JSON.stringify({ v: 1, essential: true, analytics: true, marketing: true, at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString() })],
+      [CONSENT_KEY, JSON.stringify(consentRecord({ analytics: true, marketing: true, at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString() }))],
     );
     await page.goto('/products');
     const dialog = page.getByRole('dialog', { name: 'Cookies on this site' });
@@ -316,6 +317,22 @@ test.describe('cookie consent', () => {
     const choice = await stored(page);
     expect(choice).toMatchObject({ v: 1, essential: true, analytics: true, marketing: true });
     expect(Date.parse(choice.at)).toBeGreaterThan(Date.now() - 60_000);
+  });
+
+  test('settings view stays clear of the sticky header on a short phone', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    const dialog = page.getByRole('dialog', { name: 'Cookies on this site' });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Cookie settings' }).click();
+    await expect(dialog.getByRole('switch', { name: 'Marketing cookies' })).toBeVisible();
+    const headerBottom = await page.locator('header').evaluate((el) => el.closest('.sticky')!.getBoundingClientRect().bottom);
+    const box = (await dialog.boundingBox())!;
+    expect(box.y, 'settings card top vs header bottom').toBeGreaterThanOrEqual(headerBottom - 1);
+    expect(box.y + box.height).toBeLessThanOrEqual(667 + 1);
+    // Everything is still reachable: the card scrolls inside itself.
+    await dialog.getByRole('button', { name: 'Save settings' }).scrollIntoViewIfNeeded();
+    await expect(dialog.getByRole('button', { name: 'Save settings' })).toBeVisible();
   });
 
   test('popup hides while the basket drawer is open and returns when it closes', async ({ page }) => {

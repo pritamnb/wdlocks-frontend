@@ -46,12 +46,12 @@ src/
     api/cart/clear/route.ts     DELETE        (empties the basket on checkout handoff)
     sitemap.ts · robots.ts · opengraph-image.tsx · not-found.tsx · error.tsx
   components/
-    layout/   AnnouncementBar, Navbar (+MegaMenu, MobileMenu), Footer, Logo, RootLayout
+    layout/   AnnouncementBar, Navbar (+MegaMenu, MobileMenu), Footer (+CookieSettingsLink), CookieConsent, Logo, RootLayout
     product/  ProductCard, ProductGrid, SizePicker, VariationSelector, ProductGallery, AddToCart, Breadcrumb
     cart/     CartDrawer, CartLineItem, QuantityControl
     home/     Hero, TrustStrip, WhyWatchdog, Reviews, Delivery
     ui/       Button, Modal, Toast, Skeleton, ErrorBoundary
-  hooks/      useCart (context + optimistic updates), useProducts (SWR)
+  hooks/      useCart (context + optimistic updates), useConsent (cookie choice, `wd:consent`), useProducts (SWR)
   lib/
     constants.ts     design tokens, catalogue (9 products), all 31 variation IDs, site info
     wdlocks-api.ts   Store API product client + money formatting (pence → £)
