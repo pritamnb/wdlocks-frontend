@@ -73,11 +73,25 @@ export async function getProductSSR(id: number): Promise<WooProduct | null> {
   }
 }
 
+/**
+ * Single product by slug. 404 → null. Any other upstream failure (after storeFetch's own retries) falls back to the
+ * same product from the catalogue list call, which is one cached URL shared by every page of a build and by the
+ * homepage, so a rate-limited build still renders every product page with live prices, images and variations instead
+ * of failing the deploy. Only when that is unavailable too does the error propagate.
+ */
 export async function getProductBySlugSSR(slug: string): Promise<WooProduct | null> {
   try {
     return await getProductBySlug(slug, ssrInit);
   } catch (err) {
     if (err instanceof StoreApiError && err.status === 404) return null;
+    const id = CATALOGUE.find((p) => p.slug === slug)?.id;
+    if (id) {
+      const fromList = (await getProductsSSR()).find((p) => p.id === id);
+      if (fromList) {
+        console.warn(`[api] product ${slug} served from the catalogue list after a Store API failure`, err instanceof StoreApiError ? { status: err.status, code: err.code } : err);
+        return fromList;
+      }
+    }
     throw err;
   }
 }

@@ -894,7 +894,19 @@ cart call takes 1.1–1.6 s from the UK and 2–3 s through the Vercel function;
 
 Pritam: the hero background was too dark to see the films. The two films shot on white now play at 75% brightness instead of 55%, and the left-to-right overlay goes from 90% black behind the copy to clear on the right (was 95% → 70% → 10%); the bottom fade is shorter and lighter (h-28, 80%). A soft text shadow on the copy column keeps the headline readable over the brighter frames. Checked live on all three films (desktop) and on the phone poster: the cylinder, pins and laser read clearly on the right, the films' own captions stay hidden behind the copy except a faint "Excess Discharge Vents" above the eyebrow on the third film.
 
-### Pass 48 — 13 Nov 2026: cookie consent popup
+### Pass 48 — 13 Nov 2026: builds survive a Store API 429
+Deployment dpl_H7U3KsXA8Tk7hjSbZKVbtmFTkR35 (00:01) failed: prerendering the half-cylinder page got `Store API responded
+with 429` from wdlocks.co.uk after four deploys in twenty minutes, and one non-404 error aborts the whole export. The
+three deploys after it succeeded; production was never affected.
+- `storeFetch` (src/lib/wdlocks-api.ts) now retries 429 / 502 / 503 / 504 and network errors twice (1 s, 3 s, or the
+  host's `Retry-After` up to 10 s) and throws at once on anything else. Checked with a stubbed fetch: 429→200 succeeds
+  on attempt two, 404 throws after one call, three 503s give up with the last error, a network error then 200 passes.
+- `getProductBySlugSSR` (src/lib/api.ts): if the single-product call still fails, the product is taken from the
+  catalogue list call (one URL cached across the build and the homepage) with live prices, images and variations, so a
+  rate-limited build still renders every product page; only a 404 returns null and only a double failure rethrows.
+- Local build clean; e2e page suites run against production after the deploy.
+
+### Pass 49 — 13 Nov 2026: cookie consent popup
 
 Pritam: "cookies popup". A UK GDPR / PECR consent popup, built in-house (no consent library, no new network requests, nothing on wdlocks.co.uk).
 - **Popup** (`src/components/layout/CookieConsent.tsx`, mounted once in `RootLayout` after the footer): shown on a first visit at the bottom of the viewport as a white rounded-2xl card (border-black/10, Outfit heading "Cookies on this site", two lines of plain English, link to the privacy policy). Buttons: **Accept all** (red), **Essential only** (outline) and a **Cookie settings** disclosure that lists the three categories: Essential (always on: basket `wd:basket`, checkout form session storage, the checkout / demo-order cookies, Stripe's fraud-prevention frame on the checkout), Analytics (off; no analytics runs today, the choice is stored for when it does) and Marketing (off; none used). Switches are `role="switch"`; the panel is `role="dialog"` with aria-labelledby/-describedby, not modal, no focus trap, keyboard reachable in DOM order; reopened from the footer it takes focus and Escape closes it. Mobile-safe (`env(safe-area-inset-bottom)`), z-45: above the sticky header (z-40), below the basket drawer (z-50) and toasts (z-60); hidden while the drawer is open, back when it closes. Framer-motion slide-up, fade only under reduced motion.
@@ -902,7 +914,7 @@ Pritam: "cookies popup". A UK GDPR / PECR consent popup, built in-house (no cons
 - Legal copy untouched: the privacy page renders the WordPress `privacy-policy` page, which has no local cookies section to extend (wording changes need Pritam).
 - **Tests** (`tests/e2e/pages.spec.ts`, "cookie consent" block): first visit shows the popup at the bottom, inside the viewport, header clear, no horizontal overflow (desktop 1366 and Pixel 7), one h1, no console errors; settings default Essential "Always on" / Analytics off / Marketing off; "Essential only" hides it and the stored choice survives a reload; the footer link reopens it focused, Escape closes it without changing the choice, Analytics on + "Save settings" is stored; "Accept all" stores both on; a 400-day-old choice is asked again; the popup hides behind the basket drawer and returns. Every other spec (pages, basket, Stripe) pre-answers the popup through `tests/e2e/consent.ts` so it never sits over the controls they click.
 - Verified on a local demo build (`npx next build` with Stripe / WooCommerce secrets blanked, `NEXT_PUBLIC_CHECKOUT_MODE=demo`): `--project=desktop --project=mobile --no-deps` 58 passed (the cookie-consent block on both viewports, every `renders cleanly` check still one h1 / no console errors); `basket-desktop` + `basket-mobile` 10 passed, 6 skipped (the Stripe spec skips in demo mode). Looked at in the browser pane: first-visit card on desktop and a 375 px phone, the settings view (fits the phone, scrolls inside the card past that), the footer reopen on /contact with focus on the dialog and the close button, no horizontal overflow.
-- Branch `cookie-consent`, PR [#9](https://github.com/pritamnb/wdlocks-frontend/pull/9); not merged, not deployed (nothing on production or staging shows the popup yet).
+- Branch `cookie-consent`, PR [#9](https://github.com/pritamnb/wdlocks-frontend/pull/9); merged into main on 14 Nov 2026 (production auto-deploys from main, staging fast-forwarded and deployed).
 
 ## 9. Independent review
 
