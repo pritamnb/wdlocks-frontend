@@ -943,6 +943,25 @@ Pritam: "please fix the image resolutions it doesn't look good". The pixel count
 - **Open item for Pritam (WordPress side, not this project):** the live `privacy-policy` page's "Cookies" section reads "please see [LINK TO YOUR COOKIE POLICY]" and an earlier paragraph "cookie policy [LINK]" — template placeholders. They could point at the footer's Cookie settings or a cookie policy page once one exists.
 - Branch `cookie-consent-review`, PR [#10](https://github.com/pritamnb/wdlocks-frontend/pull/10); not merged.
 
+### Pass 54 — 14 Nov 2026: key tags cut out properly, on the panel itself
+
+Pritam: "why can't you make it transparent?" (about Pass 51's white card). Pass 51 gave up because a colour cut-out of
+the soft WhatsApp JPEG frayed. Measured why: along most of their length the tags' white faces meet the white page at
+1/255 difference, so no colour rule can find that edge. The tags are rounded quadrilaterals, though, and their red and
+black print gives exact straight edges:
+- `scripts/images/keytags-fit.mjs` fits each tag's four sides from the print (Theil–Sen start, least squares; 0.1–0.6 px
+  rms, every scan point kept) and its corners from the bisector gap (radii 20 px at the top, 28–36 px at the bottom).
+- `scripts/images/keytags-cutout.mjs` draws the tags from those fits by signed distance (anti-aliased), colour-mattes
+  only the ring (small highlight gaps kept, its hole opened, the pale JPEG halo next to the tags ignored), un-mixes every
+  edge pixel from white (F = 255 − (255 − c) / α, which removes the white fringe), at 2× then downsampled.
+  Result `public/brand/product/guarantee-keytags-cutout.webp` (1199 × 1312, WebP q92 with exact alpha, 200 KB); the
+  white-page `guarantee-keytags-pair.webp` is gone. The scripts reproduce it byte for byte from the client's JPEG.
+- `Guarantee`: the white card is gone. The black half of the guarantee tag (RGB ≈ 25) is about the panel's colour
+  (RGB 10), so a soft white spotlight (16 % → 5 % → 0) sits behind the pair and the tags carry a deep drop shadow; the
+  black tag reads as a darker shape against the glow, with the photo's own light edge highlight as its rim.
+- Verified on a local production build: desktop 1440 px and iPhone 13 screenshots, served through `/_next/image` at
+  q85, no horizontal overflow; `pages.spec` 60 passed on Desktop Chrome and Pixel 7.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

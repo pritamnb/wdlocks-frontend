@@ -3,7 +3,8 @@ import { BRAND_RENDERS, GUARANTEE } from '@/lib/constants';
 
 /**
  * Ultion's "Register your £5,000 guarantee" on a dark panel with the pair of key tags (Pritam, 14 Nov: replaces the single
- * red tag; then "fix the image resolutions": the photo now sits on its own white page in a card instead of a cut-out).
+ * red tag). The tags are a transparent cut-out on the panel itself; the black half of the guarantee tag is about the
+ * panel's colour, so a soft spotlight behind the pair lets its outline read as a darker shape against the glow.
  */
 export function Guarantee() {
   return (
@@ -20,16 +21,16 @@ export function Guarantee() {
           </a>
         </div>
         <div className="relative lg:col-span-5">
-          {/* The photo keeps its white studio page, so the card is white too; quality 85 keeps the small print crisp. */}
-          <div className="mx-auto w-[290px] overflow-hidden rounded-3xl bg-white p-2 shadow-[0_40px_80px_-24px_rgb(0_0_0/0.8)] ring-1 ring-white/10 sm:w-[340px] lg:w-[420px]">
+          <div className="relative mx-auto w-[290px] sm:w-[340px] lg:w-[420px]">
+            <div aria-hidden="true" className="pointer-events-none absolute -inset-[12%] rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.16),rgb(255_255_255/0.05)_55%,transparent)]" />
             <Image
               src={BRAND_RENDERS.guaranteeKeytags.src}
               alt={BRAND_RENDERS.guaranteeKeytags.alt}
               width={BRAND_RENDERS.guaranteeKeytags.width}
               height={BRAND_RENDERS.guaranteeKeytags.height}
-              sizes="(max-width: 640px) 274px, (max-width: 1024px) 324px, 404px"
+              sizes="(max-width: 640px) 290px, (max-width: 1024px) 340px, 420px"
               quality={85}
-              className="h-auto w-full"
+              className="relative h-auto w-full drop-shadow-[0_28px_36px_rgb(0_0_0/0.55)]"
             />
           </div>
         </div>
