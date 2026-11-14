@@ -21,7 +21,11 @@
  *   split mirrors WooCommerce's (ex = round(inc / 1.2), tax = inc − ex), verified line by line against the live cart.
  */
 import type { CouponQuote, WooCart, WooCartItem, WooCurrency, WooProduct, WooShippingPackage, WooShippingRate } from '@/types';
-import { CATALOGUE_BY_ID, CYLINDER_SIZES, MAX_CART_QUANTITY, PURCHASABLE_IDS, RIM_COLOURS, SHIPPING_OPTIONS, THUMB_SIZES, VARIATIONS_BY_PRODUCT, type ShippingOption } from '@/lib/constants';
+import { MAX_CART_QUANTITY } from '@/lib/constants';
+import { parentProductIdOf, variationLabel } from '@/lib/catalogue';
+import { pickShippingOption, type ShippingOption } from '@/lib/shipping-options';
+
+export { parentProductIdOf, variationLabel };
 
 export const BASKET_STORAGE_KEY = 'wd:basket';
 const BASKET_VERSION = 1;
@@ -52,7 +56,7 @@ export interface BasketLine extends BasketLineSnapshot {
 export interface BasketState {
   v: number;
   lines: BasketLine[];
-  /** Chosen delivery option (SHIPPING_OPTIONS id); the first option is the default. */
+  /** Chosen delivery option (a WooCommerce rate id such as "flat_rate:1"); '' or an unknown id means the cheapest. */
   shippingOptionId: string;
   updatedAt: number;
 }
@@ -86,11 +90,7 @@ export function splitVat(incPence: number): { ex: number; tax: number } {
 }
 
 export function emptyBasket(): BasketState {
-  return { v: BASKET_VERSION, lines: [], shippingOptionId: SHIPPING_OPTIONS[0].id, updatedAt: Date.now() };
-}
-
-export function shippingOptionById(id: string | null | undefined): ShippingOption {
-  return SHIPPING_OPTIONS.find((o) => o.id === id) ?? SHIPPING_OPTIONS[0];
+  return { v: BASKET_VERSION, lines: [], shippingOptionId: '', updatedAt: Date.now() };
 }
 
 /* ---------------------------------------------------------------------------
@@ -101,7 +101,8 @@ function isLine(value: unknown): value is BasketLine {
   if (!value || typeof value !== 'object') return false;
   const l = value as Record<string, unknown>;
   return (
-    typeof l.id === 'number' && PURCHASABLE_IDS.has(l.id) &&
+    // Any positive id: WooCommerce decides at "Place order" whether it is still sold (the server re-prices every line).
+    typeof l.id === 'number' && Number.isInteger(l.id) && l.id > 0 &&
     typeof l.quantity === 'number' && Number.isInteger(l.quantity) && l.quantity >= 1 && l.quantity <= MAX_CART_QUANTITY &&
     typeof l.name === 'string' && typeof l.pricePence === 'number' && Number.isFinite(l.pricePence)
   );
@@ -118,7 +119,7 @@ export function readBasket(): BasketState {
     return {
       v: BASKET_VERSION,
       lines: parsed.lines.filter(isLine).slice(0, MAX_BASKET_LINES),
-      shippingOptionId: shippingOptionById(parsed.shippingOptionId).id,
+      shippingOptionId: typeof parsed.shippingOptionId === 'string' ? parsed.shippingOptionId : '',
       updatedAt: parsed.updatedAt,
     };
   } catch {
@@ -129,7 +130,7 @@ export function readBasket(): BasketState {
 export function writeBasket(state: BasketState): void {
   if (typeof window === 'undefined') return;
   try {
-    if (state.lines.length === 0 && state.shippingOptionId === SHIPPING_OPTIONS[0].id) {
+    if (state.lines.length === 0 && !state.shippingOptionId) {
       window.localStorage.removeItem(BASKET_STORAGE_KEY);
     } else {
       window.localStorage.setItem(BASKET_STORAGE_KEY, JSON.stringify({ ...state, v: BASKET_VERSION }));
@@ -147,35 +148,17 @@ export function lineKey(id: number): string {
   return `line-${id}`;
 }
 
-/** Parent product id for a variation id, from the static catalogue; null for simple products / unknown ids. */
-export function parentProductIdOf(id: number): number | null {
-  for (const [parent, variations] of Object.entries(VARIATIONS_BY_PRODUCT)) {
-    if (variations.includes(id)) return Number(parent);
-  }
-  return null;
-}
-
-/** Human label for a known variation id ("35 Inside / 35 Outside", "Brass"). */
-export function variationLabel(id: number): { attribute: string; value: string } | null {
-  const size = CYLINDER_SIZES.find((s) => s.variationId === id) ?? THUMB_SIZES.find((s) => s.variationId === id);
-  if (size) return { attribute: 'Size', value: size.label };
-  const colour = RIM_COLOURS.find((c) => c.variationId === id);
-  if (colour) return { attribute: 'Finish', value: colour.label };
-  return null;
-}
-
 /**
  * Display snapshot for an id when the caller has none (e.g. the keyed-alike add-on): catalogue name, the live
  * product's price and photo when the product list is at hand.
  */
 export function describeLine(id: number, products: readonly WooProduct[] = []): BasketLineSnapshot {
-  const parentId = parentProductIdOf(id) ?? id;
+  const parentId = parentProductIdOf(id, products) ?? id;
   const product = products.find((p) => p.id === parentId);
-  const entry = CATALOGUE_BY_ID[parentId];
   const image = product?.images[0];
-  const variation = variationLabel(id);
+  const variation = variationLabel(id, products);
   return {
-    name: product?.name ?? entry?.name ?? `Product ${id}`,
+    name: product?.name ?? `Product ${id}`,
     pricePence: product ? Number.parseInt(product.prices.price, 10) || 0 : 0,
     image: image ? { src: image.src, thumbnail: image.thumbnail, alt: image.alt } : null,
     ...(variation ? { variation: [variation] } : {}),
@@ -203,7 +186,7 @@ const VERIFIED_PRICE_TTL_MS = 10 * 60 * 1000;
 
 export function unitPriceFor(line: BasketLine, products: readonly WooProduct[]): number {
   if (line.verifiedAt && Date.now() - line.verifiedAt < VERIFIED_PRICE_TTL_MS) return Math.max(0, Math.round(line.pricePence));
-  const parentId = parentProductIdOf(line.id) ?? line.id;
+  const parentId = parentProductIdOf(line.id, products) ?? line.id;
   const product = products.find((p) => p.id === parentId);
   if (product && !product.prices.price_range) {
     const live = Number.parseInt(product.prices.price, 10);
@@ -212,7 +195,7 @@ export function unitPriceFor(line: BasketLine, products: readonly WooProduct[]):
   return Math.max(0, Math.round(line.pricePence));
 }
 
-function toCartItem(line: BasketLine, unitPence: number): WooCartItem {
+function toCartItem(line: BasketLine, unitPence: number, products: readonly WooProduct[]): WooCartItem {
   const inc = unitPence * line.quantity;
   const { ex, tax } = splitVat(inc);
   const price = String(unitPence);
@@ -220,7 +203,7 @@ function toCartItem(line: BasketLine, unitPence: number): WooCartItem {
   return {
     key: lineKey(line.id),
     id: line.id,
-    type: parentProductIdOf(line.id) ? 'variation' : 'simple',
+    type: parentProductIdOf(line.id, products) ? 'variation' : 'simple',
     quantity: line.quantity,
     quantity_limits: { minimum: 1, maximum: MAX_CART_QUANTITY, multiple_of: 1, editable: true },
     name: line.name,
@@ -273,21 +256,21 @@ function emptyAddress() {
 
 /** An empty basket shaped like a Store API response. */
 export function emptyCart(): WooCart {
-  return buildCart(emptyBasket(), []);
+  return buildCart(emptyBasket(), [], []);
 }
 
 /**
- * The basket as a Store API cart: lines, VAT split, the three Royal Mail options (the chosen one selected) and the
- * grand total in pence. Shipping is only added once there is something to ship.
+ * The basket as a Store API cart: lines, VAT split, the store's delivery options (the chosen one selected) and the
+ * grand total in pence. Shipping is only added once there is something to ship and the store has offered rates.
  */
-export function buildCart(state: BasketState, products: readonly WooProduct[] = []): WooCart {
-  const items = state.lines.map((line) => toCartItem(line, unitPriceFor(line, products)));
+export function buildCart(state: BasketState, products: readonly WooProduct[] = [], shippingOptions: readonly ShippingOption[] = []): WooCart {
+  const items = state.lines.map((line) => toCartItem(line, unitPriceFor(line, products), products));
   const total_items = items.reduce((n, i) => n + Number(i.totals.line_subtotal), 0);
   const total_items_tax = items.reduce((n, i) => n + Number(i.totals.line_subtotal_tax), 0);
   const needsShipping = items.length > 0;
-  const chosen = shippingOptionById(state.shippingOptionId);
-  const shipping = needsShipping ? chosen.exVatPence : 0;
-  const shippingTax = needsShipping ? chosen.taxPence : 0;
+  const chosen = pickShippingOption(shippingOptions, state.shippingOptionId);
+  const shipping = needsShipping && chosen ? chosen.exVatPence : 0;
+  const shippingTax = needsShipping && chosen ? chosen.taxPence : 0;
   const total_tax = total_items_tax + shippingTax;
   const total_price = total_items + total_items_tax + shipping + shippingTax;
   const packages: WooShippingPackage[] = needsShipping
@@ -296,7 +279,7 @@ export function buildCart(state: BasketState, products: readonly WooProduct[] = 
         name: 'Delivery',
         destination: emptyAddress(),
         items: items.map((i) => ({ key: i.key, name: i.name, quantity: i.quantity })),
-        shipping_rates: SHIPPING_OPTIONS.map((o) => toRate(o, o.id === chosen.id)),
+        shipping_rates: shippingOptions.map((o) => toRate(o, o.id === chosen?.id)),
       }]
     : [];
   return {
@@ -311,8 +294,8 @@ export function buildCart(state: BasketState, products: readonly WooProduct[] = 
       total_fees_tax: '0',
       total_discount: '0',
       total_discount_tax: '0',
-      total_shipping: needsShipping ? String(shipping) : null,
-      total_shipping_tax: needsShipping ? String(shippingTax) : null,
+      total_shipping: needsShipping && chosen ? String(shipping) : null,
+      total_shipping_tax: needsShipping && chosen ? String(shippingTax) : null,
       total_price: String(total_price),
       total_tax: String(total_tax),
       tax_lines: total_tax > 0 ? [{ name: 'VAT', price: String(total_tax), rate: '20%' }] : [],
@@ -322,7 +305,7 @@ export function buildCart(state: BasketState, products: readonly WooProduct[] = 
     needs_payment: total_price > 0,
     needs_shipping: needsShipping,
     payment_requirements: ['products'],
-    has_calculated_shipping: needsShipping,
+    has_calculated_shipping: needsShipping && chosen !== null,
     shipping_rates: packages,
     items_count: items.reduce((n, i) => n + i.quantity, 0),
     items_weight: 0,

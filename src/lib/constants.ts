@@ -90,46 +90,17 @@ export const GUARANTEE = {
   blurb: 'Once your Watchdog lock is fitted, register it with us. Registration switches on key-copy protection and activates your £5,000 security guarantee.',
 } as const;
 
-export interface ShippingOption {
-  id: string;
-  /** Store API rate id (`method:instance`) and its parts, as the live store reports them. */
-  rateId: string;
-  methodId: string;
-  instanceId: number;
-  label: string;
-  /** The rate's name on the live store, used as the order's shipping method title. */
-  methodTitle: string;
-  eta: string;
-  /** Inc-VAT price in pence (what the shopper sees). */
-  pricePence: number;
-  /** The same price split the way WooCommerce stores it: ex-VAT shipping line + 20 % shipping tax. */
-  exVatPence: number;
-  taxPence: number;
-  transitDays: readonly [number, number];
-}
-
-/**
- * Delivery options as configured on the live WooCommerce store. Rate ids, names and the ex-VAT/tax split were read
- * from the Store API cart for a UB6 address on 12 Nov 2026 (flat_rate:1 533+107, flat_rate:2 833+167, flat_rate:3
- * 2400+480). The basket prices delivery itself; the order carries the matching shipping line.
- */
-export const SHIPPING_OPTIONS: readonly ShippingOption[] = [
-  { id: 'rm-signed', rateId: 'flat_rate:1', methodId: 'flat_rate', instanceId: 1, label: 'Royal Mail 1st Class Signed For', methodTitle: 'Royal Mail 1st Class Signed For (3–5 working days)', eta: '3–5 working days', pricePence: 640, exVatPence: 533, taxPence: 107, transitDays: [3, 5] },
-  { id: 'rm-24', rateId: 'flat_rate:2', methodId: 'flat_rate', instanceId: 2, label: 'Royal Mail Special Delivery 24hr', methodTitle: 'Royal Mail Special Delivery 24hr', eta: 'next working day', pricePence: 1000, exVatPence: 833, taxPence: 167, transitDays: [1, 1] },
-  { id: 'saturday', rateId: 'flat_rate:3', methodId: 'flat_rate', instanceId: 3, label: 'Saturday Delivery', methodTitle: 'Saturday Delivery', eta: 'Saturday', pricePence: 2880, exVatPence: 2400, taxPence: 480, transitDays: [1, 1] },
-] as const;
-
 /** Dispatch cut-off: orders before 14:00 Europe/London Mon–Fri ship the same day. */
 export const DISPATCH = { cutoffHour: 14, timeZone: 'Europe/London' } as const;
 
 /** Products pushed as "Quick add" upsells in the basket drawer (simple products only). */
 export const UPSELL_PRODUCT_IDS: readonly number[] = [PRODUCT_IDS.LUBRICANT, PRODUCT_IDS.KEYED_ALIKE];
 
-/** Default variation preselected on variable products (the most common composite-door size). */
-export const DEFAULT_VARIATION_ID: Readonly<Record<number, number>> = {
-  [PRODUCT_IDS.CYLINDER_LOCK]: 5168, // 35 Inside / 35 Outside
-  [PRODUCT_IDS.THUMB_TURN]: 5107, // 35 Thumb / 35 Outside
-  [PRODUCT_IDS.RIM_CYLINDER]: 5137, // Brass
+/** Size or finish preselected on variable products (term slug; the most common composite-door size). */
+export const DEFAULT_VARIATION_TERM: Readonly<Record<number, string>> = {
+  [PRODUCT_IDS.CYLINDER_LOCK]: '35-inside-35-outside',
+  [PRODUCT_IDS.THUMB_TURN]: '35-thumb-35-outside',
+  [PRODUCT_IDS.RIM_CYLINDER]: 'brass',
 };
 
 /** Mobile menu "Most viewed" quick links. */
@@ -154,11 +125,16 @@ export const NAV_LINKS = [
   { label: 'Contact', href: '/contact', menu: null },
 ] as const;
 
-/** Mega-menu contents: featured product cards + secondary text links, per group. Keys reference CATALOGUE. */
-export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured: ProductKey[]; more: Array<{ label: string; href: string; external?: boolean }>; aside: { eyebrow: string; title: string; cta: string; href: string; image?: 'keysEngraved' | 'cylinderFront' } }>> = {
+/**
+ * Mega-menu contents: featured product cards + secondary text links, per group. `featured` is the preferred cards (ids
+ * WooCommerce no longer sells are skipped); free slots fill with other live products from `categories` (WooCommerce
+ * category slugs), so a product added in WordPress appears in its group's menu.
+ */
+export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured: number[]; categories: string[]; more: Array<{ label: string; href: string; external?: boolean }>; aside: { eyebrow: string; title: string; cta: string; href: string; image?: 'keysEngraved' | 'cylinderFront' } }>> = {
   locks: {
     title: 'Locks',
-    featured: ['CYLINDER_LOCK', 'THUMB_TURN', 'RIM_CYLINDER', 'HALF_CYLINDER'],
+    featured: [PRODUCT_IDS.CYLINDER_LOCK, PRODUCT_IDS.THUMB_TURN, PRODUCT_IDS.RIM_CYLINDER, PRODUCT_IDS.HALF_CYLINDER],
+    categories: ['key-key', 'key-thumb', 'rim-cylinder', 'half-cylinder'],
     more: [
       { label: 'All products', href: '/products' },
       { label: 'Sizing guide', href: '/products/3-star-alps-cylinder-door-lock#sizing' },
@@ -169,7 +145,8 @@ export const MENU_GROUPS: Readonly<Record<MenuGroupId, { title: string; featured
   },
   keys: {
     title: 'Keys & Aftercare',
-    featured: ['EXTRA_KEYS_3', 'EXTRA_KEYS_1', 'LUBRICANT', 'BRUNO_TEDDY'],
+    featured: [PRODUCT_IDS.EXTRA_KEYS_3, PRODUCT_IDS.EXTRA_KEYS_1, PRODUCT_IDS.LUBRICANT, PRODUCT_IDS.BRUNO_TEDDY],
+    categories: ['keys-and-aftercare'],
     more: [
       { label: 'Keyed-alike service', href: '/products/watchdog-keyed-a-like' },
       { label: 'Activate £5,000 guarantee', href: '/guarantee' },
@@ -507,215 +484,54 @@ export const FONTS = {
 } as const;
 
 /* ---------------------------------------------------------------------------
- * Product catalogue
+ * Product presentation (the catalogue itself comes from WooCommerce: src/lib/catalogue.ts)
  * ------------------------------------------------------------------------- */
-export interface CatalogueEntry {
-  key: ProductKey;
-  id: number;
-  slug: string;
-  name: string;
-  shortName: string;
-  type: 'simple' | 'variable';
-  category: string;
-  /** Short marketing blurb used in the mega-menu and cards. */
-  blurb: string;
-  /** Shows a "Popular" badge on cards and in the mega-menu. */
+export interface ProductExtras {
+  /** Short name for menus and cards. Default: the WooCommerce name without "Watchdog". */
+  shortName?: string;
+  /** Category label when WooCommerce's first category is not the one to show. */
+  category?: string;
+  /** One-line marketing blurb; `{price}` is replaced by the live WooCommerce price. Default: the short description. */
+  blurb?: string;
+  /** "Popular" badge on cards and in the mega-menu. */
   popular?: boolean;
 }
 
 /**
- * Static catalogue used for navigation, static params and fallbacks. Its order is the shop order (grid, homepage,
- * footer, mobile menu). Pritam, 12 Nov: rim cylinder moved from 3rd to 7th, the keyed-alike service up to 3rd, then to 2nd.
- * Slugs match the live WooCommerce slugs so canonical URLs stay stable.
- * NOTE: the brief listed EXTRA_KEYS_3 (4266) as variable; the live store has it as simple.
+ * Copy the store does not hold, keyed by WooCommerce product id. Optional: a product added in WordPress with no
+ * entry here still appears everywhere, with its WooCommerce name and short description.
  */
-export const CATALOGUE: readonly CatalogueEntry[] = [
-  {
-    key: 'CYLINDER_LOCK',
-    id: 5141,
-    slug: '3-star-alps-cylinder-door-lock',
-    name: 'Watchdog 3 Star ALPS Cylinder Lock',
-    shortName: '3 Star Cylinder Lock',
-    type: 'variable',
-    category: 'Euro Cylinder Lock',
-    blurb: 'Anti-snap, anti-bump euro cylinder. 17 sizes.',
-    popular: true,
-  },
-  {
-    key: 'KEYED_ALIKE',
-    id: 5642,
-    slug: 'watchdog-keyed-a-like',
-    name: 'Watchdog Keyed-a-like Service, Same Key, Different Locks',
-    shortName: 'Keyed-Alike Service',
-    type: 'simple',
-    category: 'Keys and Aftercare',
-    blurb: 'One key for every lock you order.',
-  },
-  {
-    key: 'THUMB_TURN',
-    id: 5077,
-    slug: '3-star-alps-euro-cylinder-thumb-turn-lock',
-    name: 'Watchdog 3 Star ALPS Thumb Turn Lock',
-    shortName: '3 Star Thumb Turn',
-    type: 'variable',
-    category: 'Euro Thumb Turn Cylinder Lock',
-    blurb: 'Key outside, thumb turn inside. 12 sizes.',
-    popular: true,
-  },
-  {
-    key: 'HALF_CYLINDER',
-    id: 3861,
-    slug: 'watchdog-3-star-alps-half-cylinder-lock-10-35',
-    name: 'Watchdog 3 Star ALPS Half Cylinder Lock 10-35',
-    shortName: 'Half Cylinder 10/35',
-    type: 'simple',
-    category: 'Half Cylinder',
-    blurb: 'For garage doors, shutters and gates.',
-  },
-  {
-    key: 'EXTRA_KEYS_3',
-    id: 4266,
-    slug: 'watchdog-3-star-alps-extra-keys',
-    name: 'Watchdog 3 Star ALPS | Extra Keys',
-    shortName: '3 Star Extra Keys',
-    type: 'simple',
-    category: 'Keys and Aftercare',
-    blurb: 'Cut to your key number. £12 per key.',
-  },
-  {
-    key: 'EXTRA_KEYS_1',
-    id: 6062,
-    slug: 'watchdog-1-star-alps-extra-keys',
-    name: 'Watchdog 1 Star Extra keys',
-    shortName: '1 Star Extra Keys',
-    type: 'simple',
-    category: 'Keys and Aftercare',
-    blurb: 'Spare keys for 1 Star cylinders.',
-  },
-  {
-    key: 'RIM_CYLINDER',
-    id: 5112,
-    slug: 'watchdog-rim-cylinder',
-    name: 'Watchdog Rim Cylinder Lock',
-    shortName: 'Rim Cylinder',
-    type: 'variable',
-    category: 'Rim Cylinder Lock',
-    blurb: 'For nightlatches. Brass or nickel finish.',
-  },
-  {
-    key: 'LUBRICANT',
-    id: 4384,
-    slug: 'watchdog-3-star-alps-lock-lubricant',
-    name: 'Watchdog 3 Star ALPS | Lock Lubricant',
-    shortName: 'Lock Lubricant',
-    type: 'simple',
-    category: 'Keys and Aftercare',
-    blurb: 'Keeps your cylinder turning smoothly.',
-    popular: true,
-  },
-  {
-    key: 'BRUNO_TEDDY',
-    id: 5565,
-    slug: 'bruno-teddy-protection-car-key-signal-blocker',
-    name: 'Bruno Teddy Protection – Car Key Signal Blocker',
-    shortName: 'Bruno Teddy Signal Blocker',
-    type: 'simple',
-    category: 'Car Security',
-    blurb: 'Faraday teddy that stops relay theft.',
-  },
-] as const;
-
-export const CATALOGUE_BY_ID: Readonly<Record<number, CatalogueEntry>> = Object.fromEntries(
-  CATALOGUE.map((p) => [p.id, p]),
-);
-export const CATALOGUE_BY_SLUG: Readonly<Record<string, CatalogueEntry>> = Object.fromEntries(
-  CATALOGUE.map((p) => [p.slug, p]),
-);
-
-/* ---------------------------------------------------------------------------
- * Variation maps
- * ------------------------------------------------------------------------- */
-export interface SizeOption {
-  /** Human label as shown on the live site, e.g. "35 Inside / 35 Outside". */
-  label: string;
-  /** Compact label for swatches, e.g. "35/35". */
-  short: string;
-  /** Inside (room side) measurement in mm; null for half-cylinder style sizes. */
-  inside: number | null;
-  /** Outside measurement in mm. */
-  outside: number;
-  /** WooCommerce variation ID — this is what gets added to the cart. */
-  variationId: number;
-  /** Taxonomy term slug for the pa_locksize attribute. */
-  termSlug: string;
-}
-
-export const LOCK_SIZE_ATTRIBUTE = 'pa_locksize';
-export const COLOUR_ATTRIBUTE = 'pa_colour';
-
-/** Watchdog 3 Star ALPS Cylinder Lock (product 5141) — 17 sizes. */
-export const CYLINDER_SIZES: readonly SizeOption[] = [
-  { label: '10 / 35 Outside', short: '10/35', inside: 10, outside: 35, variationId: 5166, termSlug: '10-35-outside' },
-  { label: '10 / 45 Outside', short: '10/45', inside: 10, outside: 45, variationId: 5190, termSlug: '10-45-outside' },
-  { label: '10 / 55 Outside', short: '10/55', inside: 10, outside: 55, variationId: 5191, termSlug: '10-55-outside' },
-  { label: '30 Inside / 30 Outside', short: '30/30', inside: 30, outside: 30, variationId: 5167, termSlug: '30-inside-30-outside' },
-  { label: '30 Inside / 35 Outside', short: '30/35', inside: 30, outside: 35, variationId: 6082, termSlug: '30-inside-35-outside' },
-  { label: '30 Inside / 55 Outside', short: '30/55', inside: 30, outside: 55, variationId: 6083, termSlug: '30-inside-55-outside' },
-  { label: '30 Inside / 60 Outside', short: '30/60', inside: 30, outside: 60, variationId: 6084, termSlug: '30-inside-60-outside' },
-  { label: '30 Inside / 70 Outside', short: '30/70', inside: 30, outside: 70, variationId: 5192, termSlug: '30-inside-70-outside' },
-  { label: '35 Inside / 35 Outside', short: '35/35', inside: 35, outside: 35, variationId: 5168, termSlug: '35-inside-35-outside' },
-  { label: '35 Inside / 50 Outside', short: '35/50', inside: 35, outside: 50, variationId: 5193, termSlug: '35-inside-50-outside' },
-  { label: '35 Inside / 55 Outside', short: '35/55', inside: 35, outside: 55, variationId: 6085, termSlug: '35-inside-55-outside' },
-  { label: '40 Inside / 40 Outside', short: '40/40', inside: 40, outside: 40, variationId: 5194, termSlug: '40-inside-40-outside' },
-  { label: '45 Inside / 45 Outside', short: '45/45', inside: 45, outside: 45, variationId: 5169, termSlug: '45-inside-45-outside' },
-  { label: '45 Inside / 50 Outside', short: '45/50', inside: 45, outside: 50, variationId: 5170, termSlug: '45-inside-50-outside' },
-  { label: '45 Inside / 55 Outside', short: '45/55', inside: 45, outside: 55, variationId: 5171, termSlug: '45-inside-55-outside' },
-  { label: '50 Inside / 50 Outside', short: '50/50', inside: 50, outside: 50, variationId: 5172, termSlug: '50-inside-50-outside' },
-  { label: '55 Inside / 55 Outside', short: '55/55', inside: 55, outside: 55, variationId: 5195, termSlug: '55-inside-55-outside' },
-] as const;
-
-/** Watchdog 3 Star ALPS Thumb Turn Lock (product 5077) — 12 sizes. "Thumb" = inside. */
-export const THUMB_SIZES: readonly SizeOption[] = [
-  { label: '30 Thumb / 30 Outside', short: '30/30', inside: 30, outside: 30, variationId: 5196, termSlug: '30-thumb-30-outside' },
-  { label: '30 Thumb / 60 Outside', short: '30/60', inside: 30, outside: 60, variationId: 6079, termSlug: '30-thumb-60-outside' },
-  { label: '35 Thumb / 30 Outside', short: '35/30', inside: 35, outside: 30, variationId: 5106, termSlug: '35-thumb-30-outside' },
-  { label: '35 Thumb / 35 Outside', short: '35/35', inside: 35, outside: 35, variationId: 5107, termSlug: '35-thumb-35-outside' },
-  { label: '35 Thumb / 55 Outside', short: '35/55', inside: 35, outside: 55, variationId: 6080, termSlug: '35-thumb-55-outside' },
-  { label: '40 Thumb / 40 Outside', short: '40/40', inside: 40, outside: 40, variationId: 5108, termSlug: '40-thumb-40-outside' },
-  { label: '45 Thumb / 45 Outside', short: '45/45', inside: 45, outside: 45, variationId: 5109, termSlug: '45-thumb-45-outside' },
-  { label: '45 Thumb / 55 Outside', short: '45/55', inside: 45, outside: 55, variationId: 5110, termSlug: '45-thumb-55-outside' },
-  { label: '50 Thumb / 50 Outside', short: '50/50', inside: 50, outside: 50, variationId: 5111, termSlug: '50-thumb-50-outside' },
-  { label: '55 Thumb / 35 Outside', short: '55/35', inside: 55, outside: 35, variationId: 6081, termSlug: '55-thumb-35-outside' },
-  { label: '55 Thumb / 45 Outside', short: '55/45', inside: 55, outside: 45, variationId: 5197, termSlug: '55-thumb-45-outside' },
-  { label: '55 Thumb / 55 Outside', short: '55/55', inside: 55, outside: 55, variationId: 5198, termSlug: '55-thumb-55-outside' },
-] as const;
-
-export interface ColourOption {
-  label: string;
-  variationId: number;
-  termSlug: string;
-  /** Swatch colour. */
-  hex: string;
-}
-
-/** Watchdog Rim Cylinder Lock (product 5112) — 2 finishes. */
-export const RIM_COLOURS: readonly ColourOption[] = [
-  { label: 'Brass', variationId: 5137, termSlug: 'brass', hex: '#C9A24A' },
-  { label: 'Nickel', variationId: 5138, termSlug: 'nickel', hex: '#B9BCC0' },
-] as const;
-
-/** Every variation ID we know about, keyed by parent product ID. */
-export const VARIATIONS_BY_PRODUCT: Readonly<Record<number, readonly number[]>> = {
-  [PRODUCT_IDS.CYLINDER_LOCK]: CYLINDER_SIZES.map((s) => s.variationId),
-  [PRODUCT_IDS.THUMB_TURN]: THUMB_SIZES.map((s) => s.variationId),
-  [PRODUCT_IDS.RIM_CYLINDER]: RIM_COLOURS.map((c) => c.variationId),
+export const PRODUCT_EXTRAS: Readonly<Record<number, ProductExtras>> = {
+  [PRODUCT_IDS.CYLINDER_LOCK]: { shortName: '3 Star Cylinder Lock', blurb: 'Anti-snap, anti-bump euro cylinder. 17 sizes.', popular: true },
+  [PRODUCT_IDS.KEYED_ALIKE]: { shortName: 'Keyed-Alike Service', blurb: 'One key for every lock you order.' },
+  [PRODUCT_IDS.THUMB_TURN]: { shortName: '3 Star Thumb Turn', blurb: 'Key outside, thumb turn inside. 12 sizes.', popular: true },
+  [PRODUCT_IDS.HALF_CYLINDER]: { shortName: 'Half Cylinder 10/35', blurb: 'For garage doors, shutters and gates.' },
+  [PRODUCT_IDS.EXTRA_KEYS_3]: { shortName: '3 Star Extra Keys', blurb: 'Cut to your key number. {price} per key.' },
+  [PRODUCT_IDS.EXTRA_KEYS_1]: { shortName: '1 Star Extra Keys', blurb: 'Spare keys for 1 Star cylinders.' },
+  [PRODUCT_IDS.RIM_CYLINDER]: { shortName: 'Rim Cylinder', blurb: 'For nightlatches. Brass or nickel finish.' },
+  [PRODUCT_IDS.LUBRICANT]: { shortName: 'Lock Lubricant', blurb: 'Keeps your cylinder turning smoothly.', popular: true },
+  [PRODUCT_IDS.BRUNO_TEDDY]: { shortName: 'Bruno Teddy Signal Blocker', category: 'Car Security', blurb: 'Faraday teddy that stops relay theft.' },
 };
 
-/** Set of every purchasable ID (simple product IDs + variation IDs). Used for proxy input validation. */
-export const PURCHASABLE_IDS: ReadonlySet<number> = new Set<number>([
-  ...CATALOGUE.filter((p) => p.type === 'simple').map((p) => p.id),
-  ...Object.values(VARIATIONS_BY_PRODUCT).flat(),
-]);
+/**
+ * Preferred shop order (grid, homepage, footer, menus). Pritam, 12 Nov: rim cylinder moved from 3rd to 7th, the
+ * keyed-alike service up to 2nd. Products not listed follow in WooCommerce's own order (Products → Sorting); a
+ * listed id that WooCommerce no longer sells is simply skipped.
+ */
+export const PRODUCT_ORDER: readonly number[] = [
+  PRODUCT_IDS.CYLINDER_LOCK,
+  PRODUCT_IDS.KEYED_ALIKE,
+  PRODUCT_IDS.THUMB_TURN,
+  PRODUCT_IDS.HALF_CYLINDER,
+  PRODUCT_IDS.EXTRA_KEYS_3,
+  PRODUCT_IDS.EXTRA_KEYS_1,
+  PRODUCT_IDS.RIM_CYLINDER,
+  PRODUCT_IDS.LUBRICANT,
+  PRODUCT_IDS.BRUNO_TEDDY,
+];
+
+/** Swatch colours for finish terms (WooCommerce stores the names only). Unknown finishes get a neutral swatch. */
+export const SWATCH_HEX: Readonly<Record<string, string>> = { brass: '#C9A24A', nickel: '#B9BCC0' };
 
 export const MAX_CART_QUANTITY = 99;
 

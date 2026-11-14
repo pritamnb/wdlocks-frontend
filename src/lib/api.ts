@@ -3,8 +3,8 @@
  * Uses Next.js fetch caching with a 60s revalidate window.
  * Only import from server components, route handlers, sitemap/robots.
  */
-import { getCatalogueProducts, getProduct, getProductBySlug, StoreApiError } from '@/lib/wdlocks-api';
-import { CATALOGUE } from '@/lib/constants';
+import { getAllProducts, getProduct, getProductBySlug, getVariationsByIds, StoreApiError, stripHtml } from '@/lib/wdlocks-api';
+import { sortProducts } from '@/lib/catalogue';
 import type { WooProduct } from '@/types';
 
 const REVALIDATE_SECONDS = 60;
@@ -32,10 +32,13 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 2): Promise<T> {
   throw lastErr;
 }
 
-/** All 9 catalogue products for the homepage/products listing. Never throws: falls back to the last good list, then []. */
+/**
+ * Every product WooCommerce sells, in the preferred shop order (src/lib/catalogue.ts). Adding or removing a product in
+ * WordPress shows here within a minute. Never throws: falls back to the last good list, then [].
+ */
 export async function getProductsSSR(): Promise<WooProduct[]> {
   try {
-    const products = await withRetry(() => getCatalogueProducts(ssrInit));
+    const products = sortProducts(await withRetry(() => getAllProducts(ssrInit)));
     if (products.length > 0) lastGoodCatalogue = products;
     return products.length > 0 ? products : (lastGoodCatalogue ?? products);
   } catch (err) {
@@ -54,10 +57,11 @@ export async function getMenuProductsSSR(): Promise<WooProduct[]> {
   return products.map((p) => ({
     ...p,
     description: '',
-    short_description: '',
+    // Plain text, short: the fallback blurb for a product with no PRODUCT_EXTRAS entry.
+    short_description: stripHtml(p.short_description ?? '', 140),
     price_html: '',
-    variations: [],
-    attributes: [],
+    // Variation ids and the variation attributes' terms stay: the basket labels sizes and finishes from them.
+    attributes: p.attributes.filter((a) => a.has_variations),
     images: p.images.slice(0, 1).map((img) => ({ ...img, srcset: '', sizes: '' })),
     extensions: {},
   }));
@@ -84,9 +88,8 @@ export async function getProductBySlugSSR(slug: string): Promise<WooProduct | nu
     return await getProductBySlug(slug, ssrInit);
   } catch (err) {
     if (err instanceof StoreApiError && err.status === 404) return null;
-    const id = CATALOGUE.find((p) => p.slug === slug)?.id;
-    if (id) {
-      const fromList = (await getProductsSSR()).find((p) => p.id === id);
+    {
+      const fromList = (await getProductsSSR()).find((p) => p.slug === slug);
       if (fromList) {
         console.warn(`[api] product ${slug} served from the catalogue list after a Store API failure`, err instanceof StoreApiError ? { status: err.status, code: err.code } : err);
         return fromList;
@@ -96,7 +99,32 @@ export async function getProductBySlugSSR(slug: string): Promise<WooProduct | nu
   }
 }
 
-/** Slugs for generateStaticParams — static catalogue so builds don't depend on the upstream being up. */
-export function getProductSlugs(): string[] {
-  return CATALOGUE.map((p) => p.slug);
+/** Slugs for generateStaticParams. An empty list (store unreachable at build) is fine: pages render on first visit. */
+export async function getProductSlugs(): Promise<string[]> {
+  return (await getProductsSSR()).map((p) => p.slug);
+}
+
+/** Link to a product page by WooCommerce id; the products listing when the store no longer sells it. */
+export async function productHref(id: number): Promise<string> {
+  const p = (await getProductsSSR()).find((x) => x.id === id);
+  return p ? `/products/${p.slug}` : '/products';
+}
+
+/**
+ * Inc-VAT price in pence per variation id for one variable product (sizes can be priced differently in WooCommerce).
+ * Empty on failure: callers fall back to the product's own price.
+ */
+export async function getVariationPricesSSR(product: WooProduct): Promise<Record<number, number>> {
+  if (product.type !== 'variable' || product.variations.length === 0) return {};
+  try {
+    const variations = await withRetry(() => getVariationsByIds(product.variations.map((v) => v.id), ssrInit));
+    return Object.fromEntries(
+      variations
+        .map((v) => [v.id, Number.parseInt(v.prices.price, 10)] as const)
+        .filter(([, pence]) => Number.isInteger(pence) && pence > 0),
+    );
+  } catch (err) {
+    console.error('[api] getVariationPricesSSR failed', err);
+    return {};
+  }
 }

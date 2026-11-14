@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SITE } from '@/lib/constants';
 import { estimateDelivery, formatDeliveryDate } from '@/lib/delivery';
+import { useCart } from '@/hooks/useCart';
 
 /**
  * Utility strip under the header (Ultion pattern, 11 Nov wording from the client):
@@ -16,13 +17,14 @@ import { estimateDelivery, formatDeliveryDate } from '@/lib/delivery';
 export function AnnouncementBar() {
   const pathname = usePathname();
   // The estimate depends on the clock; render the generic wording on the server and refine on the client.
+  const { shippingOptions } = useCart();
   const [est, setEst] = React.useState<ReturnType<typeof estimateDelivery> | null>(null);
   React.useEffect(() => {
-    const tick = () => setEst(estimateDelivery());
+    const tick = () => setEst(estimateDelivery(new Date(), shippingOptions));
     tick();
     const id = setInterval(tick, 60_000);
     return () => clearInterval(id);
-  }, []);
+  }, [shippingOptions]);
 
   const onProduct = pathname.startsWith('/products/');
 

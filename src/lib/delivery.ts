@@ -1,4 +1,5 @@
-import { DISPATCH, SHIPPING_OPTIONS } from '@/lib/constants';
+import { DISPATCH } from '@/lib/constants';
+import type { ShippingOption } from '@/lib/shipping-options';
 
 /** Local date parts in Europe/London for a given instant. */
 function londonParts(d: Date) {
@@ -51,28 +52,49 @@ export interface DeliveryEstimate {
   minutesToCutoff: number;
   /** The dispatch date. */
   dispatchDate: Date;
-  /** Earliest arrival using Special Delivery 24hr. */
+  /** Earliest arrival with the store's fastest rate (Special Delivery 24hr today). */
   expressDate: Date;
-  /** Arrival window for Royal Mail 1st Class Signed For. */
+  /** Arrival window with the store's cheapest rate (Royal Mail 1st Class Signed For today). */
   standardFrom: Date;
   standardTo: Date;
+  /** The rates the two estimates use (null when the store offered no rates). */
+  express: ShippingOption | null;
+  standard: ShippingOption | null;
 }
 
-export function estimateDelivery(now: Date = new Date()): DeliveryEstimate {
+/** Transit used when the store's rate names say nothing about timing (Royal Mail's own published windows). */
+const FALLBACK_TRANSIT = { express: [1, 1] as const, standard: [3, 5] as const };
+
+/** Arrival window for one delivery option, counted in working days from the dispatch date. */
+export function arrivalWindow(est: Pick<DeliveryEstimate, 'dispatchDate'>, option: ShippingOption): { from: Date; to: Date } | null {
+  if (!option.transitDays) return null;
+  return { from: addWorkingDays(est.dispatchDate, option.transitDays[0]), to: addWorkingDays(est.dispatchDate, option.transitDays[1]) };
+}
+
+/**
+ * Dispatch and arrival estimate for an order placed `now`, from the 2 pm London cut-off and the store's delivery
+ * options (`options`, cheapest first, as the layout reads them from WooCommerce).
+ */
+export function estimateDelivery(now: Date = new Date(), options: readonly ShippingOption[] = []): DeliveryEstimate {
   const p = londonParts(now);
   const beforeCutoff = p.hour < DISPATCH.cutoffHour;
   const shipsToday = beforeCutoff && !isWeekend(p.weekday);
   const dispatchDate = shipsToday ? now : nextWorkingDay(now);
   const minutesToCutoff = shipsToday ? (DISPATCH.cutoffHour - p.hour) * 60 - p.minute : 0;
-  const standard = SHIPPING_OPTIONS[0];
-  const express = SHIPPING_OPTIONS[1];
+  const timed = options.filter((o) => o.transitDays);
+  const standard = timed[0] ?? options[0] ?? null;
+  const express = [...timed].sort((a, b) => a.transitDays![0] - b.transitDays![0] || a.pricePence - b.pricePence)[0] ?? null;
+  const expressDays = express?.transitDays ?? FALLBACK_TRANSIT.express;
+  const standardDays = standard?.transitDays ?? FALLBACK_TRANSIT.standard;
   return {
     shipsToday,
     minutesToCutoff,
     dispatchDate,
-    expressDate: addWorkingDays(dispatchDate, express.transitDays[0]),
-    standardFrom: addWorkingDays(dispatchDate, standard.transitDays[0]),
-    standardTo: addWorkingDays(dispatchDate, standard.transitDays[1]),
+    expressDate: addWorkingDays(dispatchDate, expressDays[0]),
+    standardFrom: addWorkingDays(dispatchDate, standardDays[0]),
+    standardTo: addWorkingDays(dispatchDate, standardDays[1]),
+    express,
+    standard,
   };
 }
 

@@ -214,7 +214,8 @@ test('demo checkout: pay with the 4242 test card and land on the confirmation (d
   await page.getByRole('button', { name: /^Pay £/ }).click();
   const body = (await intentReq).postDataJSON() as { items: Array<{ id: number; quantity: number }>; shipping_option: string; expected_total: string; customer_note?: string };
   expect(body.items).toEqual([{ id: 5565, quantity: 1 }]);
-  expect(body.shipping_option).toBe('rm-signed');
+  // The cheapest WooCommerce rate (Royal Mail 1st Class Signed For), by its store rate id.
+  expect(body.shipping_option).toBe('flat_rate:1');
   expect(body.expected_total).toBe('2639');
   expect(body.customer_note).toContain('number 399');
   const res = await intentRes;

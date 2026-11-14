@@ -9,7 +9,8 @@ import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
 import { getVariationModel, type VariationOption } from '@/lib/product-helpers';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
-import { CHECKOUT_MODE, CHECKOUT_URL, DEFAULT_VARIATION_ID, PRODUCT_IDS, CATALOGUE_BY_ID } from '@/lib/constants';
+import { CHECKOUT_MODE, CHECKOUT_URL, DEFAULT_VARIATION_TERM, PRODUCT_IDS } from '@/lib/constants';
+import { catalogueEntry } from '@/lib/catalogue';
 import { cn } from '@/lib/cn';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -22,9 +23,9 @@ interface Props {
   className?: string;
   /** Full configurator (product page): control switch, keyed-alike, checkout now, sticky total bar. */
   showUpsells?: boolean;
+  /** Inc-VAT pence per variation id, from WooCommerce; missing ids use the product's own price. */
+  variationPrices?: Record<number, number>;
 }
-
-const KEYED_ALIKE_PRICE_PENCE = 500;
 
 function SizingDiagram({ insideLabel }: { insideLabel: string }) {
   return (
@@ -61,9 +62,12 @@ function Chevron() {
   );
 }
 
-export function VariationSelector({ product, onAdded, headingId, className, showUpsells = false }: Props) {
+export function VariationSelector({ product, onAdded, headingId, className, showUpsells = false, variationPrices }: Props) {
   const model = React.useMemo(() => getVariationModel(product), [product]);
-  const { addToCart, isAdding } = useCart();
+  const { addToCart, isAdding, products } = useCart();
+  // The keyed-alike add-on is a WooCommerce product: its name and price come from the store.
+  const keyedAlikeProduct = products.find((p) => p.id === PRODUCT_IDS.KEYED_ALIKE) ?? null;
+  const keyedAlikePence = keyedAlikeProduct ? Number.parseInt(keyedAlikeProduct.prices.price, 10) || 0 : 0;
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selected, setSelected] = React.useState<VariationOption | null>(() => {
@@ -71,8 +75,8 @@ export function VariationSelector({ product, onAdded, headingId, className, show
     const bySize = searchParams.get('size')?.replace('-', '/');
     const fromQuery = model?.options.find((o) => o.available && (o.variationId === byId || o.short === bySize));
     if (fromQuery) return fromQuery;
-    const def = DEFAULT_VARIATION_ID[product.id];
-    return model?.options.find((o) => o.variationId === def && o.available) ?? null;
+    const def = DEFAULT_VARIATION_TERM[product.id];
+    return model?.options.find((o) => o.termSlug === def && o.available) ?? null;
   });
   const [quantity, setQuantity] = React.useState(1);
   const [keyedAlike, setKeyedAlike] = React.useState(false);
@@ -118,7 +122,7 @@ export function VariationSelector({ product, onAdded, headingId, className, show
   // the shopper has picked, so the href matches) so the switch renders at once instead of flashing the route's loading
   // skeleton and letting the page shrink to it (Pritam, 12 Nov: "screen flickers").
   const siblingId = product.id === PRODUCT_IDS.CYLINDER_LOCK ? PRODUCT_IDS.THUMB_TURN : product.id === PRODUCT_IDS.THUMB_TURN ? PRODUCT_IDS.CYLINDER_LOCK : null;
-  const siblingSlug = siblingId ? CATALOGUE_BY_ID[siblingId]?.slug : undefined;
+  const siblingSlug = siblingId ? products.find((p) => p.id === siblingId)?.slug : undefined;
   const sizeQuery = selected?.short ? `?size=${selected.short.replace('/', '-')}` : '';
   React.useEffect(() => {
     if (siblingSlug) router.prefetch(`/products/${siblingSlug}${sizeQuery}`);
@@ -136,8 +140,8 @@ export function VariationSelector({ product, onAdded, headingId, className, show
 
   if (!model) return null;
   const name = decodeEntities(product.name);
-  const unitPence = Number.parseInt(product.prices.price, 10);
-  const totalPence = unitPence * quantity + (keyedAlike ? KEYED_ALIKE_PRICE_PENCE : 0);
+  const unitPence = (selected && variationPrices?.[selected.variationId]) || Number.parseInt(product.prices.price, 10);
+  const totalPence = unitPence * quantity + (keyedAlike ? keyedAlikePence : 0);
   const isLock = product.id === PRODUCT_IDS.CYLINDER_LOCK || product.id === PRODUCT_IDS.THUMB_TURN;
   const isSize = model.kind === 'size';
 
@@ -156,7 +160,8 @@ export function VariationSelector({ product, onAdded, headingId, className, show
   };
 
   const otherLockId = product.id === PRODUCT_IDS.CYLINDER_LOCK ? PRODUCT_IDS.THUMB_TURN : PRODUCT_IDS.CYLINDER_LOCK;
-  const otherLock = CATALOGUE_BY_ID[otherLockId];
+  const otherLockProduct = products.find((p) => p.id === otherLockId);
+  const otherLock = otherLockProduct ? catalogueEntry(otherLockProduct) : undefined;
 
   const add = async (openDrawer: boolean) => {
     setTouched(true);
@@ -237,7 +242,7 @@ export function VariationSelector({ product, onAdded, headingId, className, show
               { id: PRODUCT_IDS.THUMB_TURN, label: 'Thumb turn' },
             ] as const).map((opt) => {
               const isCurrent = opt.id === product.id;
-              const target = CATALOGUE_BY_ID[opt.id];
+              const target = products.find((p) => p.id === opt.id);
               return (
                 <button
                   key={opt.id}
@@ -336,12 +341,13 @@ export function VariationSelector({ product, onAdded, headingId, className, show
         </div>
       )}
 
-      {showUpsells && isLock && (
+      {/* Shown only while WooCommerce sells the keyed-alike service (its price is the store's). */}
+      {showUpsells && isLock && keyedAlikeProduct && keyedAlikeProduct.is_in_stock && keyedAlikePence > 0 && (
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-cream-dark bg-cream p-4 text-sm">
           <input type="checkbox" checked={keyedAlike} onChange={(e) => setKeyedAlike(e.target.checked)} className="mt-0.5 h-4 w-4 accent-red" />
           <span>
             <span className="font-semibold text-near-black">Key my locks alike</span>{' '}
-            <span className="text-charcoal/80">(+{formatPrice(KEYED_ALIKE_PRICE_PENCE)}) — set the quantity below and every lock is cut to one key.</span>
+            <span className="text-charcoal/80">(+{formatPrice(keyedAlikePence)}) — set the quantity below and every lock is cut to one key.</span>
           </span>
         </label>
       )}

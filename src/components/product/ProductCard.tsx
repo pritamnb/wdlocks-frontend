@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { useCart } from '@/hooks/useCart';
 import { productPriceLabel, decodeEntities } from '@/lib/wdlocks-api';
 import { primaryImage, ctaLabel, isExternalOnly } from '@/lib/product-helpers';
-import { CATALOGUE_BY_ID } from '@/lib/constants';
+import { catalogueEntry } from '@/lib/catalogue';
 import { previewFromProduct } from '@/lib/basket';
 import { cn } from '@/lib/cn';
 
@@ -23,8 +23,8 @@ export function ProductCard({ product, priority = false }: Props) {
   const [busy, setBusy] = React.useState(false);
   const image = primaryImage(product);
   const name = decodeEntities(product.name);
-  const entry = CATALOGUE_BY_ID[product.id];
-  const href = `/products/${entry?.slug ?? product.slug}`;
+  const entry = catalogueEntry(product);
+  const href = `/products/${product.slug}`;
   const isVariable = product.type === 'variable';
   const externalOnly = isExternalOnly(product);
 

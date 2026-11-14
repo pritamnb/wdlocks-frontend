@@ -6,15 +6,13 @@ import Link from 'next/link';
 import type { WooProduct } from '@/types';
 import { Modal, CloseButton } from '@/components/ui/Modal';
 import { Logo } from '@/components/layout/Logo';
-import { CATALOGUE, GUARANTEE, MENU_GROUPS, MOST_VIEWED, NAV_LINKS, SITE, type MenuGroupId } from '@/lib/constants';
+import { GUARANTEE, MENU_GROUPS, MOST_VIEWED, NAV_LINKS, SITE, type MenuGroupId } from '@/lib/constants';
+import { catalogueEntry, menuGroupProducts } from '@/lib/catalogue';
 import { cn } from '@/lib/cn';
 import { primaryImage } from '@/lib/product-helpers';
 
-const byKey = Object.fromEntries(CATALOGUE.map((p) => [p.key, p]));
-
 export function MobileMenu({ open, onClose, products }: { open: boolean; onClose: () => void; products: WooProduct[] }) {
   const [expanded, setExpanded] = React.useState<MenuGroupId | null>('locks');
-  const productById = new Map(products.map((p) => [p.id, p]));
 
   return (
     <Modal open={open} onClose={onClose} variant="left" labelledBy="mobile-menu-title" className="flex flex-col !bg-near-black text-white !w-full !max-w-none">
@@ -41,9 +39,9 @@ export function MobileMenu({ open, onClose, products }: { open: boolean; onClose
                 </button>
                 {expanded === l.menu && (
                   <ul className="mb-4 space-y-3">
-                    {MENU_GROUPS[l.menu].featured.map((key) => {
-                      const entry = byKey[key];
-                      const liveP = productById.get(entry.id); const img = liveP ? primaryImage(liveP) : null;
+                    {menuGroupProducts(MENU_GROUPS[l.menu], products).map((liveP) => {
+                      const entry = catalogueEntry(liveP);
+                      const img = primaryImage(liveP);
                       return (
                         <li key={entry.id} className="flex items-center gap-3">
                           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-warm-white">

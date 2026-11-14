@@ -1,8 +1,11 @@
-import { SITE, SHIPPING_OPTIONS } from '@/lib/constants';
+import { SITE } from '@/lib/constants';
+import { getShippingOptionsSSR } from '@/lib/shipping-rates';
 import { formatPrice } from '@/lib/wdlocks-api';
 import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 
-export function Delivery() {
+/** Delivery options as WooCommerce's shipping zones price them (read from the store, kept an hour). */
+export async function Delivery() {
+  const options = await getShippingOptionsSSR();
   return (
     <section id="delivery" className="scroll-mt-24 pb-20" aria-labelledby="delivery-title">
       <div className="container-wd grid gap-8 rounded-[2rem] border border-cream-dark bg-cream-mid p-8 sm:p-12 lg:grid-cols-3">
@@ -17,7 +20,8 @@ export function Delivery() {
           <div className="rounded-2xl bg-warm-white p-5 ring-1 ring-cream-dark">
             <h3 className="font-semibold text-near-black">Delivery options</h3>
             <ul className="mt-3 divide-y divide-cream-dark text-sm">
-              {SHIPPING_OPTIONS.map((o) => (
+              {options.length === 0 && <li className="py-2 text-charcoal/75">Delivery is priced at checkout.</li>}
+              {options.map((o) => (
                 <li key={o.id} className="flex items-center justify-between py-2">
                   <span>
                     <span className="font-medium text-near-black">{o.label}</span>

@@ -6,7 +6,7 @@
  * through the /api/cart/* proxy routes (see cart-client.ts and cart-proxy.ts),
  * because wdlocks.co.uk does not send Access-Control-Allow-Origin for our domain.
  */
-import { STORE_API, CATALOGUE_BY_SLUG, CATALOGUE } from '@/lib/constants';
+import { STORE_API } from '@/lib/constants';
 import type { WooProduct, WooCategory, WooStoreError } from '@/types';
 
 export class StoreApiError extends Error {
@@ -110,26 +110,24 @@ export function getProduct(id: number, init?: RequestInit): Promise<WooProduct> 
   return storeFetch<WooProduct>(`/products/${id}`, init);
 }
 
-/** Resolves a slug via our static catalogue first (one request), falling back to a slug query. */
+/** A product by its WooCommerce slug (one request); null when WooCommerce has no product with that slug. */
 export async function getProductBySlug(slug: string, init?: RequestInit): Promise<WooProduct | null> {
-  const entry = CATALOGUE_BY_SLUG[slug];
-  if (entry) return getProduct(entry.id, init);
-  const results = await storeFetch<WooProduct[]>(
-    `/products?slug=${encodeURIComponent(slug)}`,
-    init,
-  );
+  const results = await storeFetch<WooProduct[]>(`/products?slug=${encodeURIComponent(slug)}`, init);
   return results[0] ?? null;
 }
 
-/** Fetches all 9 catalogue products by ID, preserving catalogue order. */
-export async function getCatalogueProducts(init?: RequestInit): Promise<WooProduct[]> {
-  const ids = CATALOGUE.map((p) => p.id).join(',');
-  const products = await storeFetch<WooProduct[]>(
-    `/products?include=${ids}&per_page=${CATALOGUE.length}`,
-    init,
-  );
-  const byId = new Map(products.map((p) => [p.id, p]));
-  return CATALOGUE.map((p) => byId.get(p.id)).filter((p): p is WooProduct => Boolean(p));
+/**
+ * Every product the shop sells, as WooCommerce lists it (published and visible, in its Products → Sorting order).
+ * The Store API caps a page at 100; the catalogue is far below that.
+ */
+export function getAllProducts(init?: RequestInit): Promise<WooProduct[]> {
+  return storeFetch<WooProduct[]>('/products?per_page=100&orderby=menu_order&order=asc', init);
+}
+
+/** Store API data for variation ids (price, stock, parent). The list endpoint returns variations only when asked. */
+export function getVariationsByIds(ids: readonly number[], init?: RequestInit): Promise<WooProduct[]> {
+  if (ids.length === 0) return Promise.resolve([]);
+  return storeFetch<WooProduct[]>(`/products?include=${ids.join(',')}&type=variation&per_page=${Math.min(ids.length, 100)}`, init);
 }
 
 export function getCategories(init?: RequestInit): Promise<WooCategory[]> {

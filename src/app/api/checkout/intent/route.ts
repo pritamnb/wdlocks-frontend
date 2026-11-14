@@ -3,9 +3,8 @@ import type Stripe from 'stripe';
 import { errorResponse, isSecureRequest, parseAddress, parseBasketItems, readJson } from '@/lib/request-utils';
 import { CouponError, normaliseCouponCode } from '@/lib/coupon';
 import { cartHash } from '@/lib/checkout-cart-hash';
-import { shippingOptionById, type BasketLineInput } from '@/lib/basket';
+import type { BasketLineInput } from '@/lib/basket';
 import { priceBasket, PricingError, type PricedBasket } from '@/lib/pricing';
-import { SHIPPING_OPTIONS } from '@/lib/constants';
 import { getStripe, isStripeConfigured, describeStripeError } from '@/lib/stripe-server';
 import {
   isWcRestConfigured,
@@ -51,7 +50,8 @@ function parseBody(body: Record<string, unknown>): { ok: true; value: ValidBody 
   const items = parseBasketItems(body.items);
   if (!items) return { ok: false, code: 'empty_cart', message: 'Your basket is empty or contains an item we no longer sell.' };
 
-  if (typeof body.shipping_option !== 'string' || !SHIPPING_OPTIONS.some((o) => o.id === body.shipping_option)) {
+  // Checked against the store's live rates when the basket is priced (priceBasket).
+  if (typeof body.shipping_option !== 'string' || body.shipping_option.length === 0 || body.shipping_option.length > 64) {
     return { ok: false, code: 'shipping_required', message: 'Choose a delivery option before paying.' };
   }
 
@@ -209,7 +209,7 @@ export async function POST(req: Request) {
   }
 
   const hash = cartHash(basket);
-  const shippingOption = shippingOptionById(body.shippingOptionId);
+  const shippingOption = basket.shipping;
 
   // Sandbox stage: a real Stripe PaymentIntent (test mode) for a pretend order held in the signed cookie. The return
   // page reads the intent's outcome through /api/checkout/status; WooCommerce is never touched.
