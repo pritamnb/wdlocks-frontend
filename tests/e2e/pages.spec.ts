@@ -1,4 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
+import { CONSENT_KEY, presetConsent } from './consent';
+
+// Every spec but the cookie-consent block below starts with the popup already answered (Essential only).
+test.beforeEach(({ page }) => presetConsent(page));
 
 const ROUTES = ['/', '/blog', '/terms', '/privacy', '/products', '/products/3-star-alps-cylinder-door-lock', '/products/watchdog-3-star-alps-extra-keys', '/products/watchdog-keyed-a-like', '/home-truths', '/guarantee', '/contact', '/trade', '/basket', '/checkout'];
 
@@ -225,4 +229,105 @@ test('product cards are equal: same height, title/price/button rows aligned acro
     expect(new Set(row.map((c) => c.title)).size, 'title rows aligned').toBe(1);
     expect(new Set(row.map((c) => c.cta)).size, 'button rows aligned').toBe(1);
   }
+});
+
+test.describe('cookie consent', () => {
+  // These specs are about the popup itself: undo the file-level preset before any page script runs, on the first
+  // load only (init scripts run again on every reload, and a reload must keep the choice the spec just made).
+  test.beforeEach(({ page }) =>
+    page.addInitScript((key) => {
+      if (sessionStorage.getItem('e2e:consent-cleared')) return;
+      sessionStorage.setItem('e2e:consent-cleared', '1');
+      localStorage.removeItem(key);
+    }, CONSENT_KEY),
+  );
+
+  const stored = (page: Page) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? 'null'), CONSENT_KEY);
+
+  test('first visit: popup at the bottom, "Essential only" persists across a reload, footer link reopens the settings', async ({ page }) => {
+    const errors = await collectConsoleErrors(page);
+    await page.goto('/');
+    const dialog = page.getByRole('dialog', { name: 'Cookies on this site' });
+    await expect(dialog).toBeVisible();
+    expect(await stored(page), 'nothing stored before a choice').toBeNull();
+
+    // Non-modal, bottom of the viewport, clear of the header, no horizontal overflow (Pixel 7 included), one h1.
+    const vp = page.viewportSize()!;
+    const box = (await dialog.boundingBox())!;
+    expect(box.y + box.height, 'popup bottom edge').toBeLessThanOrEqual(vp.height + 1);
+    expect(box.y, 'popup leaves the header clear').toBeGreaterThan(vp.height / 3);
+    expect(box.x, 'popup inside the viewport').toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width, 'popup inside the viewport').toBeLessThanOrEqual(vp.width + 1);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    expect(overflow, 'horizontal overflow with the popup open').toBe(false);
+    await expect(page.locator('h1:visible')).toHaveCount(1);
+    await expect(dialog).not.toHaveAttribute('aria-modal', 'true');
+    await expect(dialog.getByRole('link', { name: 'Privacy policy' })).toHaveAttribute('href', '/privacy');
+
+    // Settings disclosure: Essential locked, Analytics and Marketing off by default.
+    await dialog.getByRole('button', { name: 'Cookie settings' }).click();
+    await expect(dialog).toContainText('Always on');
+    await expect(dialog.getByRole('switch', { name: 'Analytics cookies' })).toHaveAttribute('aria-checked', 'false');
+    await expect(dialog.getByRole('switch', { name: 'Marketing cookies' })).toHaveAttribute('aria-checked', 'false');
+
+    await dialog.getByRole('button', { name: 'Essential only' }).click();
+    await expect(dialog).toBeHidden();
+    const choice = await stored(page);
+    expect(choice).toMatchObject({ v: 1, essential: true, analytics: false, marketing: false });
+    expect(Date.parse(choice.at), 'ISO timestamp of the choice').toBeGreaterThan(Date.now() - 60_000);
+
+    // Persisted: a reload (hydrated: the footer button is interactive) does not ask again.
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(750);
+    await expect(dialog).toHaveCount(0);
+
+    // Footer link reopens the popup on its settings view, with focus on it; Escape closes without changing the choice.
+    const footerLink = page.locator('footer').getByRole('button', { name: 'Cookie settings' });
+    await footerLink.click();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('switch', { name: 'Analytics cookies' })).toHaveAttribute('aria-checked', 'false');
+    await expect(dialog).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    expect(await stored(page)).toMatchObject({ analytics: false, marketing: false });
+
+    // Reopen, turn Analytics on, save: the stored choice changes.
+    await footerLink.click();
+    await dialog.getByRole('switch', { name: 'Analytics cookies' }).click();
+    await dialog.getByRole('button', { name: 'Save settings' }).click();
+    await expect(dialog).toBeHidden();
+    expect(await stored(page)).toMatchObject({ v: 1, essential: true, analytics: true, marketing: false });
+
+    const own = errors.filter((e) => !/openstreetmap|Failed to load resource/.test(e));
+    expect(own, 'console errors').toEqual([]);
+  });
+
+  test('"Accept all" turns both optional categories on; a choice older than 12 months is asked again', async ({ page }) => {
+    await page.addInitScript(
+      ([key, value]) => localStorage.setItem(key, value),
+      [CONSENT_KEY, JSON.stringify({ v: 1, essential: true, analytics: true, marketing: true, at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString() })],
+    );
+    await page.goto('/products');
+    const dialog = page.getByRole('dialog', { name: 'Cookies on this site' });
+    await expect(dialog, 'expired choice: asked again').toBeVisible();
+    await dialog.getByRole('button', { name: 'Accept all' }).click();
+    await expect(dialog).toBeHidden();
+    const choice = await stored(page);
+    expect(choice).toMatchObject({ v: 1, essential: true, analytics: true, marketing: true });
+    expect(Date.parse(choice.at)).toBeGreaterThan(Date.now() - 60_000);
+  });
+
+  test('popup hides while the basket drawer is open and returns when it closes', async ({ page }) => {
+    await page.goto('/products/3-star-alps-cylinder-door-lock');
+    const dialog = page.getByRole('dialog', { name: 'Cookies on this site' });
+    await expect(dialog).toBeVisible();
+    await page.getByRole('button', { name: 'Add to basket' }).click();
+    const drawer = page.getByRole('dialog', { name: /basket/i });
+    await expect(drawer).toBeVisible();
+    await expect(dialog).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(drawer).toBeHidden();
+    await expect(dialog).toBeVisible();
+  });
 });

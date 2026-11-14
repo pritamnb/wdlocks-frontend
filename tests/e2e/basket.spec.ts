@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { presetConsent } from './consent';
 
 /**
  * Basket flow with the client-held basket (src/lib/basket.ts): add → drawer → /basket → /checkout → remove. Nothing
@@ -6,6 +7,9 @@ import { test, expect, type Page } from '@playwright/test';
  * at once (no network wait, no disabled interval). The "Continue to secure payment" hand-off button is never clicked.
  */
 test.describe.configure({ mode: 'serial', retries: 2 });
+
+// The cookie popup is answered up front so it never sits over the basket or checkout controls.
+test.beforeEach(({ page }) => presetConsent(page));
 
 const UB6 = { email: 'test@example.com', phone: '02038574718', first: 'Test', last: 'Shopper', line1: '397 Greenford Road', town: 'Greenford', postcode: 'UB6 8RF' };
 

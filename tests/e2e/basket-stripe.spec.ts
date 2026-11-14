@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { presetConsent } from './consent';
 
 /**
  * Payments rollout stage 1 (docs/stripe-checkout-plan.md §5): on a target with Stripe TEST keys the checkout shows the
@@ -8,6 +9,8 @@ import { test, expect, type Page } from '@playwright/test';
  * cancelled afterwards (they are paid with test cards, no stock moves).
  * The basket is client-held: the only call to the store is POST /api/checkout/intent at "Place order".
  */
+// The cookie popup is answered up front so it never sits over the basket or checkout controls.
+test.beforeEach(({ page }) => presetConsent(page));
 
 async function startCheckout(page: Page): Promise<boolean> {
   await page.goto('/products/bruno-teddy-protection-car-key-signal-blocker');
