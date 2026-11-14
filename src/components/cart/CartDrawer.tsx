@@ -12,7 +12,8 @@ import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { canCheckout } from '@/lib/checkout';
-import { CATALOGUE_BY_ID, CHECKOUT_MODE, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
+import { CHECKOUT_MODE, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
+import { catalogueEntry } from '@/lib/catalogue';
 import { previewFromProduct } from '@/lib/basket';
 
 export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
@@ -88,7 +89,7 @@ export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-charcoal/75">Don’t forget</p>
             <ul className="mt-2 space-y-2">
               {upsells.map((p) => {
-                const entry = CATALOGUE_BY_ID[p.id];
+                const entry = catalogueEntry(p);
                 const img = p.images[0];
                 return (
                   <li key={p.id} className="group flex items-center gap-3 rounded-xl bg-warm-white p-2 ring-1 ring-cream-dark">

@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CATALOGUE, CONTACT, SITE, TRUST_SIGNALS, BROCHURE } from '@/lib/constants';
+import type { WooProduct } from '@/types';
+import { CONTACT, SITE, TRUST_SIGNALS, BROCHURE } from '@/lib/constants';
+import { catalogueEntry } from '@/lib/catalogue';
 import { CookieSettingsLink } from '@/components/layout/CookieSettingsLink';
 
 const helpLinks = [
@@ -30,7 +32,7 @@ function FooterLink({ href, label, external }: { href: string; label: string; ex
   );
 }
 
-export function Footer() {
+export function Footer({ products }: { products: readonly WooProduct[] }) {
   const year = new Date().getFullYear();
   return (
     <footer className="mt-24 border-t border-white/10 bg-near-black text-white" id="contact">
@@ -47,7 +49,7 @@ export function Footer() {
         <div className="col-span-2 md:col-span-1">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">Products</h2>
           <ul className="grid grid-cols-2 gap-x-6 gap-y-2.5 md:grid-cols-1">
-            {CATALOGUE.map((p) => (
+            {products.map(catalogueEntry).map((p) => (
               <li key={p.id}><FooterLink href={`/products/${p.slug}`} label={p.shortName} /></li>
             ))}
           </ul>

@@ -16,7 +16,7 @@ import { withCoupon } from '@/lib/basket';
 import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
 import { EMAIL, EMPTY_ADDRESS, FIELD, isAddressComplete, toApiAddress, validateAddress, type AddressForm } from '@/lib/checkout-form';
 import { estimateDelivery, formatCountdown, formatDeliveryDate } from '@/lib/delivery';
-import { CHECKOUT_MODE, SHIPPING_OPTIONS, SITE, STRIPE_TEST_MODE } from '@/lib/constants';
+import { CHECKOUT_MODE, SITE, STRIPE_TEST_MODE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import type { CouponQuote, CreatePaymentIntentResponse } from '@/types';
 
@@ -52,7 +52,7 @@ interface Saved {
  * configured, the demo provider in demo mode; otherwise the page runs in preview mode and hands off to wdlocks.co.uk.
  */
 export function CheckoutPage({ preview = false }: { preview?: boolean }) {
-  const { cart, status, pendingKeys, updateCartItem, removeCartItem, clearCart, shippingOptionId, setShippingOption, lineInputs, applyPrices } = useCart();
+  const { cart, status, pendingKeys, updateCartItem, removeCartItem, clearCart, shippingOptionId, shippingOptions, setShippingOption, lineInputs, applyPrices } = useCart();
   const { toast } = useToast();
   const [email, setEmail] = React.useState('');
   const [phone, setPhone] = React.useState('');
@@ -71,7 +71,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   const [savedPromo, setSavedPromo] = React.useState('');
   const isClient = React.useSyncExternalStore(() => () => {}, () => true, () => false);
   const now = isClient ? new Date() : null;
-  const est = now ? estimateDelivery(now) : null;
+  const est = now ? estimateDelivery(now, shippingOptions) : null;
 
   // Restore what the shopper typed if they come back (sessionStorage only, cleared on success).
   React.useEffect(() => {
@@ -146,7 +146,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   const addressReady = isAddressComplete(shipping) && (billingSame || isAddressComplete(billing));
 
   const onSelectRate = (_packageId: number, rateId: string) => {
-    const option = SHIPPING_OPTIONS.find((o) => o.rateId === rateId);
+    const option = shippingOptions.find((o) => o.rateId === rateId);
     if (option) setShippingOption(option.id);
   };
 

@@ -11,18 +11,19 @@ import { useCart } from '@/hooks/useCart';
 import { previewFromProduct } from '@/lib/basket';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { canCheckout } from '@/lib/checkout';
-import { CATALOGUE_BY_ID, CHECKOUT_MODE, SHIPPING_OPTIONS, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
+import { CHECKOUT_MODE, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
+import { catalogueEntry } from '@/lib/catalogue';
 
 /** Ultion-style cart page: trust bar, line table, "Don't forget", totals, proceed to checkout. */
 export function BasketPage({ products = [] }: { products?: WooProduct[] }) {
-  const { cart, status, error, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, addToCart, isAdding } = useCart();
+  const { cart, status, error, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, addToCart, isAdding, shippingOptions } = useCart();
   const items = cart?.items ?? [];
   const gate = canCheckout(cart);
   const inCart = new Set(items.map((i) => i.id));
   const upsells = UPSELL_PRODUCT_IDS.map((id) => products.find((p) => p.id === id))
     .filter((p): p is WooProduct => Boolean(p) && !inCart.has(p!.id) && p!.is_in_stock)
     .slice(0, 2);
-  const cheapest = SHIPPING_OPTIONS[0];
+  const cheapest = shippingOptions[0] ?? null;
 
   return (
     <>
@@ -72,7 +73,7 @@ export function BasketPage({ products = [] }: { products?: WooProduct[] }) {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-charcoal/75">Don’t forget</p>
                   <ul className="mt-3 grid gap-3 sm:grid-cols-2">
                     {upsells.map((p) => {
-                      const entry = CATALOGUE_BY_ID[p.id];
+                      const entry = catalogueEntry(p);
                       const img = p.images[0];
                       return (
                         <li key={p.id} className="flex items-center gap-3 rounded-xl bg-warm-white p-3 ring-1 ring-cream-dark">
@@ -100,7 +101,7 @@ export function BasketPage({ products = [] }: { products?: WooProduct[] }) {
                 <h2 className="font-playfair text-xl font-semibold text-near-black">Basket totals</h2>
                 <dl className="mt-4 space-y-3 text-sm">
                   <div className="flex justify-between"><dt className="text-charcoal/80">Subtotal <span className="text-xs">({itemCount} {itemCount === 1 ? 'item' : 'items'}, inc. VAT)</span></dt><dd className="font-semibold tabular-nums text-near-black">{formatPrice(subtotalPence)}</dd></div>
-                  <div className="flex justify-between"><dt className="text-charcoal/80">Delivery</dt><dd className="text-right text-charcoal/80">from {formatPrice(cheapest.pricePence)}<br /><span className="text-xs">chosen at checkout</span></dd></div>
+                  <div className="flex justify-between"><dt className="text-charcoal/80">Delivery</dt><dd className="text-right text-charcoal/80">{cheapest ? `from ${formatPrice(cheapest.pricePence)}` : 'priced'}<br /><span className="text-xs">chosen at checkout</span></dd></div>
                   <div className="flex justify-between border-t border-cream-dark pt-3"><dt className="font-semibold text-near-black">Total <span className="text-xs font-normal text-charcoal/70">inc. VAT, before delivery</span></dt><dd className="font-playfair text-2xl font-semibold tabular-nums text-near-black">{formatPrice(subtotalPence)}</dd></div>
                 </dl>
                 {!gate.ok && (

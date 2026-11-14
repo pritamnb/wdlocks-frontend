@@ -12,7 +12,8 @@ import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { previewFromProduct } from '@/lib/basket';
 
 /** Product-page purchase box: inline size/finish picker for variable products, qty + add for simple ones. */
-export function AddToCart({ product }: { product: WooProduct }) {
+/** `variationPrices`: inc-VAT pence per variation id from WooCommerce (sizes may be priced differently). */
+export function AddToCart({ product, variationPrices }: { product: WooProduct; variationPrices?: Record<number, number> }) {
   const { addToCart, isAdding } = useCart();
   const [quantity, setQuantity] = React.useState(1);
   const name = decodeEntities(product.name);
@@ -40,7 +41,7 @@ export function AddToCart({ product }: { product: WooProduct }) {
     return (
       <section id="sizing" className="scroll-mt-28 rounded-2xl border border-cream-dark bg-warm-white p-5" aria-labelledby="pdp-options-label">
         <React.Suspense fallback={<div className="h-64" aria-hidden="true" />}>
-          <VariationSelector product={product} headingId="pdp-options" showUpsells />
+          <VariationSelector product={product} variationPrices={variationPrices} headingId="pdp-options" showUpsells />
         </React.Suspense>
       </section>
     );

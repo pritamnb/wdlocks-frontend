@@ -6,6 +6,7 @@ import type { WooCartItem } from '@/types';
 import { QuantityControl } from '@/components/cart/QuantityControl';
 import { formatPrice, sumPence, decodeEntities } from '@/lib/wdlocks-api';
 import { productHref } from '@/lib/product-helpers';
+import { useCart } from '@/hooks/useCart';
 import { MAX_CART_QUANTITY } from '@/lib/constants';
 
 interface Props {
@@ -18,7 +19,8 @@ interface Props {
 
 export function CartLineItem({ item, pending, onQuantity, onRemove, onNavigate }: Props) {
   const image = item.images[0];
-  const href = productHref(item.id);
+  const { products } = useCart();
+  const href = productHref(item.id, products);
   const name = decodeEntities(item.name);
   const lineIncVat = sumPence(item.totals.line_subtotal, item.totals.line_subtotal_tax);
   const max = Math.min(item.quantity_limits.maximum || MAX_CART_QUANTITY, MAX_CART_QUANTITY);

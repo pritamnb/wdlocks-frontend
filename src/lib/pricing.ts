@@ -3,12 +3,13 @@
  *
  * The browser sends ids and quantities; nothing else it says about money is trusted. Every line is priced from the
  * Store API products endpoint (public, read-only, inc-VAT pence), stock is checked from the same payload, delivery is
- * the chosen SHIPPING_OPTIONS rate, and the total must equal the `expected_total` the shopper saw. The products
+ * the chosen rate from the store's own shipping zones (src/lib/shipping-rates.ts), and the total must equal the `expected_total` the shopper saw. The products
  * endpoint answers in 1.1–1.6 s, so prices are cached per id for a few minutes (module memo + Next's data cache).
  */
 import { STORE_API, MAX_CART_QUANTITY } from '@/lib/constants';
-import { parentProductIdOf, shippingOptionById, splitVat, type BasketLineInput } from '@/lib/basket';
-import type { ShippingOption } from '@/lib/constants';
+import { splitVat, type BasketLineInput } from '@/lib/basket';
+import type { ShippingOption } from '@/lib/shipping-options';
+import { getShippingOptionsSSR } from '@/lib/shipping-rates';
 import { quoteCoupon } from '@/lib/coupon';
 import type { CouponQuote, WooProduct } from '@/types';
 
@@ -86,7 +87,8 @@ async function storeFetchProducts(query: string): Promise<WooProduct[]> {
 
 /**
  * Store API products for the given ids (simple products and variations). The list endpoint only returns variations
- * when asked for `type=variation`, so the ids are split into two parallel calls. Results are memoised for
+ * when asked for `type=variation`, so both lists are asked for every id in two parallel calls and merged (no id list
+ * in code decides which is which). Results are memoised for
  * PRICE_CACHE_SECONDS; `force` bypasses the memo (used once when a price check fails, so a stale cache can never
  * reject a correct basket).
  */
@@ -100,12 +102,11 @@ export async function getProductsForIds(ids: readonly number[], force = false): 
     else missing.push(id);
   }
   if (missing.length > 0) {
-    const simple = missing.filter((id) => parentProductIdOf(id) === null);
-    const variations = missing.filter((id) => parentProductIdOf(id) !== null);
-    const calls: Promise<WooProduct[]>[] = [];
-    if (simple.length) calls.push(storeFetchProducts(`include=${simple.join(',')}&per_page=${simple.length}`));
-    if (variations.length) calls.push(storeFetchProducts(`include=${variations.join(',')}&type=variation&per_page=${variations.length}`));
-    const results = await Promise.all(calls);
+    const ids = missing.join(',');
+    const results = await Promise.all([
+      storeFetchProducts(`include=${ids}&per_page=${missing.length}`),
+      storeFetchProducts(`include=${ids}&type=variation&per_page=${missing.length}`),
+    ]);
     const expiresAt = Date.now() + PRICE_CACHE_SECONDS * 1000;
     for (const product of results.flat()) {
       cache.set(product.id, { product, expiresAt });
@@ -129,7 +130,7 @@ function priceLine(input: BasketLineInput, product: WooProduct | undefined): Pri
   }
   const linePence = unitPence * input.quantity;
   const { ex, tax } = splitVat(linePence);
-  const parent = parentProductIdOf(input.id);
+  const parent = product.type === 'variation' && product.parent ? product.parent : null;
   const name = product.type === 'variation' && product.variation ? `${product.name} (${product.variation})` : product.name;
   return {
     id: input.id,
@@ -150,7 +151,10 @@ function priceLine(input: BasketLineInput, product: WooProduct | undefined): Pri
  * before the mismatch is reported, so a price change on the store is never masked by our own cache.
  */
 export async function priceBasket(items: readonly BasketLineInput[], shippingOptionId: string, expectedTotalPence?: number, couponCode?: string): Promise<PricedBasket> {
-  const shipping = shippingOptionById(shippingOptionId);
+  const options = await getShippingOptionsSSR();
+  if (options.length === 0) throw new PricingError(502, 'upstream_unavailable', 'We could not get delivery prices from the store. Please try again.');
+  const shipping = options.find((o) => o.id === shippingOptionId);
+  if (!shipping) throw new PricingError(400, 'shipping_required', 'That delivery option is no longer offered. Please choose delivery again.');
   const ids = items.map((i) => i.id);
   // The promo code is checked by WooCommerce in parallel with the price lookup (CouponError 400 when it no longer applies).
   const [first, coupon] = await Promise.all([getProductsForIds(ids), couponCode ? quoteCoupon(items, couponCode) : Promise.resolve(null)]);

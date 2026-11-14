@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getProductBySlugSSR, getProductSlugs } from '@/lib/api';
+import { getProductBySlugSSR, getProductSlugs, getVariationPricesSSR } from '@/lib/api';
+import { catalogueEntry } from '@/lib/catalogue';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { Breadcrumb } from '@/components/product/Breadcrumb';
 import { AddToCart } from '@/components/product/AddToCart';
@@ -12,7 +13,7 @@ import { faqsForProduct } from '@/lib/faqs';
 import { decodeEntities, productPriceLabel, stripHtml } from '@/lib/wdlocks-api';
 import { sanitizeProductHtml } from '@/lib/sanitize';
 import { galleryImagesFor } from '@/lib/product-helpers';
-import { BRAND_VIDEO, BROCHURE, CATALOGUE_BY_ID, KEY_PRODUCT_IDS, PRODUCT_BULLETS, PRODUCT_FEATURES, PRODUCT_IDS, PRODUCT_PILLS, PRODUCT_SUBTITLES, SITE, SITE_URL } from '@/lib/constants';
+import { BRAND_VIDEO, BROCHURE, KEY_PRODUCT_IDS, PRODUCT_BULLETS, PRODUCT_FEATURES, PRODUCT_IDS, PRODUCT_PILLS, PRODUCT_SUBTITLES, SITE, SITE_URL } from '@/lib/constants';
 import { LockFeatureSections } from '@/components/product/LockFeatureSections';
 import { KeysConfigurator } from '@/components/product/KeysConfigurator';
 import { KeysFeatureSections } from '@/components/product/KeysFeatureSections';
@@ -25,8 +26,8 @@ export const dynamicParams = true;
 
 type Params = { slug: string };
 
-export function generateStaticParams(): Params[] {
-  return getProductSlugs().map((slug) => ({ slug }));
+export async function generateStaticParams(): Promise<Params[]> {
+  return (await getProductSlugs()).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
@@ -57,9 +58,10 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   if (!product) notFound();
 
   const name = decodeEntities(product.name);
-  const entry = CATALOGUE_BY_ID[product.id];
+  const entry = catalogueEntry(product);
+  const variationPrices = await getVariationPricesSSR(product);
   const gallery = galleryImagesFor(product.id, product.images);
-  const category = entry?.category ?? product.categories[0]?.name;
+  const category = entry.category || undefined;
   const price = Number.parseInt(product.prices.price, 10) / 10 ** product.prices.currency_minor_unit;
 
   const productJsonLd = {
@@ -97,7 +99,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   return (
     <div className="bg-white"><div className="container-wd py-8 sm:py-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
-      <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Products', href: '/products' }, { label: entry?.shortName ?? name }]} />
+      <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Products', href: '/products' }, { label: entry.shortName }]} />
 
       <div className="mt-6 grid gap-10 lg:grid-cols-2 lg:gap-14">
         {/* min-w-0: the thumbnail scroll row must not set the column's minimum width (7 thumbs widened phones to 512 px). */}
@@ -163,7 +165,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
           <div className="mt-8">
             <ErrorBoundary>
-              {product.id === PRODUCT_IDS.EXTRA_KEYS_3 || product.id === PRODUCT_IDS.EXTRA_KEYS_1 ? <KeysConfigurator product={product} /> : <AddToCart product={product} />}
+              {product.id === PRODUCT_IDS.EXTRA_KEYS_3 || product.id === PRODUCT_IDS.EXTRA_KEYS_1 ? <KeysConfigurator product={product} /> : <AddToCart product={product} variationPrices={variationPrices} />}
             </ErrorBoundary>
           </div>
 

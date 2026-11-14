@@ -4,7 +4,7 @@
  * client-held basket made redundant.)
  */
 import { NextResponse } from 'next/server';
-import { PURCHASABLE_IDS, MAX_CART_QUANTITY, EXTERNAL_ONLY_PRODUCT_IDS } from '@/lib/constants';
+import { MAX_CART_QUANTITY, EXTERNAL_ONLY_PRODUCT_IDS } from '@/lib/constants';
 import { MAX_BASKET_LINES, type BasketLineInput } from '@/lib/basket';
 import type { WooStoreError, CheckoutAddressInput } from '@/types';
 
@@ -34,11 +34,13 @@ export function parseQuantity(value: unknown): number | null {
   return n;
 }
 
-/** Product/variation ID must be a positive int AND one we sell (allow-list defeats enumeration). */
+/**
+ * Product/variation ID: a positive int in WordPress's id range. Whether it is sold is WooCommerce's answer, checked
+ * when the basket is priced (an id it does not list is refused there), so no id list in code goes stale.
+ */
 export function parseProductId(value: unknown): number | null {
   const n = typeof value === 'string' ? Number(value) : value;
-  if (typeof n !== 'number' || !Number.isInteger(n) || n <= 0) return null;
-  if (!PURCHASABLE_IDS.has(n)) return null;
+  if (typeof n !== 'number' || !Number.isInteger(n) || n <= 0 || n > 2_147_483_647) return null;
   return n;
 }
 
@@ -105,7 +107,7 @@ export function parseAddress(value: unknown): CheckoutAddressInput | null {
   return out;
 }
 
-/** Basket lines from the browser: allow-listed ids, 1–99 each, at most MAX_BASKET_LINES, duplicates merged. */
+/** Basket lines from the browser: valid ids, 1–99 each, at most MAX_BASKET_LINES, duplicates merged. */
 export function parseBasketItems(value: unknown): BasketLineInput[] | null {
   if (!Array.isArray(value) || value.length === 0 || value.length > MAX_BASKET_LINES) return null;
   const byId = new Map<number, number>();

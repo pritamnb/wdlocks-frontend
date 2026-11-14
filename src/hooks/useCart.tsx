@@ -8,7 +8,6 @@ import {
   emptyBasket,
   lineKey,
   readBasket,
-  shippingOptionById,
   toLineInputs,
   writeBasket,
   BASKET_STORAGE_KEY,
@@ -19,6 +18,7 @@ import {
   type BasketState,
 } from '@/lib/basket';
 import { MAX_CART_QUANTITY } from '@/lib/constants';
+import { pickShippingOption, type ShippingOption } from '@/lib/shipping-options';
 import { useToast } from '@/components/ui/Toast';
 
 export type CartStatus = 'loading' | 'ready' | 'error';
@@ -64,8 +64,12 @@ export interface CartContextValue {
   removeCartItem: (key: string) => Promise<boolean>;
   /** Empties the basket (after an order, or when handing it to the WooCommerce checkout). Never throws. */
   clearCart: () => Promise<boolean>;
-  /** SHIPPING_OPTIONS id of the chosen delivery rate (the first option by default). */
+  /** Id (WooCommerce rate id) of the chosen delivery option: the cheapest by default; '' when the store offered none. */
   shippingOptionId: string;
+  /** The store's delivery options, cheapest first (read from WooCommerce by the layout). */
+  shippingOptions: readonly ShippingOption[];
+  /** The layout's product list (every product WooCommerce sells). */
+  products: readonly WooProduct[];
   setShippingOption: (id: string) => void;
   /** Ids and quantities for POST /api/checkout/intent. */
   lineInputs: BasketLineInput[];
@@ -92,7 +96,7 @@ function clampQuantity(q: number): number {
  * synchronous state update, so the drawer, badge and totals respond at once and nothing waits on wdlocks.co.uk.
  * `products` (the layout's ISR catalogue) keeps displayed prices current and fills in lines added without a preview.
  */
-export function CartProvider({ children, products = [] }: { children: React.ReactNode; products?: WooProduct[] }) {
+export function CartProvider({ children, products = [], shippingOptions = [] }: { children: React.ReactNode; products?: WooProduct[]; shippingOptions?: readonly ShippingOption[] }) {
   const { toast } = useToast();
   const [basket, setBasket] = React.useState<BasketState | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
@@ -213,9 +217,10 @@ export function CartProvider({ children, products = [] }: { children: React.Reac
 
   const setShippingOption = React.useCallback(
     (id: string) => {
-      commit((state) => ({ ...state, shippingOptionId: shippingOptionById(id).id }));
+      const option = pickShippingOption(shippingOptions, id);
+      if (option) commit((state) => ({ ...state, shippingOptionId: option.id }));
     },
-    [commit],
+    [commit, shippingOptions],
   );
 
   const applyPrices = React.useCallback(
@@ -232,11 +237,11 @@ export function CartProvider({ children, products = [] }: { children: React.Reac
     [commit],
   );
 
-  const cart = React.useMemo(() => (basket ? buildCart(basket, products) : null), [basket, products]);
+  const cart = React.useMemo(() => (basket ? buildCart(basket, products, shippingOptions) : null), [basket, products, shippingOptions]);
   const status: CartStatus = basket ? 'ready' : 'loading';
   const itemCount = cart?.items_count ?? 0;
   const subtotalPence = cart ? Number(cart.totals.total_items) + Number(cart.totals.total_items_tax) : 0;
-  const shippingOptionId = basket?.shippingOptionId ?? shippingOptionById(null).id;
+  const shippingOptionId = pickShippingOption(shippingOptions, basket?.shippingOptionId)?.id ?? '';
   const lineInputs = React.useMemo(() => (basket ? toLineInputs(basket) : []), [basket]);
 
   const value = React.useMemo<CartContextValue>(
@@ -257,11 +262,13 @@ export function CartProvider({ children, products = [] }: { children: React.Reac
       removeCartItem,
       clearCart,
       shippingOptionId,
+      shippingOptions,
+      products,
       setShippingOption,
       lineInputs,
       applyPrices,
     }),
-    [cart, status, itemCount, subtotalPence, isOpen, openCart, closeCart, refresh, addToCart, updateCartItem, removeCartItem, clearCart, shippingOptionId, setShippingOption, lineInputs, applyPrices],
+    [cart, status, itemCount, subtotalPence, isOpen, openCart, closeCart, refresh, addToCart, updateCartItem, removeCartItem, clearCart, shippingOptionId, shippingOptions, products, setShippingOption, lineInputs, applyPrices],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

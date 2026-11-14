@@ -9,7 +9,7 @@ import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/wdlocks-api';
 import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
 import { estimateDelivery, formatCountdown, formatDeliveryDate } from '@/lib/delivery';
-import { SHIPPING_OPTIONS, SITE, WC_BASE } from '@/lib/constants';
+import { SITE, WC_BASE } from '@/lib/constants';
 
 /**
  * Ultion-style checkout page, step one. Details and payment are taken on the WooCommerce checkout at
@@ -17,11 +17,11 @@ import { SHIPPING_OPTIONS, SITE, WC_BASE } from '@/lib/constants';
  * happens next, and hands the basket over.
  */
 export function CheckoutReview() {
-  const { cart, status, error, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, clearCart } = useCart();
+  const { cart, status, error, itemCount, subtotalPence, pendingKeys, updateCartItem, removeCartItem, refresh, clearCart, shippingOptions } = useCart();
   const [handingOff, setHandingOff] = React.useState(false);
   // Client-only estimate (depends on the clock); server and first client render show nothing.
   const isClient = React.useSyncExternalStore(() => () => {}, () => true, () => false);
-  const est = isClient ? estimateDelivery() : null;
+  const est = isClient ? estimateDelivery(new Date(), shippingOptions) : null;
   React.useEffect(() => {
     const onShow = (e: PageTransitionEvent) => {
       if (e.persisted) setHandingOff(false);
@@ -93,7 +93,7 @@ export function CheckoutReview() {
               <p className="mt-1 text-sm text-charcoal/75">Chosen on the payment page. Orders before {SITE.dispatchCutoff} Monday to Friday are dispatched the same day.</p>
               <table className="mt-4 w-full text-sm">
                 <tbody className="divide-y divide-cream-dark">
-                  {SHIPPING_OPTIONS.map((o) => (
+                  {shippingOptions.map((o) => (
                     <tr key={o.id}>
                       <td className="py-2.5 pr-3 font-medium text-near-black">{o.label}</td>
                       <td className="py-2.5 pr-3 text-charcoal/75">{o.eta}</td>
@@ -121,7 +121,7 @@ export function CheckoutReview() {
               </ul>
               <dl className="mt-4 space-y-3 border-t border-cream-dark pt-4 text-sm">
                 <div className="flex justify-between"><dt className="text-charcoal/80">Subtotal <span className="text-xs">({itemCount} {itemCount === 1 ? 'item' : 'items'})</span></dt><dd className="font-semibold tabular-nums text-near-black">{formatPrice(subtotalPence)}</dd></div>
-                <div className="flex justify-between"><dt className="text-charcoal/80">Delivery</dt><dd className="text-charcoal/80">from {formatPrice(SHIPPING_OPTIONS[0].pricePence)}</dd></div>
+                <div className="flex justify-between"><dt className="text-charcoal/80">Delivery</dt><dd className="text-charcoal/80">{shippingOptions[0] ? `from ${formatPrice(shippingOptions[0].pricePence)}` : 'at checkout'}</dd></div>
                 <div className="flex justify-between border-t border-cream-dark pt-3"><dt className="font-semibold text-near-black">Total inc. VAT</dt><dd className="font-playfair text-2xl font-semibold tabular-nums text-near-black">{formatPrice(subtotalPence)}<span className="block text-right text-xs font-sans font-normal text-charcoal/70">+ delivery</span></dd></div>
               </dl>
               {!gate.ok && (

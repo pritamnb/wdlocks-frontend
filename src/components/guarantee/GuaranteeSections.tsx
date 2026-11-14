@@ -1,8 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { BRAND_RENDERS, CATALOGUE, GUARANTEE, GUARANTEE_PAGE } from '@/lib/constants';
-
-const bySlug = (key: string) => CATALOGUE.find((p) => p.key === key)?.slug ?? '';
+import { BRAND_RENDERS, GUARANTEE, GUARANTEE_PAGE, PRODUCT_IDS } from '@/lib/constants';
+import { productHref } from '@/lib/api';
 
 /** "What's covered": the four big figures and the nine conditions from clause 14 of the terms. */
 export function Covered() {
@@ -66,14 +65,15 @@ export function HowToClaim() {
 }
 
 /** "Keep it valid": genuine keys and lubrication, each linking to the product. */
-export function KeepValid() {
+export async function KeepValid() {
+  const [keysHref, lubricantHref] = await Promise.all([productHref(PRODUCT_IDS.EXTRA_KEYS_3), productHref(PRODUCT_IDS.LUBRICANT)]);
   const tiles = [
     {
       eyebrow: 'Genuine keys only',
       title: 'Copied keys void the guarantee.',
       body: 'Only a key cut by Watchdog to your key number keeps the lock, and the guarantee, as they should be. Extra keys are cut to order and dispatched the same day before 2pm.',
       cta: 'Order extra keys',
-      href: `/products/${bySlug('EXTRA_KEYS_3')}`,
+      href: keysHref,
       render: BRAND_RENDERS.keysEngraved,
     },
     {
@@ -81,7 +81,7 @@ export function KeepValid() {
       title: 'A drop of lubricant keeps it covered.',
       body: 'The terms ask for Lution XM every 6 months or 5,000 cycles, whichever comes first. It keeps the eleven pins moving freely and the guarantee valid.',
       cta: 'Buy lock lubricant',
-      href: `/products/${bySlug('LUBRICANT')}`,
+      href: lubricantHref,
       render: BRAND_RENDERS.cylinderDetail,
     },
   ];
@@ -111,7 +111,8 @@ export function KeepValid() {
 }
 
 /** Ultion's "Key security promise" → key-copy protection by key number. */
-export function KeyControl() {
+export async function KeyControl() {
+  const keysHref = await productHref(PRODUCT_IDS.EXTRA_KEYS_3);
   return (
     <section className="relative overflow-hidden bg-[#1b1a1c] py-20 text-white lg:py-28" aria-labelledby="keycontrol-title">
       <div className="container-wd grid items-center gap-10 lg:grid-cols-12">
@@ -123,7 +124,7 @@ export function KeyControl() {
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <a href="#activate" className="inline-flex h-11 items-center rounded-full bg-red px-6 text-sm font-semibold text-white transition-colors hover:bg-red-deep">Register your key number</a>
-            <Link href={`/products/${bySlug('EXTRA_KEYS_3')}`} className="inline-flex h-11 items-center rounded-full border border-white/30 px-6 text-sm font-semibold text-white transition-colors hover:border-red hover:text-red">Order extra keys</Link>
+            <Link href={keysHref} className="inline-flex h-11 items-center rounded-full border border-white/30 px-6 text-sm font-semibold text-white transition-colors hover:border-red hover:text-red">Order extra keys</Link>
           </div>
         </div>
         <div className="lg:col-span-6">

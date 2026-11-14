@@ -319,7 +319,7 @@ export interface BasketLineRequest {
  */
 export interface CreatePaymentIntentRequest {
   items: BasketLineRequest[];
-  /** SHIPPING_OPTIONS id of the chosen delivery rate. */
+  /** WooCommerce rate id ("flat_rate:1") of the chosen delivery option. */
   shipping_option: string;
   billing_address: CheckoutAddressInput;
   shipping_address?: CheckoutAddressInput;

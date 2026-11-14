@@ -3,7 +3,8 @@
 import * as React from 'react';
 import type { WooShippingPackage, WooShippingRate } from '@/types';
 import { formatPrice, sumPence } from '@/lib/wdlocks-api';
-import { estimateDelivery, formatDeliveryDate } from '@/lib/delivery';
+import { arrivalWindow, estimateDelivery, formatDeliveryDate } from '@/lib/delivery';
+import { toShippingOption } from '@/lib/shipping-options';
 import { cn } from '@/lib/cn';
 
 interface Props {
@@ -16,14 +17,15 @@ interface Props {
 
 function arrivalFor(rate: WooShippingRate, now: Date | null): string | null {
   if (!now) return null;
-  const est = estimateDelivery(now);
-  const id = rate.method_id + ':' + rate.instance_id;
   if (/saturday/i.test(rate.name)) return 'Delivered on Saturday';
-  if (/24|special|next/i.test(rate.name) || id === 'flat_rate:2') return `Arrives ${formatDeliveryDate(est.expressDate)}`;
-  return `Arrives ${formatDeliveryDate(est.standardFrom)} – ${formatDeliveryDate(est.standardTo)}`;
+  const window = arrivalWindow(estimateDelivery(now), toShippingOption(rate));
+  if (!window) return null;
+  return window.from.getTime() === window.to.getTime()
+    ? `Arrives ${formatDeliveryDate(window.from)}`
+    : `Arrives ${formatDeliveryDate(window.from)} – ${formatDeliveryDate(window.to)}`;
 }
 
-/** Radio list of the delivery options (SHIPPING_OPTIONS, shaped as one Store API shipping package by the basket). */
+/** Radio list of the store's delivery options (shaped as one Store API shipping package by the basket). */
 export function ShippingOptions({ packages, pending, onSelect, now }: Props) {
   const pkg = packages[0];
   const serverSelected = pkg?.shipping_rates.find((r) => r.selected)?.rate_id ?? null;

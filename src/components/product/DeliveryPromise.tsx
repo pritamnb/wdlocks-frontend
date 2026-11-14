@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { estimateDelivery, formatCountdown, formatDeliveryDate } from '@/lib/delivery';
-import { SHIPPING_OPTIONS } from '@/lib/constants';
+import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/wdlocks-api';
 import { cn } from '@/lib/cn';
 
@@ -11,17 +11,17 @@ import { cn } from '@/lib/cn';
  * Renders nothing until mounted so server and client markup match.
  */
 export function DeliveryPromise({ compact = false, className }: { compact?: boolean; className?: string }) {
+  const { shippingOptions } = useCart();
   const [est, setEst] = React.useState<ReturnType<typeof estimateDelivery> | null>(null);
   React.useEffect(() => {
-    const tick = () => setEst(estimateDelivery());
+    const tick = () => setEst(estimateDelivery(new Date(), shippingOptions));
     tick();
     const id = setInterval(tick, 60_000);
     return () => clearInterval(id);
-  }, []);
+  }, [shippingOptions]);
   if (!est) return <div className={cn('h-12', className)} aria-hidden="true" />;
 
-  const express = SHIPPING_OPTIONS[1];
-  const standard = SHIPPING_OPTIONS[0];
+  const { express, standard } = est;
 
   return (
     <div className={cn('rounded-xl border border-cream-dark bg-warm-white px-4 py-3 text-sm', className)} role="status">
@@ -38,12 +38,16 @@ export function DeliveryPromise({ compact = false, className }: { compact?: bool
       </p>
       {!compact && (
         <ul className="mt-2 space-y-1 text-xs text-charcoal/80">
-          <li>
-            <strong className="text-near-black">Arrives {formatDeliveryDate(est.expressDate)}</strong> with {express.label} ({formatPrice(express.pricePence)})
-          </li>
-          <li>
-            Arrives {formatDeliveryDate(est.standardFrom)}–{formatDeliveryDate(est.standardTo)} with {standard.label} ({formatPrice(standard.pricePence)})
-          </li>
+          {express && express.id !== standard?.id && (
+            <li>
+              <strong className="text-near-black">Arrives {formatDeliveryDate(est.expressDate)}</strong> with {express.label} ({formatPrice(express.pricePence)})
+            </li>
+          )}
+          {standard && (
+            <li>
+              Arrives {formatDeliveryDate(est.standardFrom)}–{formatDeliveryDate(est.standardTo)} with {standard.label} ({formatPrice(standard.pricePence)})
+            </li>
+          )}
         </ul>
       )}
       {compact && (

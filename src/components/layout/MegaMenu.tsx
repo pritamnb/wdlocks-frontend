@@ -4,13 +4,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { WooProduct } from '@/types';
-import { BRAND_RENDERS, BRAND_VIDEO, CARD_HOVER_CLIPS, CATALOGUE, MENU_GROUPS, type MenuGroupId, SITE } from '@/lib/constants';
+import { BRAND_RENDERS, BRAND_VIDEO, CARD_HOVER_CLIPS, MENU_GROUPS, type MenuGroupId, SITE } from '@/lib/constants';
+import { catalogueEntry, menuGroupProducts } from '@/lib/catalogue';
 import { HoverPreview } from '@/components/media/HoverPreview';
 import { productPriceLabel } from '@/lib/wdlocks-api';
 import { cn } from '@/lib/cn';
 import { primaryImage } from '@/lib/product-helpers';
-
-const byKey = Object.fromEntries(CATALOGUE.map((p) => [p.key, p]));
 
 interface MegaMenuProps {
   id: string;
@@ -26,7 +25,6 @@ interface MegaMenuProps {
  */
 export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
   const data = group ? MENU_GROUPS[group] : null;
-  const productById = new Map(products.map((p) => [p.id, p]));
 
   return (
     <AnimatePresence>
@@ -42,10 +40,9 @@ export function MegaMenu({ id, group, products, onNavigate }: MegaMenuProps) {
         >
           <div className="container-wd grid grid-cols-12 gap-6 py-6">
             <ul className="col-span-9 grid grid-cols-4 gap-4" role="list">
-              {data.featured.map((key) => {
-                const entry = byKey[key];
-                const live = productById.get(entry.id);
-                const image = live ? primaryImage(live) : null;
+              {menuGroupProducts(data, products).map((live) => {
+                const entry = catalogueEntry(live);
+                const image = primaryImage(live);
                 const href = `/products/${entry.slug}`;
                 return (
                   <li key={entry.id} className="group relative flex flex-col overflow-hidden rounded-[10px] border border-white/10 bg-[#111013] text-cream transition-[border-color,transform,box-shadow,background-color] duration-300 ease-out hover:-translate-y-0.5 hover:border-cream/30 hover:bg-[#161418] hover:shadow-[0_18px_36px_-18px_rgb(0_0_0/0.9)]">

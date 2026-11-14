@@ -1,18 +1,14 @@
 import type { MetadataRoute } from 'next';
-import { SITE_URL, CATALOGUE } from '@/lib/constants';
+import { SITE_URL } from '@/lib/constants';
 import { getProductsSSR } from '@/lib/api';
 import { getPosts } from '@/lib/wp';
 
-/** sitemap.xml — homepage, products index and all product pages. Slugs come from the Store API with the static catalogue as fallback. */
+/** sitemap.xml — homepage, products index, blog and every product WooCommerce sells (slugs from the Store API). */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const live = await getProductsSSR();
   const posts = await getPosts();
-  const slugs = new Set<string>(CATALOGUE.map((p) => p.slug));
-  for (const p of live) {
-    const entry = CATALOGUE.find((c) => c.id === p.id);
-    slugs.add(entry?.slug ?? p.slug);
-  }
+  const slugs = new Set<string>(live.map((p) => p.slug));
 
   return [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: 'weekly', priority: 1 },

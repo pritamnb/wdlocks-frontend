@@ -1,18 +1,11 @@
 import {
-  CATALOGUE_BY_ID,
-  CYLINDER_SIZES,
-  THUMB_SIZES,
-  RIM_COLOURS,
-  PRODUCT_IDS,
-  LOCK_SIZE_ATTRIBUTE,
-  COLOUR_ATTRIBUTE,
-  VARIATIONS_BY_PRODUCT,
+  SWATCH_HEX,
   EXTERNAL_ONLY_PRODUCT_IDS,
   BRAND_RENDERS,
   EXTRA_GALLERY_RENDERS,
   PRIMARY_IMAGE_OVERRIDES,
-  type CatalogueEntry,
 } from '@/lib/constants';
+import { variationsOf, parentProductIdOf } from '@/lib/catalogue';
 import type { WooImage } from '@/types';
 import type { WooProduct } from '@/types';
 
@@ -42,82 +35,70 @@ export interface VariationModel {
   options: VariationOption[];
 }
 
-/** Builds the selectable options for a variable product, cross-checked against live variation IDs. */
+/** "30 Inside / 35 Outside" → { inside: 30, outside: 35 }; "10 / 35 Outside" → { 10, 35 }; null when not a size. */
+function parseSize(label: string): { inside: number; outside: number } | null {
+  const n = label.match(/\d+/g);
+  return n && n.length >= 2 ? { inside: Number(n[0]), outside: Number(n[1]) } : null;
+}
+
+/**
+ * Builds the selectable options for a variable product from WooCommerce's own data: one option per variation the
+ * Store API lists, labelled with the attribute term's name and ordered as the terms are ordered in WooCommerce. A size
+ * attribute (terms like "35 Inside / 35 Outside") gets the inside/outside pickers, a colour attribute gets swatches,
+ * anything else a plain list. Nothing here names a variation id, so sizes added or removed in WordPress follow.
+ */
 export function getVariationModel(product: WooProduct): VariationModel | null {
   if (product.type !== 'variable') return null;
-  const live = new Set(product.variations.map((v) => v.id));
+  const variations = variationsOf(product);
+  if (variations.length === 0) return null;
+  const attr = product.attributes.find((a) => a.has_variations);
+  const termOrder = new Map((attr?.terms ?? []).map((t, i) => [t.slug, i]));
+  variations.sort((x, y) => (termOrder.get(x.termSlug) ?? 999) - (termOrder.get(y.termSlug) ?? 999));
 
-  if (product.id === PRODUCT_IDS.CYLINDER_LOCK || product.id === PRODUCT_IDS.THUMB_TURN) {
-    const sizes = product.id === PRODUCT_IDS.CYLINDER_LOCK ? CYLINDER_SIZES : THUMB_SIZES;
+  const taxonomy = variations[0].attribute;
+  const sizes = variations.map((v) => parseSize(v.label));
+  const isSize = /size/i.test(taxonomy) || /size/i.test(attr?.name ?? '') || sizes.every(Boolean);
+  if (isSize && sizes.every(Boolean)) {
+    const thumb = variations.some((v) => /thumb/i.test(v.label));
     return {
       kind: 'size',
       heading: 'Choose your lock size',
-      insideLabel: product.id === PRODUCT_IDS.THUMB_TURN ? 'Thumb turn (inside)' : 'Inside',
-      options: sizes.map((s) => ({
-        variationId: s.variationId,
-        label: s.label,
-        short: s.short,
-        attribute: LOCK_SIZE_ATTRIBUTE,
-        termSlug: s.termSlug,
-        inside: s.inside,
-        outside: s.outside,
-        available: live.size === 0 || live.has(s.variationId),
-      })),
-    };
-  }
-
-  if (product.id === PRODUCT_IDS.RIM_CYLINDER) {
-    return {
-      kind: 'colour',
-      heading: 'Choose your finish',
-      insideLabel: 'Inside',
-      options: RIM_COLOURS.map((c) => ({
-        variationId: c.variationId,
-        label: c.label,
-        short: c.label,
-        attribute: COLOUR_ATTRIBUTE,
-        termSlug: c.termSlug,
-        hex: c.hex,
-        available: live.size === 0 || live.has(c.variationId),
-      })),
-    };
-  }
-
-  // Generic fallback: derive from the Store API payload (first variation attribute).
-  const attr = product.attributes.find((a) => a.has_variations);
-  const taxonomy = attr?.taxonomy ?? attr?.name ?? 'attribute';
-  return {
-    kind: 'generic',
-    heading: `Choose ${attr?.name?.toLowerCase() ?? 'an option'}`,
-    insideLabel: 'Inside',
-    options: product.variations.map((v) => {
-      const a = v.attributes[0];
-      const term = attr?.terms.find((t) => t.slug === a?.value);
-      return {
+      insideLabel: thumb ? 'Thumb turn (inside)' : 'Inside',
+      options: variations.map((v, i) => ({
         variationId: v.id,
-        label: term?.name ?? a?.value ?? String(v.id),
-        short: term?.name ?? a?.value ?? String(v.id),
-        attribute: taxonomy,
-        termSlug: a?.value ?? '',
+        label: v.label,
+        short: `${sizes[i]!.inside}/${sizes[i]!.outside}`,
+        attribute: v.attribute,
+        termSlug: v.termSlug,
+        inside: sizes[i]!.inside,
+        outside: sizes[i]!.outside,
         available: true,
-      };
-    }),
+      })),
+    };
+  }
+
+  const isColour = /colou?r|finish/i.test(taxonomy) || /colou?r|finish/i.test(attr?.name ?? '');
+  return {
+    kind: isColour ? 'colour' : 'generic',
+    heading: isColour ? 'Choose your finish' : `Choose ${attr?.name?.toLowerCase() ?? 'an option'}`,
+    insideLabel: 'Inside',
+    options: variations.map((v) => ({
+      variationId: v.id,
+      label: v.label,
+      short: v.label,
+      attribute: v.attribute,
+      termSlug: v.termSlug,
+      ...(isColour ? { hex: SWATCH_HEX[v.termSlug] ?? '#D9D4CC' } : {}),
+      available: true,
+    })),
   };
 }
 
-/** Finds the catalogue entry for a product OR one of its variation IDs. */
-export function catalogueEntryForId(id: number): CatalogueEntry | undefined {
-  if (CATALOGUE_BY_ID[id]) return CATALOGUE_BY_ID[id];
-  for (const [parentId, variations] of Object.entries(VARIATIONS_BY_PRODUCT)) {
-    if (variations.includes(id)) return CATALOGUE_BY_ID[Number(parentId)];
-  }
-  return undefined;
-}
-
-/** Our product page URL for a product/variation ID, if we have one. */
-export function productHref(id: number): string | null {
-  const entry = catalogueEntryForId(id);
-  return entry ? `/products/${entry.slug}` : null;
+/** Our product page URL for a product or variation id in the given product list, if it is one we sell. */
+export function productHref(id: number, products: readonly WooProduct[]): string | null {
+  const productId = parentProductIdOf(id, products) ?? id;
+  const product = products.find((p) => p.id === productId);
+  return product ? `/products/${product.slug}` : null;
 }
 
 export function primaryImage(product: WooProduct): WooImage | null {
@@ -135,7 +116,6 @@ export function ctaLabel(product: WooProduct): string {
   if (!product.is_in_stock) return 'Out of stock';
   if (isExternalOnly(product)) return 'Order keys';
   if (product.type !== 'variable') return 'Buy now';
-  if (product.id === PRODUCT_IDS.RIM_CYLINDER) return 'Buy now';
   return 'Buy now';
 }
 

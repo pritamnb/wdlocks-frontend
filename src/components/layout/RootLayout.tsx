@@ -8,17 +8,18 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ConsentProvider } from '@/hooks/useConsent';
 import { CookieConsent } from '@/components/layout/CookieConsent';
 import { getMenuProductsSSR } from '@/lib/api';
+import { getShippingOptionsSSR } from '@/lib/shipping-rates';
 
 /**
  * Site chrome: providers + announcement bar + navbar + page + footer + cookie consent + cart drawer.
- * Products are fetched here (ISR 60s) so the mega-menu, mobile menu and basket upsells
- * can show live images and prices without a client fetch.
+ * Products and delivery options are read from WooCommerce here (ISR 60s; rates kept an hour) so the menus, footer,
+ * basket and checkout show the store's live catalogue, prices and delivery charges without a client fetch.
  */
 export async function RootLayout({ children }: { children: ReactNode }) {
-  const products = await getMenuProductsSSR();
+  const [products, shippingOptions] = await Promise.all([getMenuProductsSSR(), getShippingOptionsSSR()]);
   return (
     <ToastProvider>
-      <CartProvider products={products}>
+      <CartProvider products={products} shippingOptions={shippingOptions}>
         <ConsentProvider>
           <a
             href="#main"
@@ -33,7 +34,7 @@ export async function RootLayout({ children }: { children: ReactNode }) {
           <main id="main" className="flex-1">
             {children}
           </main>
-          <Footer />
+          <Footer products={products} />
           <CookieConsent />
           <CartDrawer products={products} />
         </ConsentProvider>
