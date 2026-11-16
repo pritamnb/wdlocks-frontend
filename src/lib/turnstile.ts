@@ -3,16 +3,18 @@
  * Cloudflare's siteverify endpoint. The browser half is src/hooks/useTurnstile.tsx.
  *
  * Switched on only when BOTH NEXT_PUBLIC_TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY are set, so a half-configured
- * deploy never locks people out of the forms. Each form passes its own `action`, and a token minted for one form is
- * refused by the others.
+ * deploy never locks people out of the forms. NEXT_PUBLIC_TURNSTILE_FORMS picks which forms are checked (default all;
+ * src/lib/turnstile-forms.ts). Each form passes its own `action`, and a token minted for one form is refused by the
+ * others.
  *
  * Turnstile is a security measure the visitor's own request needs (ICO: "strictly necessary"), so it runs whatever
  * the cookie choice is; the script loads only on pages with a protected form, when the form mounts.
  */
 import { clientIp } from '@/lib/client-ip';
+import { parseTurnstileForms, type TurnstileAction } from '@/lib/turnstile-forms';
 
+export type { TurnstileAction };
 export const TURNSTILE_HEADER = 'x-turnstile-token';
-export type TurnstileAction = 'checkout' | 'contact' | 'trade' | 'guarantee';
 
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const VERIFY_TIMEOUT_MS = 5_000;
@@ -25,6 +27,19 @@ export function isTurnstileEnabled(): boolean {
   return !!process.env.TURNSTILE_SECRET_KEY?.trim() && !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
 }
 
+let formsWarned = false;
+
+/** True when Turnstile is on and NEXT_PUBLIC_TURNSTILE_FORMS includes this form. */
+export function isTurnstileRequired(action: TurnstileAction): boolean {
+  if (!isTurnstileEnabled()) return false;
+  const { forms, valid } = parseTurnstileForms(process.env.NEXT_PUBLIC_TURNSTILE_FORMS);
+  if (!valid && !formsWarned) {
+    formsWarned = true;
+    console.error('[turnstile] NEXT_PUBLIC_TURNSTILE_FORMS has an unknown form name; checking all forms');
+  }
+  return forms.has(action);
+}
+
 export type TurnstileResult = { ok: true } | { ok: false; reason: 'missing' | 'rejected' | 'wrong-action' };
 
 interface SiteverifyReply {
@@ -35,12 +50,12 @@ interface SiteverifyReply {
 }
 
 /**
- * Verifies the request's token for `action`. Resolves `{ ok: true }` when Turnstile is off.
+ * Verifies the request's token for `action`. Resolves `{ ok: true }` when Turnstile is off or not set for this form.
  * Fails open (logged) only when Cloudflare itself cannot be reached: an attacker cannot cause that, and closing the
  * checkout during a Cloudflare outage would cost real orders; the rate limits still apply.
  */
 export async function verifyTurnstile(req: Request, action: TurnstileAction): Promise<TurnstileResult> {
-  if (!isTurnstileEnabled()) return { ok: true };
+  if (!isTurnstileRequired(action)) return { ok: true };
   const token = req.headers.get(TURNSTILE_HEADER)?.trim();
   if (!token || token.length > MAX_TOKEN_LENGTH) return { ok: false, reason: 'missing' };
 

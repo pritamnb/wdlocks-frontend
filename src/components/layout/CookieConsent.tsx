@@ -27,7 +27,7 @@ const CATEGORIES: Category[] = [
     key: 'essential',
     locked: true,
     name: 'Essential',
-    detail: `Keep your basket (saved in this browser), the checkout form and your order working, and let Stripe protect the payment page from fraud.${TURNSTILE_ENABLED ? ' A Cloudflare security check stops bots on checkout and our forms.' : ''} Always on.`,
+    detail: `Keep your basket (saved in this browser), the checkout form and your order working, and let Stripe protect the payment page from fraud.${TURNSTILE_ENABLED ? ' A Cloudflare security check stops bots sending orders and forms.' : ''} Always on.`,
   },
   {
     key: 'analytics',

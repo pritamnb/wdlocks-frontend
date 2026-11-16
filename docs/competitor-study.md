@@ -1013,6 +1013,10 @@ forms send email or post to wdlocks.co.uk, so all six write routes are now limit
   (< £11), 3DS on elevated risk, and an incident playbook. Needs Radar for Fraud Teams; nothing changed in Stripe.
 - **Tests.** `tests/e2e/abuse.spec.ts` (with `presetConsent`): client-IP unit checks, 429 on all six routes and the
   forged-XFF case (local builds only), and a Turnstile block run against a build with Cloudflare's test keys.
+- **Configuration only.** Pritam asked that future changes need no code: each route's limits can be overridden with
+  `RATE_LIMIT_<ROUTE>=10/1m,30/1h` or `off` (invalid values keep the defaults, logged), `NEXT_PUBLIC_TURNSTILE_FORMS`
+  picks the checked forms, and the store accepts any Upstash-REST server (Upstash, Vercel KV, own Redis behind
+  serverless-redis-http; plain http only on private addresses). README has a "Changing it without code" table.
 - **Still open:** pick and create the Redis store (Upstash suggested), create Turnstile keys for the real hostnames,
   confirm Tomia's proxy header, and have the client add the Radar rules.
 
