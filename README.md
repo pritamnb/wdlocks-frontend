@@ -145,7 +145,7 @@ Routes (all `force-dynamic`, Node runtime, `no-store`):
 | `POST /api/cart/customer` | Store API `cart/update-customer` | billing (+ optional shipping) address → cart with shipping rates / VAT |
 | `POST /api/cart/shipping` | Store API `cart/select-shipping-rate` | `{ package_id, rate_id }` |
 | `POST` / `DELETE /api/cart/coupon` | Store API `cart/apply-coupon` / `remove-coupon` | `{ code }` |
-| `POST /api/checkout/intent` | WC REST `orders` + Stripe | re-reads the basket, creates/reuses a `pending` order, returns `clientSecret`; `409 total_mismatch` if the total moved; 10 req/min per IP |
+| `POST /api/checkout/intent` | WC REST `orders` + Stripe | re-reads the basket, creates/reuses a `pending` order, returns `clientSecret`; `409 total_mismatch` if the total moved; rate limited and Turnstile-checked (see Abuse protection) |
 | `GET /api/checkout/status?order=&key=` | WC REST `orders/{id}` | status/paid for the return page; the order key is the secret |
 | `POST /api/stripe/webhook` | Stripe → WC REST | marks orders paid / failed / on-hold, notes refunds |
 
@@ -159,6 +159,58 @@ stripe trigger payment_intent.succeeded
 
 Test cards: `4242 4242 4242 4242` (success), `4000 0025 0000 3155` (3DS), `4000 0000 0000 9995` (declined).
 Test orders land in WooCommerce as `pending` → `processing` with meta `_headless_site = wdlocks-frontend`.
+
+## Abuse protection
+
+Place order creates a real WooCommerce order and a Stripe PaymentIntent, and the forms send email or post to
+wdlocks.co.uk, so every write route is rate limited per IP and (once keys are added) bot-checked.
+
+**Rate limits** (`src/lib/rate-limit.ts`, `RATE_LIMITS`), fixed windows per client IP, `429` + `Retry-After`:
+
+| Route | Limits |
+|---|---|
+| `POST /api/checkout/intent` | 10 / min, 30 / hour |
+| `POST /api/checkout/coupon` | 8 / min, 40 / hour |
+| `POST /api/contact` | 5 / 10 min, 20 / day |
+| `POST /api/trade` | 3 / 10 min, 10 / day |
+| `POST /api/guarantee` | 10 / 10 min, 50 / day |
+| `POST /api/crime` | 20 / min, 200 / day |
+
+Counters live in a shared Redis over the Upstash REST protocol when `UPSTASH_REDIS_REST_URL` +
+`UPSTASH_REDIS_REST_TOKEN` are set (Vercel's Upstash integration sets `KV_REST_API_URL` + `KV_REST_API_TOKEN`,
+also accepted). It is plain HTTPS, so it works the same on Vercel and on any Node host. Without those vars, or if the
+store does not answer within 800 ms, each server instance counts in its own memory (logged once a minute). IPs are
+stored as an HMAC, never in clear, and expire with their window.
+
+**Client IP** (`src/lib/client-ip.ts`). The first `X-Forwarded-For` entry is written by the visitor and is never used.
+
+| Host | Setting |
+|---|---|
+| Vercel | nothing: `VERCEL=1` is set by the platform, the IP comes from `x-vercel-forwarded-for` / `x-real-ip` |
+| Behind Cloudflare | `CLIENT_IP_HEADER=cf-connecting-ip` (only if the origin accepts traffic from Cloudflare alone) |
+| nginx / Apache / a PaaS router in front of `next start` | `CLIENT_IP_HEADER=x-real-ip` if the proxy **overwrites** that header with the peer address (nginx `proxy_set_header X-Real-IP $remote_addr;`), otherwise leave it unset and set `TRUSTED_PROXY_COUNT` to the number of proxies that **append** to `X-Forwarded-For` (default `1`) |
+
+**Tomia (client host).** Where the Next.js app will run on Tomia's side is still open (WP Engine Headless Platform
+or another Node host). Before launch, ask Tomia which header their front proxy sets and pick a row above; if they
+cannot say, leave `CLIENT_IP_HEADER` unset with `TRUSTED_PROXY_COUNT=1` and test: send
+`curl -X POST https://<site>/api/crime -H 'Content-Type: application/json' -H 'X-Forwarded-For: 198.51.100.1' -d '{}'`
+21 times within a minute, changing the made-up address each time. The 21st must still answer `429`; if it does
+not, the setting trusts a header the visitor controls. Never expose `next start` directly: with no proxy in front,
+the visitor's own `X-Forwarded-For` is all there is.
+
+**Turnstile** (Cloudflare's bot check): `src/hooks/useTurnstile.tsx` in the browser, `src/lib/turnstile.ts` in the
+routes. Covers Place order (`/api/checkout/intent`) and the contact, trade and guarantee forms; the token travels in
+the `X-Turnstile-Token` header and each form has its own `action`. Switched on only when **both**
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` (build time) and `TURNSTILE_SECRET_KEY` are set; with either missing the forms
+work exactly as before. The widget is invisible unless Cloudflare wants a click, and the script loads only on pages
+with a protected form. It is a security measure for the visitor's own request, so it is "essential" in the cookie
+popup and runs whatever the visitor chose. If Cloudflare's verify endpoint is unreachable the route lets the request
+through (logged) rather than stopping sales; the rate limits still apply. Cloudflare's test keys (site
+`1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA`; secret `2x0000000000000000000000000000000AA`
+always fails) are fine for local runs and staging.
+
+**Stripe Radar** rules for card testing: `docs/stripe-radar-rules.md` (recommendations only; nothing is changed in
+the Stripe account from this repo).
 
 ## Deployment (Vercel)
 
@@ -180,8 +232,8 @@ are kept outside the repo at `../client-assets/wetransfer-2026-11-10/`, and the 
   delivery. If the client adds a free-shipping rule, reinstate the messaging.
 - Install the mu-plugin above and set `NEXT_PUBLIC_CART_HANDOFF_PLUGIN=true` before launch.
 - Extra Keys (4266) orders go to wdlocks.co.uk until a key-number field is added to the headless flow.
-- Rate-limit `/api/cart/*` (Vercel WAF or `@upstash/ratelimit`); it is an open proxy to wdlocks.co.uk.
-  `/api/checkout/intent` has an in-memory 10/min/IP limit only (per serverless instance).
+- Abuse protection needs its accounts before launch: an Upstash (or other) Redis for shared rate limits, Turnstile
+  keys, the client-IP setting for Tomia, and the Radar rules in `docs/stripe-radar-rules.md` (see Abuse protection).
 - Replace the regex HTML sanitiser with `sanitize-html`/DOMPurify, or move to a nonce-based CSP.
 - `script-src 'unsafe-inline'` in the CSP is required by static generation; move to nonces if routes go dynamic.
 - **PENDING — Reviews (parked 2026-11-10):** the reviews section links out via `TRUSTPILOT_URL` and asserts no rating.

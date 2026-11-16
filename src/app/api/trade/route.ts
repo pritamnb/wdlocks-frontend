@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { TRADE } from '@/lib/constants';
+import { rateLimit, retryAfterHeaders } from '@/lib/rate-limit';
+import { verifyTurnstile, TURNSTILE_FAILED_MESSAGE } from '@/lib/turnstile';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +27,8 @@ const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/[
  * where applications are recorded today. Used only when TRADE.formMode is 'proxy'. Nothing is stored here.
  */
 export async function POST(req: Request) {
+  const limited = await rateLimit(req, 'trade');
+  if (!limited.ok) return NextResponse.json({ error: 'Too many applications from this connection. Please wait a few minutes, or call us.' }, { status: 429, headers: retryAfterHeaders(limited) });
   if (TRADE.formMode !== 'proxy') {
     return NextResponse.json({ error: 'Applications are handled on wdlocks.co.uk.', redirect: TRADE.applyUrl }, { status: 409 });
   }
@@ -53,6 +57,9 @@ export async function POST(req: Request) {
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 422 });
   if (!PHONE_RE.test(phone)) return NextResponse.json({ error: 'Enter a phone number.' }, { status: 422 });
   if (!business) return NextResponse.json({ error: 'Choose your type of business.' }, { status: 422 });
+
+  const human = await verifyTurnstile(req, 'trade');
+  if (!human.ok) return NextResponse.json({ error: TURNSTILE_FAILED_MESSAGE, reason: 'turnstile' }, { status: 403 });
 
   const f = TRADE.form.fields;
   const form = new URLSearchParams({

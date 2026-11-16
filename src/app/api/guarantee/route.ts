@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GUARANTEE } from '@/lib/constants';
+import { rateLimit, retryAfterHeaders } from '@/lib/rate-limit';
+import { verifyTurnstile, TURNSTILE_FAILED_MESSAGE } from '@/lib/turnstile';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +23,8 @@ const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/[
  * recorded today. Only used when GUARANTEE.formMode is 'proxy'. Nothing is stored here.
  */
 export async function POST(req: Request) {
+  const limited = await rateLimit(req, 'guarantee');
+  if (!limited.ok) return NextResponse.json({ error: 'Too many registrations from this connection. Please wait a few minutes, or call us.' }, { status: 429, headers: retryAfterHeaders(limited) });
   if (GUARANTEE.formMode !== 'proxy') {
     return NextResponse.json({ error: 'Registration is handled on wdlocks.co.uk.', redirect: GUARANTEE.registerUrl }, { status: 409 });
   }
@@ -49,6 +53,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Enter the key number stamped on your key, e.g. ${GUARANTEE.keyNumberExample}.` }, { status: 422 });
   }
   if (body.consent !== true) return NextResponse.json({ error: 'Please confirm you are happy for your data to be stored for the guarantee.' }, { status: 422 });
+
+  const human = await verifyTurnstile(req, 'guarantee');
+  if (!human.ok) return NextResponse.json({ error: TURNSTILE_FAILED_MESSAGE, reason: 'turnstile' }, { status: 403 });
 
   const message = [
     `Key number${keys.length > 1 ? 's' : ''}: ${keys.join(', ')}`,

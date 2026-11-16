@@ -2,6 +2,8 @@ import type { NextConfig } from 'next';
 
 const WC_HOST = new URL(process.env.NEXT_PUBLIC_WC_BASE ?? 'https://wdlocks.co.uk').host;
 const isDev = process.env.NODE_ENV === 'development';
+/** Cloudflare Turnstile (src/hooks/useTurnstile.tsx) is allowed only on builds that have its site key. */
+const TURNSTILE = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ? ' https://challenges.cloudflare.com' : '';
 
 /**
  * Content-Security-Policy.
@@ -14,17 +16,19 @@ const isDev = process.env.NODE_ENV === 'development';
  * - Stripe (checkout on our domain, docs/stripe-checkout-plan.md §3d): js.stripe.com + *.js.stripe.com load
  *   Stripe.js / Elements, m.stripe.network is its fraud-signal frame, api/q/r.stripe.com are its XHR targets,
  *   hooks.stripe.com + checkout.stripe.com host 3DS / redirect frames, *.stripe.com serves wallet brand images.
+ * - Turnstile (bot check on checkout + forms, only when NEXT_PUBLIC_TURNSTILE_SITE_KEY is set): challenges.cloudflare.com
+ *   serves its script and its challenge frame.
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://js.stripe.com https://*.js.stripe.com https://m.stripe.network`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://js.stripe.com https://*.js.stripe.com https://m.stripe.network${TURNSTILE}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://${WC_HOST} https://*.stripe.com`,
   "font-src 'self' data:",
   `connect-src 'self' https://${WC_HOST} https://api.stripe.com https://m.stripe.network https://q.stripe.com https://r.stripe.com${isDev ? ' ws: wss:' : ''}`,
   // The Home Truths crime checker embeds an OpenStreetMap frame centred on the searched postcode.
   // youtube-nocookie: the Sky Sports advert on the homepage ("How we protect you").
-  'frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://checkout.stripe.com',
+  `frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://checkout.stripe.com${TURNSTILE}`,
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

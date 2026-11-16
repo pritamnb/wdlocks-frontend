@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { BRAND_RENDERS, GUARANTEE, GUARANTEE_PAGE } from '@/lib/constants';
 import { Modal, CloseButton } from '@/components/ui/Modal';
 import { cn } from '@/lib/cn';
+import { useTurnstile, turnstileHeaders } from '@/hooks/useTurnstile';
 
 /**
  * Ultion's `/guarantee-registration/` section: dark two-column panel, "Activate your protection.", the three
@@ -130,6 +131,7 @@ function ProxyForm({ onHelp, onData }: { onHelp: () => void; onData: () => void 
   const [installType, setInstallType] = React.useState<'door-and-lock' | 'lock'>('lock');
   const [consent, setConsent] = React.useState(false);
   const [status, setStatus] = React.useState<Status>({ kind: 'idle' });
+  const turnstile = useTurnstile('guarantee');
 
   const keysValid = keys.filter(Boolean).length > 0 && keys.filter(Boolean).every((k) => GUARANTEE.keyNumberPattern.test(k.trim()));
   const canSend = name.trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && keysValid && consent && status.kind !== 'sending';
@@ -138,10 +140,17 @@ function ProxyForm({ onHelp, onData }: { onHelp: () => void; onData: () => void 
     e.preventDefault();
     if (!canSend) return;
     setStatus({ kind: 'sending' });
+    let token: string | null;
+    try {
+      token = await turnstile.getToken();
+    } catch {
+      setStatus({ kind: 'error', message: 'The security check could not run. Please try again, or register on wdlocks.co.uk.', redirect: GUARANTEE.registerUrl });
+      return;
+    }
     try {
       const res = await fetch('/api/guarantee', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...turnstileHeaders(token) },
         body: JSON.stringify({ name: name.trim(), email: email.trim(), keyNumbers: keys.filter(Boolean), installType, consent }),
       });
       const json = (await res.json()) as { ok?: boolean; message?: string; error?: string; redirect?: string };
@@ -219,6 +228,7 @@ function ProxyForm({ onHelp, onData }: { onHelp: () => void; onData: () => void 
           By activating my guarantee I am happy for my data to be securely stored by a third-party security partner for the purposes of registering my guarantee.
         </label>
       </div>
+      {turnstile.widget}
       {status.kind === 'error' && (
         <p role="alert" className="mt-4 text-sm text-red">
           {status.message}{' '}

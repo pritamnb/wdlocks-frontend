@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { CRIME_CHECKER } from '@/lib/constants';
+import { rateLimit, retryAfterHeaders } from '@/lib/rate-limit';
 import { geocodePostcode, isValidPostcode, reverseGeocode, summariseCrime, type Radius } from '@/lib/crime';
 
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,8 @@ interface Body {
  * A POST body keeps the visitor's postcode or location out of URLs and logs.
  */
 export async function POST(req: Request) {
+  const limited = await rateLimit(req, 'crime');
+  if (!limited.ok) return NextResponse.json({ error: 'Too many searches in a short time. Please wait a minute and try again.' }, { status: 429, headers: retryAfterHeaders(limited) });
   let body: Body;
   try {
     const parsed: unknown = await req.json();

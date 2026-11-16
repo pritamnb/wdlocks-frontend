@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { TRADE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
+import { useTurnstile, turnstileHeaders } from '@/hooks/useTurnstile';
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'error'; message: string; redirect?: string } | { kind: 'done'; message: string };
 
@@ -49,6 +50,7 @@ function HandoffCard() {
 function ProxyForm() {
   const [v, setV] = React.useState({ company: '', contact: '', address: '', postcode: '', email: '', phone: '', business: '', volume: '', website: '' });
   const [status, setStatus] = React.useState<Status>({ kind: 'idle' });
+  const turnstile = useTurnstile('trade');
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
 
   const canSend =
@@ -58,8 +60,15 @@ function ProxyForm() {
     e.preventDefault();
     if (!canSend) return;
     setStatus({ kind: 'sending' });
+    let token: string | null;
     try {
-      const res = await fetch('/api/trade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v) });
+      token = await turnstile.getToken();
+    } catch {
+      setStatus({ kind: 'error', message: 'The security check could not run. Please try again, or apply on wdlocks.co.uk.', redirect: TRADE.applyUrl });
+      return;
+    }
+    try {
+      const res = await fetch('/api/trade', { method: 'POST', headers: { 'Content-Type': 'application/json', ...turnstileHeaders(token) }, body: JSON.stringify(v) });
       const json = (await res.json()) as { ok?: boolean; message?: string; error?: string; redirect?: string };
       if (!res.ok || !json.ok) setStatus({ kind: 'error', message: json.error ?? 'Something went wrong.', redirect: json.redirect });
       else setStatus({ kind: 'done', message: json.message ?? 'Your application has been sent.' });
@@ -127,6 +136,7 @@ function ProxyForm() {
           <input id="t-website" name="website" type="url" autoComplete="url" value={v.website} onChange={set('website')} className={cn(field, 'mt-1.5')} placeholder="https://" />
         </div>
       </div>
+      {turnstile.widget}
       {status.kind === 'error' && (
         <p role="alert" className="mt-4 text-sm text-red">
           {status.message} {status.redirect && <a href={status.redirect} rel="noopener" className="underline">Use the form on wdlocks.co.uk</a>}

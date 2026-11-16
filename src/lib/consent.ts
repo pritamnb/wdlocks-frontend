@@ -3,8 +3,8 @@
  * Pure read/write helpers; the React side is src/hooks/useConsent.tsx. Code that runs outside <ConsentProvider>
  * (a script tag in the root layout, say) reads the stored choice with `readConsent()` instead of the hook.
  *
- * Essential storage (basket, checkout form, demo-order / checkout cookies, Stripe's fraud frame on the checkout) is
- * always on and not asked about. The choice is asked again after 12 months (UK ICO guidance).
+ * Essential storage (basket, checkout form, demo-order / checkout cookies, Stripe's fraud frame on the checkout, and the
+ * Cloudflare Turnstile bot check on checkout and the forms when it is configured) is always on and not asked about. The choice is asked again after 12 months (UK ICO guidance).
  */
 
 export const CONSENT_STORAGE_KEY = 'wd:consent';

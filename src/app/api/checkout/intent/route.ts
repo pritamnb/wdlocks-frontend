@@ -20,7 +20,8 @@ import {
   STRIPE_INTENT_META,
   type WooRestOrder,
 } from '@/lib/wc-rest';
-import { RateLimiter, clientIp } from '@/lib/rate-limit';
+import { rateLimit, retryAfterHeaders } from '@/lib/rate-limit';
+import { verifyTurnstile, TURNSTILE_FAILED_MESSAGE } from '@/lib/turnstile';
 import { isDemoCheckout, isStripeSandbox, newDemoOrder, writeDemoOrder, type DemoOrder } from '@/lib/demo-checkout';
 import type { CheckoutAddressInput, CreatePaymentIntentResponse } from '@/types';
 
@@ -33,8 +34,6 @@ const CHECKOUT_ORDER_COOKIE_TTL = 60 * 60 * 24; // 1 day
 const CUSTOMER_NOTE_MAX = 500;
 /** Stripe's minimum charge for GBP is 30p. */
 const MIN_AMOUNT_MINOR = 30;
-
-const limiter = new RateLimiter(10, 60_000);
 
 interface ValidBody {
   items: BasketLineInput[];
@@ -160,11 +159,15 @@ function demoDetail(basket: PricedBasket): Pick<DemoOrder, 'lines' | 'shipping' 
  * endpoint (cached a few minutes), then — depending on the rollout stage — writes a pretend order (demo / sandbox) or
  * creates the pending WooCommerce order and the Stripe PaymentIntent.
  * Responses: 200 CreatePaymentIntentResponse · 400 invalid / stock · 404 unknown product · 409 total_mismatch ·
- * 429 · 502 upstream · 503 not-configured.
+ * 403 turnstile_failed · 429 rate_limited · 502 upstream · 503 not-configured.
+ * Header X-Turnstile-Token: the Cloudflare Turnstile token, required when Turnstile is configured (src/lib/turnstile.ts).
  */
 export async function POST(req: Request) {
-  if (!limiter.allow(clientIp(req))) {
-    return errorResponse(429, 'rate_limited', 'Too many checkout attempts. Please wait a minute and try again.');
+  const limited = await rateLimit(req, 'checkoutIntent');
+  if (!limited.ok) {
+    const res = errorResponse(429, 'rate_limited', 'Too many checkout attempts. Please wait a few minutes and try again.');
+    for (const [k, v] of Object.entries(retryAfterHeaders(limited))) res.headers.set(k, v);
+    return res;
   }
   // Rollout stages: demo (pretend provider) → sandbox (Stripe test keys, pretend orders) → live (Stripe + WooCommerce).
   const sandbox = isStripeSandbox();
@@ -178,6 +181,10 @@ export async function POST(req: Request) {
   const parsed = parseBody(raw);
   if (!parsed.ok) return errorResponse(400, parsed.code, parsed.message);
   const body = parsed.value;
+
+  // Bot check (Cloudflare Turnstile, when configured) before anything reaches the Store API, WooCommerce or Stripe.
+  const human = await verifyTurnstile(req, 'checkout');
+  if (!human.ok) return errorResponse(403, 'turnstile_failed', TURNSTILE_FAILED_MESSAGE);
 
   // 1. Price the basket from the live Store API (the only basket truth the server accepts).
   let basket: PricedBasket;

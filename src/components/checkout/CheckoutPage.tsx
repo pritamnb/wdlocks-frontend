@@ -18,6 +18,7 @@ import { EMAIL, EMPTY_ADDRESS, FIELD, isAddressComplete, toApiAddress, validateA
 import { estimateDelivery, formatCountdown, formatDeliveryDate } from '@/lib/delivery';
 import { CHECKOUT_MODE, SITE, STRIPE_TEST_MODE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
+import { useTurnstile } from '@/hooks/useTurnstile';
 import type { CouponQuote, CreatePaymentIntentResponse } from '@/types';
 
 const StripePayment = dynamic(() => import('@/components/checkout/StripePayment').then((m) => m.StripePayment), {
@@ -69,6 +70,9 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   const [promoChecking, setPromoChecking] = React.useState(false);
   const [promoError, setPromoError] = React.useState<string | null>(null);
   const [savedPromo, setSavedPromo] = React.useState('');
+  /** Bot check on Place order (Cloudflare Turnstile; inert unless its keys are configured). */
+  const turnstile = useTurnstile('checkout');
+  const { getToken } = turnstile;
   const isClient = React.useSyncExternalStore(() => () => {}, () => true, () => false);
   const now = isClient ? new Date() : null;
   const est = now ? estimateDelivery(now, shippingOptions) : null;
@@ -177,6 +181,12 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   const prepare = React.useCallback(async (): Promise<CreatePaymentIntentResponse | null> => {
     if (!pricedCart) return null;
     const contact = { email: email.trim(), phone: phone.trim() };
+    let token: string | null;
+    try {
+      token = await getToken();
+    } catch {
+      throw new CartClientError(0, 'turnstile_unavailable', `The security check could not run. Check your connection (or ad blocker) and try again, or call us on ${SITE.phone} to order.`);
+    }
     try {
       return await createPaymentIntent({
         items: lineInputs,
@@ -186,7 +196,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
         customer_note: note.trim() || undefined,
         expected_total: pricedCart.totals.total_price,
         ...(promo ? { coupon_code: promo.quote.code } : {}),
-      });
+      }, token);
     } catch (err) {
       if (err instanceof CartClientError && err.code === 'total_mismatch') {
         const prices = (err.data?.prices ?? null) as Record<string, number> | null;
@@ -203,7 +213,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
       }
       throw err;
     }
-  }, [pricedCart, email, phone, billingSame, shipping, billing, note, lineInputs, shippingOptionId, applyPrices, toast, promo, lineSig]);
+  }, [pricedCart, email, phone, billingSame, shipping, billing, note, lineInputs, shippingOptionId, applyPrices, toast, promo, lineSig, getToken]);
 
   const returnUrl = React.useCallback((order: CreatePaymentIntentResponse) => {
     const u = new URL('/checkout/return', window.location.origin);
@@ -395,6 +405,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
                   </Button>
                 </div>
               )}
+              {(stripeLive || demo) && turnstile.widget}
               <p className="mt-4 text-center text-xs text-charcoal/65">
                 Your personal data is used to process your order and support your experience, as described in our{' '}
                 <Link href="/privacy" className="underline underline-offset-2 hover:text-red">privacy policy</Link>.
