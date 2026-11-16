@@ -450,10 +450,17 @@ export const PRIMARY_IMAGE_OVERRIDES: Readonly<Partial<Record<number, { src: str
   [PRODUCT_IDS.RIM_CYLINDER]: { src: '/brand/product/rim-cylinder-brass-1254.webp', width: 1254, height: 1254, alt: 'Watchdog brass rim cylinder for nightlatches' },
   /** Shop photo is 500 × 500; 2× Lanczos upscale. */
   [PRODUCT_IDS.LUBRICANT]: { src: '/brand/product/lock-lubricant.png', width: 1000, height: 1000, alt: 'Watchdog 3 Star ALPS lock lubricant bottle' },
+  /**
+   * Transparent renders from Pritam, 16 Nov ("replace these two images"), in place of the shop's watchdog1.png and
+   * watchdog-2.png. Current markings (TS007-1:2024, KM597142). Sources: client-assets/product/cylinder-*-2026-11-16.webp.
+   */
+  [PRODUCT_IDS.CYLINDER_LOCK]: { src: '/brand/product/cylinder-key-key.webp', width: 1440, height: 1260, alt: 'Watchdog 3 Star ALPS key-and-key euro cylinder with red anti-snap cam and BSI Kitemark markings' },
+  [PRODUCT_IDS.THUMB_TURN]: { src: '/brand/product/cylinder-thumb-turn.webp', width: 1433, height: 1122, alt: 'Watchdog 3 Star ALPS thumb turn euro cylinder with red anti-snap cam and BSI Kitemark markings' },
 };
 
 export const EXTRA_GALLERY_RENDERS: Readonly<Partial<Record<number, ReadonlyArray<keyof typeof BRAND_RENDERS>>>> = {
-  [PRODUCT_IDS.CYLINDER_LOCK]: ['cylinderAngled', 'cylinderDetail', 'cylinderFront'],
+  // No cylinderAngled here: the primary override above is the same shot at twice the size, with current markings.
+  [PRODUCT_IDS.CYLINDER_LOCK]: ['cylinderDetail', 'cylinderFront'],
   [PRODUCT_IDS.EXTRA_KEYS_3]: ['keysEngraved'],
   [PRODUCT_IDS.EXTRA_KEYS_1]: ['keysEngraved'],
   [PRODUCT_IDS.KEYED_ALIKE]: ['keysEngraved'],

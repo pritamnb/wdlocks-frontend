@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { QuantityControl } from '@/components/cart/QuantityControl';
 import { DeliveryPromise } from '@/components/product/DeliveryPromise';
 import { useCart } from '@/hooks/useCart';
-import { getVariationModel, type VariationOption } from '@/lib/product-helpers';
+import { getVariationModel, primaryImage, type VariationOption } from '@/lib/product-helpers';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { CHECKOUT_MODE, CHECKOUT_URL, DEFAULT_VARIATION_TERM, PRODUCT_IDS } from '@/lib/constants';
 import { catalogueEntry } from '@/lib/catalogue';
@@ -166,7 +166,7 @@ export function VariationSelector({ product, onAdded, headingId, className, show
   const add = async (openDrawer: boolean) => {
     setTouched(true);
     if (!selected) return false;
-    const image = product.images[0];
+    const image = primaryImage(product);
     const ok = await addToCart({
       id: selected.variationId,
       quantity,
