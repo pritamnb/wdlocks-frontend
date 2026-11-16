@@ -29,6 +29,11 @@ export const metadata: Metadata = {
     description: SITE.description,
   },
   robots: IS_STAGING ? { index: false, follow: false } : { index: true, follow: true },
+  // Same tokens the WordPress site serves, so the existing Search Console and Meta domain verifications survive cutover.
+  verification: {
+    google: ['ekgPg_mbvWC66sp-DGiSTyl6gDoDZAnfJf9X778_UNE', 'mLwQfI66BfRMyoIe6eeXWxQx8QfREWjyosnVE4NKAz8'],
+    other: { 'facebook-domain-verification': 'b9jbj0o5lwkurowscxn4bejtni594b' },
+  },
   icons: { icon: '/favicon.ico' },
 };
 

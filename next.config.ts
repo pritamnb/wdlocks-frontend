@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { legacyRedirects } from './legacy-redirects';
 
 const WC_HOST = new URL(process.env.NEXT_PUBLIC_WC_BASE ?? 'https://wdlocks.co.uk').host;
 const isDev = process.env.NODE_ENV === 'development';
@@ -80,13 +81,8 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    return [
-      { source: '/shop', destination: '/products', permanent: true },
-      { source: '/shop/:path*', destination: '/products', permanent: true },
-      // WooCommerce product permalinks → our product pages (same slugs)
-      { source: '/product/:slug', destination: '/products/:slug', permanent: true },
-      { source: '/product-category/:path*', destination: '/products', permanent: true },
-    ];
+    // Every URL from the old WordPress sitemap → its new home (see legacy-redirects.ts)
+    return legacyRedirects;
   },
 };
 
