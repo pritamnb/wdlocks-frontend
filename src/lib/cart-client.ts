@@ -5,6 +5,7 @@
  */
 import type { WooStoreError, CreatePaymentIntentRequest, CreatePaymentIntentResponse, CheckoutStatusResponse, CouponQuote } from '@/types';
 import type { BasketLineInput } from '@/lib/basket';
+import { turnstileHeaders } from '@/hooks/useTurnstile';
 export class CartClientError extends Error {
   readonly status: number;
   readonly code: string;
@@ -67,9 +68,12 @@ async function checkoutRequest<T>(path: string, init: RequestInit = {}): Promise
   return (await res.json()) as T;
 }
 
-/** Creates the pending WooCommerce order and the Stripe PaymentIntent. 503 `not-configured` when Stripe keys are missing. */
-export function createPaymentIntent(body: CreatePaymentIntentRequest): Promise<CreatePaymentIntentResponse> {
-  return checkoutRequest<CreatePaymentIntentResponse>('/intent', { method: 'POST', body: JSON.stringify(body) });
+/**
+ * Creates the pending WooCommerce order and the Stripe PaymentIntent. 503 `not-configured` when Stripe keys are missing,
+ * 403 `turnstile_failed` when the bot check is on and `turnstileToken` is missing or refused.
+ */
+export function createPaymentIntent(body: CreatePaymentIntentRequest, turnstileToken: string | null = null): Promise<CreatePaymentIntentResponse> {
+  return checkoutRequest<CreatePaymentIntentResponse>('/intent', { method: 'POST', body: JSON.stringify(body), headers: turnstileHeaders(turnstileToken) });
 }
 
 export function getCheckoutStatus(orderId: number, orderKey: string): Promise<CheckoutStatusResponse> {

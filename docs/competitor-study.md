@@ -986,6 +986,36 @@ cookies and the header set are sound). Fixed here:
   `DEMO_CHECKOUT_SIGNING_KEY` is unset on both Vercel projects, so the demo cookie uses the public fallback key
   (pretend orders only).
 
+### Pass 56 — 16 Nov 2026: abuse protection (shared rate limits, trusted client IP, Turnstile, Radar rules)
+
+Follows Pass 55's open items. Checkout creates a real WooCommerce order and Stripe PaymentIntent per attempt, and the
+forms send email or post to wdlocks.co.uk, so all six write routes are now limited and the money/email ones bot-checked.
+- **Shared limiter.** `src/lib/rate-limit.ts` counts fixed windows in Redis over the Upstash REST protocol (one
+  pipelined `INCR`+`EXPIRE` per request, 800 ms timeout, IPs stored as an HMAC) when `UPSTASH_REDIS_REST_URL`/`TOKEN`
+  (or Vercel's `KV_REST_API_*`) are set; no new npm dependency. Without them, or if the store fails, each instance
+  counts in memory as before. No account was created: which provider is Pritam's call.
+- **Limits** (`RATE_LIMITS`, 429 + `Retry-After`): intent 10/min + 30/h, coupon 8/min + 40/h, contact 5/10 min +
+  20/day, trade 3/10 min + 10/day, guarantee 10/10 min + 50/day, crime 20/min + 200/day. Counted before the body is
+  read, so junk requests count too.
+- **Client IP.** `src/lib/client-ip.ts`: on Vercel the platform header (`x-vercel-forwarded-for`, `x-real-ip`);
+  elsewhere `CLIENT_IP_HEADER` (one header the proxy overwrites) or X-Forwarded-For counted from the right
+  (`TRUSTED_PROXY_COUNT`, default 1). The visitor-written first hop is never used. README "Abuse protection" has the
+  Tomia checklist and a curl test.
+- **Turnstile.** `src/hooks/useTurnstile.tsx` + `src/lib/turnstile.ts`: on only when both
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are set. Invisible unless Cloudflare wants a click; the
+  script loads only when a protected form mounts; fresh single-use token per submission in `X-Turnstile-Token`,
+  verified server-side with a per-form `action` (checkout, contact, trade, guarantee) before anything reaches
+  WooCommerce, Stripe, Resend or Elementor. Fails open only if siteverify is unreachable. CSP gains
+  challenges.cloudflare.com only on builds with the site key. The cookie popup's Essential text mentions the check
+  when it is on (security, strictly necessary); the WordPress privacy page was not touched.
+- **Radar.** `docs/stripe-radar-rules.md`: velocity rules per IP / email / card (`card_count_for_ip_address_hourly`,
+  `card_count_for_email_daily`, `email_count_for_card_daily`, declines per IP/email/card), a low-value review rule
+  (< £11), 3DS on elevated risk, and an incident playbook. Needs Radar for Fraud Teams; nothing changed in Stripe.
+- **Tests.** `tests/e2e/abuse.spec.ts` (with `presetConsent`): client-IP unit checks, 429 on all six routes and the
+  forged-XFF case (local builds only), and a Turnstile block run against a build with Cloudflare's test keys.
+- **Still open:** pick and create the Redis store (Upstash suggested), create Turnstile keys for the real hostnames,
+  confirm Tomia's proxy header, and have the client add the Radar rules.
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { CONTACT, SITE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
+import { useTurnstile, turnstileHeaders, type TurnstileHandle } from '@/hooks/useTurnstile';
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'error'; message: string } | { kind: 'done'; via: 'email' | 'mail-app' };
 
@@ -19,10 +20,20 @@ function callbackWindows(now = new Date()): string[] {
   return [...today, 'Tomorrow morning', 'Tomorrow afternoon', 'Any time, whenever suits you'];
 }
 
-/** POST to /api/contact; on 503 (no email provider) open the visitor's mail app with the same content. */
-async function deliver(payload: Record<string, string>, mailSubject: string, mailBody: string): Promise<Status> {
+/**
+ * POST to /api/contact; on 503 (no email provider), an upstream failure or a bot check that cannot run (blocked
+ * script), open the visitor's mail app with the same content.
+ */
+async function deliver(turnstile: TurnstileHandle, payload: Record<string, string>, mailSubject: string, mailBody: string): Promise<Status> {
   try {
-    const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    let token: string | null;
+    try {
+      token = await turnstile.getToken();
+    } catch {
+      window.location.href = `mailto:${SITE.email}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
+      return { kind: 'done', via: 'mail-app' };
+    }
+    const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', ...turnstileHeaders(token) }, body: JSON.stringify(payload) });
     if (res.ok) return { kind: 'done', via: 'email' };
     const json = (await res.json().catch(() => ({}))) as { error?: string; reason?: string };
     if (res.status === 503 || json.reason === 'not-configured' || json.reason === 'upstream') {
@@ -58,6 +69,7 @@ export function CallbackForm() {
   const [topic, setTopic] = React.useState('');
   const [company, setCompany] = React.useState('');
   const [status, setStatus] = React.useState<Status>({ kind: 'idle' });
+  const turnstile = useTurnstile('contact');
   // Server render uses a fixed morning so the markup matches; the client recomputes from the real clock after mount.
   const isClient = React.useSyncExternalStore(() => () => {}, () => true, () => false);
   const windows = isClient ? callbackWindows() : callbackWindows(new Date(2000, 0, 1, 8));
@@ -69,7 +81,7 @@ export function CallbackForm() {
     if (!canSend) return;
     setStatus({ kind: 'sending' });
     const body = `Name: ${name}\nPhone: ${phone}\nWhen: ${when}${topic ? `\nAbout: ${topic}` : ''}`;
-    setStatus(await deliver({ kind: 'callback', name, phone, when, topic, company }, `Callback request: ${name}`, body));
+    setStatus(await deliver(turnstile, { kind: 'callback', name, phone, when, topic, company }, `Callback request: ${name}`, body));
   };
 
   if (status.kind === 'done') return <Done via={status.via} what="Your callback request" />;
@@ -106,6 +118,7 @@ export function CallbackForm() {
           <input id="cb-company" name="company" tabIndex={-1} autoComplete="off" value={company} onChange={(e) => setCompany(e.target.value)} />
         </div>
       </div>
+      {turnstile.widget}
       {status.kind === 'error' && <p role="alert" className="mt-4 text-sm text-red">{status.message}</p>}
       <button type="submit" disabled={!canSend} className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full bg-red px-6 text-sm font-semibold text-white transition-colors hover:bg-red-deep disabled:opacity-50">
         {status.kind === 'sending' ? 'Booking…' : 'Book my call'}
@@ -123,6 +136,7 @@ export function MessageForm() {
   const [message, setMessage] = React.useState('');
   const [company, setCompany] = React.useState('');
   const [status, setStatus] = React.useState<Status>({ kind: 'idle' });
+  const turnstile = useTurnstile('contact');
 
   const canSend = name.trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) && message.trim().length >= 5 && status.kind !== 'sending';
 
@@ -131,7 +145,7 @@ export function MessageForm() {
     if (!canSend) return;
     setStatus({ kind: 'sending' });
     const body = `Name: ${name}\nEmail: ${email}\n\n${message}`;
-    setStatus(await deliver({ kind: 'message', name, email, subject, message, company }, subject || `Website message from ${name}`, body));
+    setStatus(await deliver(turnstile, { kind: 'message', name, email, subject, message, company }, subject || `Website message from ${name}`, body));
   };
 
   if (status.kind === 'done') return <Done via={status.via} what="Your message" />;
@@ -163,6 +177,7 @@ export function MessageForm() {
           <input id="msg-company" name="company" tabIndex={-1} autoComplete="off" value={company} onChange={(e) => setCompany(e.target.value)} />
         </div>
       </div>
+      {turnstile.widget}
       {status.kind === 'error' && <p role="alert" className="mt-4 text-sm text-red">{status.message}</p>}
       <button type="submit" disabled={!canSend} className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-near-black px-7 text-sm font-semibold text-white transition-colors hover:bg-red disabled:opacity-50">
         {status.kind === 'sending' ? 'Sending…' : 'Send message'}

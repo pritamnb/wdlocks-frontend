@@ -1,13 +1,10 @@
 import { NextResponse } from 'next/server';
 import { errorResponse, parseBasketItems, readJson } from '@/lib/request-utils';
 import { CouponError, normaliseCouponCode, quoteCoupon } from '@/lib/coupon';
-import { RateLimiter, clientIp } from '@/lib/rate-limit';
+import { rateLimit, retryAfterHeaders } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-/** Guessing codes should be slow: 8 tries a minute per address. */
-const limiter = new RateLimiter(8, 60_000);
 
 /**
  * POST /api/checkout/coupon   body: { items: [{ id, quantity }], code }
@@ -15,8 +12,12 @@ const limiter = new RateLimiter(8, 60_000);
  * 400 coupon_invalid (WooCommerce's reason) / invalid_request · 429 · 502 upstream.
  */
 export async function POST(req: Request) {
-  if (!limiter.allow(clientIp(req))) {
-    return errorResponse(429, 'rate_limited', 'Too many tries. Please wait a minute and try again.');
+  // Guessing codes should be slow (RATE_LIMITS.checkoutCoupon).
+  const limited = await rateLimit(req, 'checkoutCoupon');
+  if (!limited.ok) {
+    const res = errorResponse(429, 'rate_limited', 'Too many tries. Please wait a few minutes and try again.');
+    for (const [k, v] of Object.entries(retryAfterHeaders(limited))) res.headers.set(k, v);
+    return res;
   }
   const body = await readJson(req);
   if (!body) return errorResponse(400, 'invalid_request', 'Request body must be a JSON object.');

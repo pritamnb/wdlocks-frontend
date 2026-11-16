@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { SITE } from '@/lib/constants';
+import { rateLimit, retryAfterHeaders } from '@/lib/rate-limit';
+import { verifyTurnstile, TURNSTILE_FAILED_MESSAGE } from '@/lib/turnstile';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,9 +28,13 @@ const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/[
 /**
  * POST /api/contact — emails a callback request or a message to the sales inbox through Resend.
  * Returns 503 { reason: 'not-configured' } when RESEND_API_KEY is absent so the page can fall back
- * to the visitor's mail app. Nothing is stored here.
+ * to the visitor's mail app. Nothing is stored here. 403 { reason: 'turnstile' } when the bot check fails, 429 when
+ * the address has sent too many (RATE_LIMITS.contact).
  */
 export async function POST(req: Request) {
+  const limited = await rateLimit(req, 'contact');
+  if (!limited.ok) return NextResponse.json({ error: 'You have sent several messages in a short time. Please wait a few minutes, or call us.' }, { status: 429, headers: retryAfterHeaders(limited) });
+
   let body: Body;
   try {
     const parsed: unknown = await req.json();
@@ -57,6 +63,9 @@ export async function POST(req: Request) {
     if (!EMAIL_RE.test(email)) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 422 });
     if (message.length < 5) return NextResponse.json({ error: 'Tell us how we can help.' }, { status: 422 });
   }
+
+  const human = await verifyTurnstile(req, 'contact');
+  if (!human.ok) return NextResponse.json({ error: TURNSTILE_FAILED_MESSAGE, reason: 'turnstile' }, { status: 403 });
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return NextResponse.json({ error: 'Email delivery is not configured.', reason: 'not-configured' }, { status: 503 });

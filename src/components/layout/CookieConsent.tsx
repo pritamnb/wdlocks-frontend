@@ -8,6 +8,7 @@ import { CloseButton } from '@/components/ui/Modal';
 import { useCart } from '@/hooks/useCart';
 import { useConsent } from '@/hooks/useConsent';
 import { ACCEPT_ALL, ESSENTIAL_ONLY, type ConsentChoice } from '@/lib/consent';
+import { TURNSTILE_ENABLED } from '@/hooks/useTurnstile';
 import { cn } from '@/lib/cn';
 
 /**
@@ -26,7 +27,7 @@ const CATEGORIES: Category[] = [
     key: 'essential',
     locked: true,
     name: 'Essential',
-    detail: 'Keep your basket (saved in this browser), the checkout form and your order working, and let Stripe protect the payment page from fraud. Always on.',
+    detail: `Keep your basket (saved in this browser), the checkout form and your order working, and let Stripe protect the payment page from fraud.${TURNSTILE_ENABLED ? ' A Cloudflare security check stops bots on checkout and our forms.' : ''} Always on.`,
   },
   {
     key: 'analytics',
