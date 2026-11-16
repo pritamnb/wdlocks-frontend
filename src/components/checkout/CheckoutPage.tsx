@@ -157,14 +157,39 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
   const items = cart?.items ?? [];
   const selectedRate = cart?.shipping_rates[0]?.shipping_rates.find((r) => r.selected) ?? null;
   const total = pricedCart ? Number.parseInt(pricedCart.totals.total_price, 10) || 0 : 0;
-  const formValid = emailOk && phoneOk && addressReady && terms && (!cart?.needs_shipping || !!selectedRate);
+  const fieldsValid = emailOk && phoneOk && addressReady && (!cart?.needs_shipping || !!selectedRate);
+  const formRef = React.useRef<HTMLFormElement>(null);
 
-  /** Shared gate for both payment paths: show errors and refuse until the form is complete. */
-  const validate = (): boolean => {
+  /** After the errors render, bring the first flagged field (top of the page first) into view and focus it. */
+  const focusFirstInvalid = () => {
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const el = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]');
+        if (!el) return;
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        el.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+        el.focus({ preventScroll: true });
+      }),
+    );
+  };
+
+  /**
+   * Shared gate for every payment path: flags EVERY problem in one go (contact, address, delivery, terms, and the
+   * payment fields when the payment component reports them through `paymentIssue`), so the shopper never fixes the
+   * card only to be sent back up the page for the address. The message names the real problem, not just the terms.
+   */
+  const validate = (paymentIssue?: string | null): boolean => {
     setShowErrors(true);
     setPayError(null);
-    if (!formValid) {
-      setPayError(!terms ? 'Please accept the terms and conditions to continue.' : 'Please complete the highlighted fields.');
+    if (!fieldsValid || !terms || paymentIssue) {
+      setPayError(
+        !fieldsValid
+          ? `Please complete the highlighted fields${!terms ? ' and accept the terms and conditions' : ''}.`
+          : paymentIssue
+            ? paymentIssue
+            : 'Please accept the terms and conditions to continue.',
+      );
+      focusFirstInvalid();
       return false;
     }
     if (promoChecking || (promo && promo.sig !== lineSig)) {
@@ -292,7 +317,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
       )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-12 lg:gap-12">
-        <form className="space-y-8 lg:col-span-7" onSubmit={(e) => e.preventDefault()} noValidate>
+        <form ref={formRef} className="space-y-8 lg:col-span-7" onSubmit={(e) => e.preventDefault()} noValidate>
           {/* 1 Contact */}
           <section aria-labelledby="co-contact">
             <h2 id="co-contact" className="flex items-center gap-3 text-lg font-semibold text-near-black">
@@ -376,6 +401,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
                 <StripePayment
                   amount={total}
                   prepare={async () => (validate() ? prepare() : null)}
+                  checkForm={validate}
                   returnUrl={returnUrl}
                   billingDetails={billingDetails}
                   disabled={false}
@@ -384,7 +410,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
                   <TermsCheckbox checked={terms} onChange={setTerms} invalid={showErrors && !terms} />
                 </StripePayment>
               ) : demo ? (
-                <DemoPayment amount={total} prepare={async () => (validate() ? prepare() : null)} returnUrl={returnUrl} disabled={false} onError={onPayError}>
+                <DemoPayment amount={total} prepare={async () => (validate() ? prepare() : null)} checkForm={validate} returnUrl={returnUrl} disabled={false} onError={onPayError}>
                   <TermsCheckbox checked={terms} onChange={setTerms} invalid={showErrors && !terms} />
                 </DemoPayment>
               ) : (

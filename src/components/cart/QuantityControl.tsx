@@ -58,7 +58,7 @@ export function QuantityControl({ value, min = 1, max = 99, onChange, disabled, 
         onKeyDown={(e) => e.key === 'Enter' && commit((e.target as HTMLInputElement).value)}
         disabled={disabled}
         aria-label={`Quantity of ${itemName}`}
-        className={cn('w-9 bg-transparent text-center text-sm font-semibold tabular-nums text-near-black outline-none', size === 'sm' && 'w-8')}
+        className={cn('w-9 bg-transparent text-center text-base font-semibold sm:text-sm tabular-nums text-near-black outline-none', size === 'sm' && 'w-8')}
       />
       <button type="button" className={btn} onClick={() => onChange(Math.min(max, value + 1))} disabled={disabled || value >= max} aria-label={`Increase quantity of ${itemName}`}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
