@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/cn';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 export interface FaqItem {
   q: string;
@@ -22,7 +23,7 @@ export function ProductFaq({ items, title = 'Questions, answered' }: { items: Fa
   };
   return (
     <section className="mt-16 max-w-3xl" aria-labelledby="faq-title">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
       <h2 id="faq-title" className="heading-display text-2xl">{title}</h2>
       <ul className="mt-5 divide-y divide-cream-dark rounded-2xl border border-cream-dark bg-warm-white">
         {items.map((item, i) => {

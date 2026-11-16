@@ -31,7 +31,9 @@ const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/[
 export async function POST(req: Request) {
   let body: Body;
   try {
-    body = (await req.json()) as Body;
+    const parsed: unknown = await req.json();
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
+    body = parsed as Body;
   } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }

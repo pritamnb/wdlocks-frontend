@@ -5,6 +5,7 @@ import { Covered, HowToClaim, KeepValid, KeyControl } from '@/components/guarant
 import { ProductFaq } from '@/components/product/ProductFaq';
 import { Accreditations } from '@/components/home/Accreditations';
 import { BuyBand } from '@/components/home/BuyBand';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 export const revalidate = 3600;
 
@@ -33,7 +34,7 @@ export default function GuaranteePage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
+      <JsonLd data={breadcrumbs} />
       <ActivationPanel />
       <Covered />
       <HowToClaim />

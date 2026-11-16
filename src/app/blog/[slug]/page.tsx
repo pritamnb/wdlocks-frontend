@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { SITE, SITE_URL } from '@/lib/constants';
 import { formatDate, getPost } from '@/lib/wp';
 import { BuyBand } from '@/components/home/BuyBand';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -58,8 +59,8 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
+      <JsonLd data={jsonLd} />
+      <JsonLd data={breadcrumbs} />
       <article className="bg-cream pb-20 pt-12 lg:pb-28 lg:pt-16">
         <div className="container-wd">
           <nav aria-label="Breadcrumb" className="text-xs text-charcoal/60">
