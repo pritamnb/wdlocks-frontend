@@ -21,6 +21,8 @@ export function Navbar({ products }: { products: WooProduct[] }) {
   const [scrolled, setScrolled] = React.useState(false);
   const headerRef = React.useRef<HTMLElement>(null);
   const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** The group a mouse hover just opened, and when: the click that usually follows must not close it again. */
+  const hoverOpened = React.useRef<{ group: MenuGroupId; at: number } | null>(null);
 
   // Close menus on route change (derived during render, no effect needed)
   const [prevPathname, setPrevPathname] = React.useState(pathname);
@@ -90,8 +92,17 @@ export function Navbar({ products }: { products: WooProduct[] }) {
               link.menu ? (
                 <li
                   key={link.label}
-                  onMouseEnter={() => { cancelClose(); setOpenGroup(link.menu); }}
-                  onMouseLeave={scheduleClose}
+                  // Hover opens only for a real mouse. A tap sends pointerenter too (pointerType 'touch'), and on a large touch
+                  // screen (iPad Pro landscape, touch laptops) that open plus the tap's click used to toggle it shut at once.
+                  onPointerEnter={(e) => {
+                    if (e.pointerType !== 'mouse') return;
+                    cancelClose();
+                    if (openGroup !== link.menu) hoverOpened.current = { group: link.menu, at: Date.now() };
+                    setOpenGroup(link.menu);
+                  }}
+                  onPointerLeave={(e) => {
+                    if (e.pointerType === 'mouse') scheduleClose();
+                  }}
                 >
                   <button
                     type="button"
@@ -102,7 +113,13 @@ export function Navbar({ products }: { products: WooProduct[] }) {
                     aria-expanded={openGroup === link.menu}
                     aria-controls={MEGA_ID}
                     aria-haspopup="true"
-                    onClick={() => setOpenGroup((g) => (g === link.menu ? null : link.menu))}
+                    onClick={() => {
+                      const hovered = hoverOpened.current;
+                      hoverOpened.current = null;
+                      // A click right after the hover opened this group keeps it open; otherwise click toggles (touch, keyboard).
+                      if (hovered?.group === link.menu && Date.now() - hovered.at < 1000) return setOpenGroup(link.menu);
+                      setOpenGroup((g) => (g === link.menu ? null : link.menu));
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'ArrowDown') {
                         e.preventDefault();
@@ -160,7 +177,7 @@ export function Navbar({ products }: { products: WooProduct[] }) {
         </div>
       </div>
 
-      <div onMouseEnter={cancelClose} onMouseLeave={scheduleClose} className="hidden xl:block">
+      <div onPointerEnter={(e) => e.pointerType === 'mouse' && cancelClose()} onPointerLeave={(e) => e.pointerType === 'mouse' && scheduleClose()} className="hidden xl:block">
         <MegaMenu id={MEGA_ID} group={openGroup} products={products} onNavigate={() => setOpenGroup(null)} />
       </div>
       <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} products={products} />

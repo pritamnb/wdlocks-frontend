@@ -68,4 +68,4 @@ export function toApiAddress(a: AddressForm, contact?: { email: string; phone: s
 
 /** Field classes shared by every checkout input (matches the contact forms). */
 export const FIELD =
-  'block w-full rounded-xl border border-black/15 bg-white px-3.5 py-3 text-[15px] text-near-black placeholder:text-charcoal/45 outline-none transition-[border-color,box-shadow] duration-150 focus:border-near-black focus:ring-2 focus:ring-near-black/10 aria-[invalid=true]:border-red aria-[invalid=true]:focus:ring-red/15';
+  'block w-full rounded-xl border border-black/15 bg-white px-3.5 py-3 text-base text-near-black sm:text-[15px] placeholder:text-charcoal/45 outline-none transition-[border-color,box-shadow] duration-150 focus:border-near-black focus:ring-2 focus:ring-near-black/10 aria-[invalid=true]:border-red aria-[invalid=true]:focus:ring-red/15';

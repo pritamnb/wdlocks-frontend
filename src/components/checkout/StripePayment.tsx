@@ -24,6 +24,9 @@ export interface StripePaymentProps {
   billingDetails: { name: string; email: string; phone: string; address: { line1: string; line2?: string; city: string; state?: string; postal_code: string; country: 'GB' } };
   disabled: boolean;
   onError: (message: string) => void;
+  /** The page's own check (contact, address, delivery, terms). Gets the Payment Element's problem, if any, so every
+   * error shows in ONE pass; returns false (and shows the message) when anything is missing. */
+  checkForm?: (paymentIssue?: string | null) => boolean;
   children?: React.ReactNode;
 }
 
@@ -49,7 +52,7 @@ export function StripePayment(props: StripePaymentProps) {
   );
 }
 
-function PaymentForm({ prepare, returnUrl, billingDetails, disabled, onError, children }: StripePaymentProps) {
+function PaymentForm({ prepare, returnUrl, billingDetails, disabled, onError, checkForm, children }: StripePaymentProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [busy, setBusy] = React.useState(false);
@@ -59,9 +62,11 @@ function PaymentForm({ prepare, returnUrl, billingDetails, disabled, onError, ch
     if (!stripe || !elements || busy) return;
     setBusy(true);
     try {
+      // Stripe marks its own card fields; the page check then flags everything else in the same pass.
       const { error: submitError } = await elements.submit();
-      if (submitError) {
-        onError(submitError.message ?? 'Please check your payment details.');
+      const paymentIssue = submitError ? (submitError.message ?? 'Please check your payment details.') : null;
+      if (checkForm ? !checkForm(paymentIssue) : paymentIssue) {
+        if (!checkForm && paymentIssue) onError(paymentIssue);
         return;
       }
       const order = await prepare();
@@ -83,7 +88,7 @@ function PaymentForm({ prepare, returnUrl, billingDetails, disabled, onError, ch
     } finally {
       setBusy(false);
     }
-  }, [stripe, elements, busy, prepare, returnUrl, billingDetails, onError]);
+  }, [stripe, elements, busy, prepare, returnUrl, billingDetails, onError, checkForm]);
 
   return (
     <div className="space-y-4">
