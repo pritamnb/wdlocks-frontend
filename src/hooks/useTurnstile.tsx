@@ -2,7 +2,8 @@
 
 /**
  * Cloudflare Turnstile, browser side (server side: src/lib/turnstile.ts). Off unless NEXT_PUBLIC_TURNSTILE_SITE_KEY
- * is set at build time: then `widget` is null and `getToken()` resolves null, and the forms behave as before.
+ * is set at build time, and only for the forms NEXT_PUBLIC_TURNSTILE_FORMS lists (default all). For any other form
+ * `widget` is null and `getToken()` resolves null, and the form behaves as before.
  *
  * When on, Cloudflare's script is loaded the first time a protected form mounts (never site-wide) and the widget runs
  * in "execute" mode with appearance "interaction-only": it stays invisible, and a checkbox appears in `widget` only
@@ -11,10 +12,12 @@
  * This is a security check for the visitor's own request (strictly necessary), so it does not wait for cookie consent.
  */
 import * as React from 'react';
-import type { TurnstileAction } from '@/lib/turnstile';
+import { parseTurnstileForms, type TurnstileAction } from '@/lib/turnstile-forms';
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? '';
-export const TURNSTILE_ENABLED = SITE_KEY !== '';
+const FORMS = parseTurnstileForms(process.env.NEXT_PUBLIC_TURNSTILE_FORMS).forms;
+/** True when at least one form is protected (the cookie popup mentions the check then). */
+export const TURNSTILE_ENABLED = SITE_KEY !== '' && FORMS.size > 0;
 export const TURNSTILE_HEADER = 'X-Turnstile-Token';
 
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
@@ -76,6 +79,7 @@ export interface TurnstileHandle {
 }
 
 export function useTurnstile(action: TurnstileAction): TurnstileHandle {
+  const enabled = TURNSTILE_ENABLED && FORMS.has(action);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const widgetRef = React.useRef<Promise<{ api: TurnstileApi; id: string }> | null>(null);
   const pendingRef = React.useRef<Pending | null>(null);
@@ -135,7 +139,7 @@ export function useTurnstile(action: TurnstileAction): TurnstileHandle {
   );
 
   const getToken = React.useCallback(async (): Promise<string | null> => {
-    if (!TURNSTILE_ENABLED) return null;
+    if (!enabled) return null;
     const { api, id } = await ensureWidget();
     settle({ error: 'Superseded by a new submission' });
     return new Promise<string>((resolve, reject) => {
@@ -145,9 +149,9 @@ export function useTurnstile(action: TurnstileAction): TurnstileHandle {
       api.reset(id);
       api.execute(id);
     });
-  }, [ensureWidget, settle]);
+  }, [enabled, ensureWidget, settle]);
 
-  const widget = TURNSTILE_ENABLED ? <div ref={attach} className="[&>*]:mt-4" /> : null;
+  const widget = enabled ? <div ref={attach} className="[&>*]:mt-4" /> : null;
   return { widget, getToken };
 }
 

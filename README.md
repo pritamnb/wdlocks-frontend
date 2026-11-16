@@ -165,22 +165,39 @@ Test orders land in WooCommerce as `pending` → `processing` with meta `_headle
 Place order creates a real WooCommerce order and a Stripe PaymentIntent, and the forms send email or post to
 wdlocks.co.uk, so every write route is rate limited per IP and (once keys are added) bot-checked.
 
-**Rate limits** (`src/lib/rate-limit.ts`, `RATE_LIMITS`), fixed windows per client IP, `429` + `Retry-After`:
+Everything here is switched and tuned with environment variables, so day-to-day changes (provider, limits, which
+forms are checked, the proxy setting) are a settings change and a restart, never a code change. See "Changing it
+without code" below.
 
-| Route | Limits |
-|---|---|
-| `POST /api/checkout/intent` | 10 / min, 30 / hour |
-| `POST /api/checkout/coupon` | 8 / min, 40 / hour |
-| `POST /api/contact` | 5 / 10 min, 20 / day |
-| `POST /api/trade` | 3 / 10 min, 10 / day |
-| `POST /api/guarantee` | 10 / 10 min, 50 / day |
-| `POST /api/crime` | 20 / min, 200 / day |
+**Rate limits** (`src/lib/rate-limit.ts`), fixed windows per client IP, `429` + `Retry-After`. Defaults:
 
-Counters live in a shared Redis over the Upstash REST protocol when `UPSTASH_REDIS_REST_URL` +
+| Route | Default limits | Override |
+|---|---|---|
+| `POST /api/checkout/intent` | 10 / min, 30 / hour | `RATE_LIMIT_CHECKOUT_INTENT` |
+| `POST /api/checkout/coupon` | 8 / min, 40 / hour | `RATE_LIMIT_CHECKOUT_COUPON` |
+| `POST /api/contact` | 5 / 10 min, 20 / day | `RATE_LIMIT_CONTACT` |
+| `POST /api/trade` | 3 / 10 min, 10 / day | `RATE_LIMIT_TRADE` |
+| `POST /api/guarantee` | 10 / 10 min, 50 / day | `RATE_LIMIT_GUARANTEE` |
+| `POST /api/crime` | 20 / min, 200 / day | `RATE_LIMIT_CRIME` |
+
+An override is up to four `count/window` pairs, units `s` `m` `h` `d` (`5/10m,20/1d`; `10/m` means per minute), or
+`off` to switch that route's limit off. An invalid value is logged and the defaults stay in force, so a typo never
+removes protection. Windows can be at most 7 days, and each pair needs a different window length.
+
+**Store.** Counters live in a shared Redis over the Upstash REST protocol when `UPSTASH_REDIS_REST_URL` +
 `UPSTASH_REDIS_REST_TOKEN` are set (Vercel's Upstash integration sets `KV_REST_API_URL` + `KV_REST_API_TOKEN`,
-also accepted). It is plain HTTPS, so it works the same on Vercel and on any Node host. Without those vars, or if the
-store does not answer within 800 ms, each server instance counts in its own memory (logged once a minute). IPs are
-stored as an HMAC, never in clear, and expire with their window.
+also accepted). Without those vars, or if the store does not answer within 800 ms, each server instance counts in
+its own memory (logged once a minute). IPs are stored as an HMAC, never in clear, and expire with their window. The
+protocol is an open HTTP API, so the provider can change by changing the two values:
+
+| Provider | URL / token |
+|---|---|
+| Upstash (recommended: free tier, HTTPS, any host) | the database's REST URL and token from the Upstash console |
+| Vercel KV / Upstash via the Vercel marketplace | nothing: Vercel sets `KV_REST_API_URL` + `KV_REST_API_TOKEN` |
+| Your own Redis (on the host, Redis Cloud, ElastiCache…) | run [serverless-redis-http](https://github.com/hiett/serverless-redis-http) next to it and point the URL at it with its `SRH_TOKEN`. Plain `http://` is accepted only for loopback, private (10/172.16–31/192.168) addresses and single-label hostnames such as a Docker service `srh`; anything else must be `https://` |
+
+A single long-running `next start` process already counts every request in one place, so a store is needed only once
+the site runs as several processes or instances (PM2 cluster, several containers, serverless).
 
 **Client IP** (`src/lib/client-ip.ts`). The first `X-Forwarded-For` entry is written by the visitor and is never used.
 
@@ -208,6 +225,27 @@ popup and runs whatever the visitor chose. If Cloudflare's verify endpoint is un
 through (logged) rather than stopping sales; the rate limits still apply. Cloudflare's test keys (site
 `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA`; secret `2x0000000000000000000000000000000AA`
 always fails) are fine for local runs and staging.
+
+`NEXT_PUBLIC_TURNSTILE_FORMS` picks which forms are checked: any of `checkout`, `contact`, `trade`, `guarantee`, or
+`all` / `none` (default all). Like the site key it is read at build time, so changing it needs a rebuild, not a code
+change; an unknown name means all forms (logged by the server).
+
+**Changing it without code**
+
+| To… | Set | Takes effect |
+|---|---|---|
+| use a shared store / switch provider | `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (or `KV_REST_API_*`) | restart |
+| go back to per-instance memory | remove those two | restart |
+| tighten or loosen a route | `RATE_LIMIT_<ROUTE>=count/window,…` | restart |
+| switch a route's limit off | `RATE_LIMIT_<ROUTE>=off` | restart |
+| move host / proxy | `CLIENT_IP_HEADER` or `TRUSTED_PROXY_COUNT` (nothing on Vercel) | restart |
+| turn Turnstile on | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` | rebuild |
+| stop enforcing Turnstile at once | remove `TURNSTILE_SECRET_KEY` (the widget keeps running until the next build) | restart |
+| check only some forms | `NEXT_PUBLIC_TURNSTILE_FORMS=checkout,contact` | rebuild |
+| rotate Turnstile or store keys | new values in the same vars | restart (rebuild for the site key) |
+
+Code changes are needed only to protect a NEW route or form (one `rateLimit()` / `verifyTurnstile()` call plus a
+default in `RATE_LIMITS` or `TURNSTILE_FORMS`).
 
 **Stripe Radar** rules for card testing: `docs/stripe-radar-rules.md` (recommendations only; nothing is changed in
 the Stripe account from this repo).

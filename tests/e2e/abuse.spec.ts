@@ -1,6 +1,15 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
 import { presetConsent } from './consent';
-import { RATE_LIMITS, rateLimit, type RateLimitName } from '../../src/lib/rate-limit';
+import {
+  RATE_LIMITS,
+  parseRateRules,
+  rateLimit,
+  rateLimitEnvName,
+  rateLimitRules,
+  rateLimitStore,
+  type RateLimitName,
+} from '../../src/lib/rate-limit';
+import { parseTurnstileForms } from '../../src/lib/turnstile-forms';
 import { clientIp, rightmostForwardedFor } from '../../src/lib/client-ip';
 
 /**
@@ -63,6 +72,67 @@ test.describe('client IP source', () => {
     const r = req({ 'x-forwarded-for': '6.6.6.6', 'cf-connecting-ip': '203.0.113.9:51234' });
     expect(clientIp(r, { kind: 'header', name: 'cf-connecting-ip' })).toBe('203.0.113.9');
     expect(clientIp(req({}), { kind: 'header', name: 'cf-connecting-ip' })).toBe('unknown');
+  });
+});
+
+test.describe('configuration without code changes', () => {
+  test('RATE_LIMIT_<ROUTE> names and values', () => {
+    expect(rateLimitEnvName('checkoutIntent')).toBe('RATE_LIMIT_CHECKOUT_INTENT');
+    expect(rateLimitEnvName('crime')).toBe('RATE_LIMIT_CRIME');
+    expect(parseRateRules('5/10m, 20/1d')).toEqual([
+      { limit: 5, windowSec: 600 },
+      { limit: 20, windowSec: 86400 },
+    ]);
+    expect(parseRateRules('10/m')).toEqual([{ limit: 10, windowSec: 60 }]);
+    expect(parseRateRules(' OFF ')).toBe('off');
+    for (const bad of ['', 'ten/1m', '10/1w', '0/1m', '10/8d', '10/1m,20/60s', '1/s,2/m,3/h,4/d,5/2d']) {
+      expect(parseRateRules(bad), bad).toBeNull();
+    }
+  });
+
+  test('an override replaces the defaults, "off" disables, a typo keeps the defaults', async () => {
+    expect(rateLimitRules('trade', {})).toEqual(RATE_LIMITS.trade);
+    expect(rateLimitRules('trade', { RATE_LIMIT_TRADE: '2/1h' })).toEqual([{ limit: 2, windowSec: 3600 }]);
+    expect(rateLimitRules('trade', { RATE_LIMIT_TRADE: 'off' })).toEqual([]);
+    expect(rateLimitRules('trade', { RATE_LIMIT_TRADE: '2 per hour' })).toEqual(RATE_LIMITS.trade);
+
+    const saved = process.env.RATE_LIMIT_CRIME;
+    const req = (ip: string) => new Request('http://localhost/api/crime', { headers: { 'x-forwarded-for': ip } });
+    try {
+      process.env.RATE_LIMIT_CRIME = '2/1m';
+      expect((await rateLimit(req('10.88.0.1'), 'crime')).ok).toBe(true);
+      expect((await rateLimit(req('10.88.0.1'), 'crime')).ok).toBe(true);
+      expect((await rateLimit(req('10.88.0.1'), 'crime')).ok).toBe(false);
+      process.env.RATE_LIMIT_CRIME = 'off';
+      for (let i = 0; i < 50; i++) expect((await rateLimit(req('10.88.0.2'), 'crime')).ok).toBe(true);
+    } finally {
+      if (saved === undefined) delete process.env.RATE_LIMIT_CRIME;
+      else process.env.RATE_LIMIT_CRIME = saved;
+    }
+  });
+
+  test('store URL: https anywhere, plain http only on private addresses', () => {
+    const store = (url: string) => rateLimitStore({ UPSTASH_REDIS_REST_URL: url, UPSTASH_REDIS_REST_TOKEN: 't' });
+    expect(store('https://eu1-x.upstash.io/')).toEqual({ url: 'https://eu1-x.upstash.io', token: 't' });
+    expect(rateLimitStore({ KV_REST_API_URL: 'https://kv.example', KV_REST_API_TOKEN: 't' })?.url).toBe('https://kv.example');
+    for (const ok of ['http://localhost:8079', 'http://127.0.0.1:8079', 'http://10.0.0.5', 'http://192.168.1.2', 'http://172.20.0.3', 'http://srh']) {
+      expect(store(ok), ok).not.toBeNull();
+    }
+    for (const bad of ['http://redis.example.com', 'http://8.8.8.8', 'ftp://srh', 'not a url']) {
+      expect(store(bad), bad).toBeNull();
+    }
+    expect(rateLimitStore({ UPSTASH_REDIS_REST_URL: 'https://x.upstash.io' })).toBeNull();
+  });
+
+  test('NEXT_PUBLIC_TURNSTILE_FORMS', () => {
+    const forms = (raw?: string) => [...parseTurnstileForms(raw).forms].sort();
+    expect(forms(undefined)).toEqual(['checkout', 'contact', 'guarantee', 'trade']);
+    expect(forms('all')).toEqual(['checkout', 'contact', 'guarantee', 'trade']);
+    expect(forms('none')).toEqual([]);
+    expect(forms(' Checkout , contact ')).toEqual(['checkout', 'contact']);
+    // A typo never drops protection: unknown names mean every form, flagged as invalid.
+    expect(forms('checkout,chekout')).toEqual(['checkout', 'contact', 'guarantee', 'trade']);
+    expect(parseTurnstileForms('checkout,chekout').valid).toBe(false);
   });
 });
 
