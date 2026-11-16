@@ -1,0 +1,17 @@
+# Reverse proxy for a plain Linux server we manage ourselves (README "Running on a plain server").
+# Caddy gets and renews the HTTPS certificate on its own. Nothing here needs the host's help, only ports 80/443
+# open and the domain's DNS pointing at the server.
+#
+#   SITE_DOMAIN=shop.example.co.uk caddy run --config deploy/Caddyfile
+#
+# The app must listen on 127.0.0.1 only (deploy/wdlocks-frontend.service does), so every request comes through here,
+# and run with CLIENT_IP_HEADER=x-real-ip: Caddy OVERWRITES X-Real-IP with the address that actually connected,
+# whatever the visitor sent.
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Real-IP {remote_host}
+	}
+}

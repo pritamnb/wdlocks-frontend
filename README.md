@@ -207,13 +207,27 @@ the site runs as several processes or instances (PM2 cluster, several containers
 | Behind Cloudflare | `CLIENT_IP_HEADER=cf-connecting-ip` (only if the origin accepts traffic from Cloudflare alone) |
 | nginx / Apache / a PaaS router in front of `next start` | `CLIENT_IP_HEADER=x-real-ip` if the proxy **overwrites** that header with the peer address (nginx `proxy_set_header X-Real-IP $remote_addr;`), otherwise leave it unset and set `TRUSTED_PROXY_COUNT` to the number of proxies that **append** to `X-Forwarded-For` (default `1`) |
 
-**Tomia (client host).** Where the Next.js app will run on Tomia's side is still open (WP Engine Headless Platform
-or another Node host). Before launch, ask Tomia which header their front proxy sets and pick a row above; if they
-cannot say, leave `CLIENT_IP_HEADER` unset with `TRUSTED_PROXY_COUNT=1` and test: send
-`curl -X POST https://<site>/api/crime -H 'Content-Type: application/json' -H 'X-Forwarded-For: 198.51.100.1' -d '{}'`
-21 times within a minute, changing the made-up address each time. The 21st must still answer `429`; if it does
-not, the setting trusts a header the visitor controls. Never expose `next start` directly: with no proxy in front,
-the visitor's own `X-Forwarded-For` is all there is.
+**Running on a plain server (production).** The host only provides the machine; everything in front of the app
+is ours, so no setting depends on the host's answers or help. On a Linux server with root:
+
+1. `deploy/wdlocks-frontend.service` runs `next start` on **127.0.0.1:3000 only**, with `CLIENT_IP_HEADER=x-real-ip`
+   and settings from `/srv/wdlocks-frontend/.env.production`.
+2. `deploy/Caddyfile` puts Caddy in front: it fetches and renews the HTTPS certificate on its own and **overwrites**
+   `X-Real-IP` with the address that really connected. Needs only ports 80/443 open and DNS pointing at the server.
+3. Leave the rate-limit store unset: one `next start` process counts every request in one place. Add
+   `UPSTASH_REDIS_REST_*` only if the site later runs as several processes or servers.
+
+On hosting without root, where the host's own proxy sits in front of Node, leave `CLIENT_IP_HEADER` unset
+(`TRUSTED_PROXY_COUNT=1` reads the address that proxy appends). Either way, check it ourselves after every deploy to
+a new server or proxy, no host involvement needed:
+
+```bash
+node scripts/check-client-ip.mjs https://<site>
+```
+
+It sends 21 requests with forged client-IP headers and must end in `429`; it then prints a one-line `curl` to run
+from a second network (a phone hotspot), which must not be limited. Never expose `next start` directly on a
+public port: with no proxy in front, the visitor's own `X-Forwarded-For` is all there is.
 
 **Turnstile** (Cloudflare's bot check): `src/hooks/useTurnstile.tsx` in the browser, `src/lib/turnstile.ts` in the
 routes. Covers Place order (`/api/checkout/intent`) and the contact, trade and guarantee forms; the token travels in
@@ -238,7 +252,7 @@ change; an unknown name means all forms (logged by the server).
 | go back to per-instance memory | remove those two | restart |
 | tighten or loosen a route | `RATE_LIMIT_<ROUTE>=count/window,…` | restart |
 | switch a route's limit off | `RATE_LIMIT_<ROUTE>=off` | restart |
-| move host / proxy | `CLIENT_IP_HEADER` or `TRUSTED_PROXY_COUNT` (nothing on Vercel) | restart |
+| move host / proxy | `CLIENT_IP_HEADER` or `TRUSTED_PROXY_COUNT` (nothing on Vercel), then `node scripts/check-client-ip.mjs` | restart |
 | turn Turnstile on | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` | rebuild |
 | stop enforcing Turnstile at once | remove `TURNSTILE_SECRET_KEY` (the widget keeps running until the next build) | restart |
 | check only some forms | `NEXT_PUBLIC_TURNSTILE_FORMS=checkout,contact` | rebuild |
@@ -271,7 +285,7 @@ are kept outside the repo at `../client-assets/wetransfer-2026-11-10/`, and the 
 - Install the mu-plugin above and set `NEXT_PUBLIC_CART_HANDOFF_PLUGIN=true` before launch.
 - Extra Keys (4266) orders go to wdlocks.co.uk until a key-number field is added to the headless flow.
 - Abuse protection needs its accounts before launch: an Upstash (or other) Redis for shared rate limits, Turnstile
-  keys, the client-IP setting for Tomia, and the Radar rules in `docs/stripe-radar-rules.md` (see Abuse protection).
+  keys, `node scripts/check-client-ip.mjs` against the production server, and the Radar rules in `docs/stripe-radar-rules.md` (see Abuse protection).
 - Replace the regex HTML sanitiser with `sanitize-html`/DOMPurify, or move to a nonce-based CSP.
 - `script-src 'unsafe-inline'` in the CSP is required by static generation; move to nonces if routes go dynamic.
 - **PENDING — Reviews (parked 2026-11-10):** the reviews section links out via `TRUSTPILOT_URL` and asserts no rating.
