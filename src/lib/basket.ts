@@ -23,6 +23,7 @@
 import type { CouponQuote, WooCart, WooCartItem, WooCurrency, WooProduct, WooShippingPackage, WooShippingRate } from '@/types';
 import { MAX_CART_QUANTITY } from '@/lib/constants';
 import { parentProductIdOf, variationLabel } from '@/lib/catalogue';
+import { primaryImage } from '@/lib/product-helpers';
 import { pickShippingOption, type ShippingOption } from '@/lib/shipping-options';
 
 export { parentProductIdOf, variationLabel };
@@ -155,7 +156,7 @@ export function lineKey(id: number): string {
 export function describeLine(id: number, products: readonly WooProduct[] = []): BasketLineSnapshot {
   const parentId = parentProductIdOf(id, products) ?? id;
   const product = products.find((p) => p.id === parentId);
-  const image = product?.images[0];
+  const image = product ? primaryImage(product) : null;
   const variation = variationLabel(id, products);
   return {
     name: product?.name ?? `Product ${id}`,
@@ -167,7 +168,7 @@ export function describeLine(id: number, products: readonly WooProduct[] = []): 
 
 /** Snapshot for a simple product card ("Buy now" on the grid, upsells, the keys configurator). */
 export function previewFromProduct(product: WooProduct, quantity = 1, name?: string): BasketLineSnapshot & { id: number; quantity: number } {
-  const image = product.images[0];
+  const image = primaryImage(product);
   return {
     id: product.id,
     quantity,

@@ -12,6 +12,7 @@ import { previewFromProduct } from '@/lib/basket';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { canCheckout } from '@/lib/checkout';
 import { CHECKOUT_MODE, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
+import { primaryImage } from '@/lib/product-helpers';
 import { catalogueEntry } from '@/lib/catalogue';
 
 /** Ultion-style cart page: trust bar, line table, "Don't forget", totals, proceed to checkout. */
@@ -74,7 +75,7 @@ export function BasketPage({ products = [] }: { products?: WooProduct[] }) {
                   <ul className="mt-3 grid gap-3 sm:grid-cols-2">
                     {upsells.map((p) => {
                       const entry = catalogueEntry(p);
-                      const img = p.images[0];
+                      const img = primaryImage(p);
                       return (
                         <li key={p.id} className="flex items-center gap-3 rounded-xl bg-warm-white p-3 ring-1 ring-cream-dark">
                           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-cream">

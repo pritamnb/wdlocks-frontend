@@ -13,6 +13,7 @@ import { useCart } from '@/hooks/useCart';
 import { formatPrice, decodeEntities } from '@/lib/wdlocks-api';
 import { canCheckout } from '@/lib/checkout';
 import { CHECKOUT_MODE, SITE, UPSELL_PRODUCT_IDS } from '@/lib/constants';
+import { primaryImage } from '@/lib/product-helpers';
 import { catalogueEntry } from '@/lib/catalogue';
 import { previewFromProduct } from '@/lib/basket';
 
@@ -90,7 +91,7 @@ export function CartDrawer({ products = [] }: { products?: WooProduct[] }) {
             <ul className="mt-2 space-y-2">
               {upsells.map((p) => {
                 const entry = catalogueEntry(p);
-                const img = p.images[0];
+                const img = primaryImage(p);
                 return (
                   <li key={p.id} className="group flex items-center gap-3 rounded-xl bg-warm-white p-2 ring-1 ring-cream-dark">
                     <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-cream">
