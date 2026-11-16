@@ -14,6 +14,7 @@ import { Accreditations } from '@/components/home/Accreditations';
 import { Delivery } from '@/components/home/Delivery';
 import { ProductGrid } from '@/components/product/ProductGrid';
 import { SITE, SITE_URL } from '@/lib/constants';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 export const revalidate = 60;
 
@@ -38,7 +39,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
+      <JsonLd data={orgJsonLd} />
       <Hero />
       <TrustStrip tone="dark" />
 

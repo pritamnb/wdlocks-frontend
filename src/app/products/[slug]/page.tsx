@@ -20,6 +20,7 @@ import { KeysFeatureSections } from '@/components/product/KeysFeatureSections';
 import { ProductFeatureTiles, KeyedAlikeDoors, ProductCloser } from '@/components/product/ProductFeatureTiles';
 import { InlineFilm } from '@/components/media/InlineFilm';
 import { ChapterLoop } from '@/components/media/ChapterLoop';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -98,7 +99,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   return (
     <div className="bg-white"><div className="container-wd py-8 sm:py-12">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <JsonLd data={productJsonLd} />
       <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Products', href: '/products' }, { label: entry.shortName }]} />
 
       <div className="mt-6 grid gap-10 lg:grid-cols-2 lg:gap-14">

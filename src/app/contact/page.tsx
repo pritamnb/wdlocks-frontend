@@ -4,6 +4,7 @@ import { CallbackForm, MessageForm } from '@/components/contact/ContactForms';
 import { CallCard, EmailCard, QuickActions, VisitCard } from '@/components/contact/ContactCards';
 import { TrustStrip } from '@/components/home/TrustStrip';
 import { BuyBand } from '@/components/home/BuyBand';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 export const revalidate = 3600;
 
@@ -40,8 +41,8 @@ export default function ContactPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
+      <JsonLd data={jsonLd} />
+      <JsonLd data={breadcrumbs} />
 
       <section className="bg-cream pt-16 lg:pt-24" aria-labelledby="contact-h1">
         <div className="container-wd">

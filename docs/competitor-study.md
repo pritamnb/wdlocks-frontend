@@ -962,6 +962,30 @@ black print gives exact straight edges:
 - Verified on a local production build: desktop 1440 px and iPhone 13 screenshots, served through `/_next/image` at
   q85, no horizontal overflow; `pages.spec` 60 passed on Desktop Chrome and Pixel 7.
 
+### Pass 55 — 16 Nov 2026: security hardening
+
+Pritam asked for a security check. A read of every API route, the shared helpers, the live headers and `npm audit` turned
+up no critical issue and no exposed secret (webhook signatures, server re-pricing, order-key bearer checks, httpOnly
+cookies and the header set are sound). Fixed here:
+- **WordPress HTML sanitizer.** `src/lib/sanitize.ts` was a regex filter; `<img/onerror=…>`, `<svg/onload=…>`, unquoted
+  and entity-encoded `javascript:` links all passed it, and the CSP's `'unsafe-inline'` would not have stopped them. It
+  now uses `sanitize-html` 2.18.1 (parser-based) with an allowlist built from a census of the content the site renders
+  (30 documents: product descriptions, posts, privacy, terms): ~40 formatting tags, `class`/`id`/`title`, link schemes
+  http(s)/mailto/tel, no style attributes, iframes, forms or svg. New-tab links get `rel="noopener noreferrer"`. Same
+  visible text and same tag counts as before on all 30 documents; the manufacturer film still lands in the ALPS copy.
+- **JSON-LD.** All 11 structured-data blocks go through `src/components/seo/JsonLd.tsx`, which escapes `<`, `>` and
+  `&`, so a WordPress title containing `</script>` cannot break out of the block.
+- **Form routes.** `/api/guarantee` type-checks every field (a non-array or non-string key list used to throw a 500)
+  and bounds the email at 160 characters; contact, trade, crime and guarantee answer 400 to a JSON body that is not an
+  object (a `null` body used to throw).
+- **Not changed.** `npm audit`'s 7 moderate advisories are one minimatch ReDoS inside the lint tooling; the fix is
+  minimatch 11 and even the latest typescript-eslint still pins ^10, so it waits for upstream (never shipped to the site).
+- **Still open:** rate limiting is per instance and keyed on the first `X-Forwarded-For` hop (spoofable behind a proxy
+  that appends rather than overwrites, which matters on Tomia); contact/trade/guarantee/crime have no limit; checkout
+  creates real orders and PaymentIntents, so add a shared limiter, a bot check and Stripe Radar rules before going live.
+  `DEMO_CHECKOUT_SIGNING_KEY` is unset on both Vercel projects, so the demo cookie uses the public fallback key
+  (pretend orders only).
+
 ## 9. Independent review
 
 A second agent re-crawled both sites (≈45 Ultion pages, 9 WD pages, both Store APIs, Ultion's theme CSS/JS, GTM container) without a browser and cross-checked sections 1–7. Full review: [competitor-study-review.md](competitor-study-review.md).

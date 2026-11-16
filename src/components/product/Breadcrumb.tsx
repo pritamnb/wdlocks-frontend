@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SITE_URL } from '@/lib/constants';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 export interface Crumb {
   label: string;
@@ -34,7 +35,7 @@ export function Breadcrumb({ items }: { items: Crumb[] }) {
           );
         })}
       </ol>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
     </nav>
   );
 }

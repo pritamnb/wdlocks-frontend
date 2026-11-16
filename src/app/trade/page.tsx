@@ -4,6 +4,7 @@ import { TradeCloser, TradeHero, TradeReasons, TradeSteps } from '@/components/t
 import { TradeForm } from '@/components/trade/TradeForm';
 import { ProductFaq } from '@/components/product/ProductFaq';
 import { Accreditations } from '@/components/home/Accreditations';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 export const revalidate = 3600;
 
@@ -25,7 +26,7 @@ export default function TradePage() {
   };
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
+      <JsonLd data={breadcrumbs} />
       <TradeHero />
       <TradeReasons />
       <TradeSteps />

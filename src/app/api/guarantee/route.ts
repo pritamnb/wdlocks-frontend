@@ -3,15 +3,18 @@ import { GUARANTEE } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
+/** Untrusted JSON: every field is checked for type before use. */
 interface Body {
-  name?: string;
-  email?: string;
-  keyNumbers?: string[];
-  installType?: 'door-and-lock' | 'lock';
-  consent?: boolean;
+  name?: unknown;
+  email?: unknown;
+  keyNumbers?: unknown;
+  installType?: unknown;
+  consent?: unknown;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Single line, trimmed, at most max characters; anything that is not a string becomes ''. */
+const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/[\r\n]+/g, ' ').trim().slice(0, max) : '');
 
 /**
  * POST /api/guarantee — forwards a registration to the Elementor form on wdlocks.co.uk, where activations are
@@ -24,21 +27,28 @@ export async function POST(req: Request) {
 
   let body: Body;
   try {
-    body = (await req.json()) as Body;
+    const parsed: unknown = await req.json();
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
+    body = parsed as Body;
   } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
 
-  const name = (body.name ?? '').trim();
-  const email = (body.email ?? '').trim();
-  const keys = (body.keyNumbers ?? []).map((k) => k.trim().toUpperCase()).filter(Boolean).slice(0, GUARANTEE.maxKeys);
+  const name = clean(body.name, 121);
+  const email = clean(body.email, 161);
+  const rawKeys = Array.isArray(body.keyNumbers) ? body.keyNumbers : [];
+  const keys = rawKeys
+    .slice(0, GUARANTEE.maxKeys * 2)
+    .map((k) => clean(k, 20).toUpperCase())
+    .filter(Boolean)
+    .slice(0, GUARANTEE.maxKeys);
 
   if (name.length < 2 || name.length > 120) return NextResponse.json({ error: 'Enter your name.' }, { status: 422 });
-  if (!EMAIL_RE.test(email)) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 422 });
-  if (keys.length === 0 || keys.some((k) => !GUARANTEE.keyNumberPattern.test(k))) {
+  if (email.length > 160 || !EMAIL_RE.test(email)) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 422 });
+  if (rawKeys.some((k) => typeof k !== 'string') || keys.length === 0 || keys.some((k) => !GUARANTEE.keyNumberPattern.test(k))) {
     return NextResponse.json({ error: `Enter the key number stamped on your key, e.g. ${GUARANTEE.keyNumberExample}.` }, { status: 422 });
   }
-  if (!body.consent) return NextResponse.json({ error: 'Please confirm you are happy for your data to be stored for the guarantee.' }, { status: 422 });
+  if (body.consent !== true) return NextResponse.json({ error: 'Please confirm you are happy for your data to be stored for the guarantee.' }, { status: 422 });
 
   const message = [
     `Key number${keys.length > 1 ? 's' : ''}: ${keys.join(', ')}`,

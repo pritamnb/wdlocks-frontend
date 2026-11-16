@@ -7,6 +7,7 @@ import { BehindWatchdog } from '@/components/truths/BehindWatchdog';
 import { Accreditations } from '@/components/home/Accreditations';
 import { Guarantee } from '@/components/home/Guarantee';
 import { BuyBand } from '@/components/home/BuyBand';
+import { JsonLd } from '@/components/seo/JsonLd';
 
 export const revalidate = 3600;
 
@@ -35,7 +36,7 @@ export default function HomeTruthsPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
+      <JsonLd data={breadcrumbs} />
       <TruthsBanner />
       <TruthsSlider />
       <CrimeChecker />
