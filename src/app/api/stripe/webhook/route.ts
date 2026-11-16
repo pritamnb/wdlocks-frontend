@@ -9,9 +9,11 @@ import {
   addOrderNote,
   isOrderPaid,
   minorToMajor,
+  recordRefund,
   WcRestError,
   type WooRestOrder,
 } from '@/lib/wc-rest';
+import { mirrorRefundsEnabled, refundToRecordPence } from '@/lib/order-housekeeping';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -112,15 +114,26 @@ async function onChargeRefunded(charge: Stripe.Charge): Promise<void> {
   const order = await orderForIntent(intent);
   if (!order) return;
   const partial = charge.amount_refunded < charge.amount ? 'Partial' : 'Full';
+  const summary = `${partial} refund in Stripe: ${money(charge.amount_refunded, charge.currency)} of ${money(charge.amount, charge.currency)} (charge ${charge.id}, intent ${intentId}).`;
+  if (!mirrorRefundsEnabled()) {
+    await addOrderNote(order.id, `${summary} Not mirrored automatically (MIRROR_STRIPE_REFUNDS=off): record the refund in WooCommerce if stock or accounts need it.`);
+    return;
+  }
+  // Book only what the order does not show yet (Stripe sends the cumulative amount; retries and second partial
+  // refunds must not double-count). No money moves here: the refund already happened in Stripe.
+  const toRecord = refundToRecordPence(charge.amount_refunded, order);
+  if (toRecord <= 0) return;
+  await recordRefund(order.id, minorToMajor(toRecord, 2), `Refunded in Stripe (${charge.id})`);
   await addOrderNote(
     order.id,
-    `${partial} refund in Stripe: ${money(charge.amount_refunded, charge.currency)} of ${money(charge.amount, charge.currency)} (charge ${charge.id}, intent ${intentId}). Not mirrored automatically — record the refund in WooCommerce if stock or accounts need it.`,
+    `${summary} ${money(toRecord, charge.currency)} booked on this order automatically; no money moved from WooCommerce. Stock was not put back: adjust it by hand if the items are returned.`,
   );
 }
 
 /**
  * POST /api/stripe/webhook — Stripe → WooCommerce order lifecycle.
- * Events: payment_intent.succeeded, payment_intent.payment_failed, payment_intent.processing, charge.refunded.
+ * Events: payment_intent.succeeded, payment_intent.payment_failed, payment_intent.processing, charge.refunded (booked on
+ * the order as a WooCommerce refund record, src/lib/order-housekeeping.ts).
  * 400 bad signature · 503 not configured · 500 when WooCommerce could not be updated (so Stripe retries) · 200 otherwise
  * (including the sandbox stage, where there is no WooCommerce order to update).
  */

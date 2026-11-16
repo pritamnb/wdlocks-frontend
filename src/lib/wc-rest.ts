@@ -75,6 +75,8 @@ export interface WooRestOrder {
   total: string;
   total_tax: string;
   date_created: string;
+  /** UTC, no zone suffix (WooCommerce format), e.g. "2026-11-16T10:04:05". */
+  date_created_gmt: string;
   date_paid: string | null;
   transaction_id: string;
   payment_method: string;
@@ -86,6 +88,8 @@ export interface WooRestOrder {
   line_items: WooRestLineItem[];
   shipping_lines: WooRestShippingLine[];
   coupon_lines: Array<{ id: number; code: string }>;
+  /** Refunds recorded on the order; `total` is negative, e.g. "-12.50". */
+  refunds?: Array<{ id: number; reason: string; total: string }>;
   meta_data: WooRestMeta[];
 }
 
@@ -311,6 +315,27 @@ export function getOrder(id: number): Promise<WooRestOrder> {
 
 export function updateOrder(id: number, patch: WooRestOrderPatch): Promise<WooRestOrder> {
   return wcFetch<WooRestOrder>(`/orders/${id}`, { method: 'PUT', body: patch });
+}
+
+/**
+ * Pending orders created between `afterIso` and `beforeIso` (UTC), oldest first, at most `perPage`. `dates_are_gmt`
+ * makes WooCommerce compare against date_created_gmt rather than the shop's local time. The lower bound matters: the
+ * shop still has unpaid orders from its old checkout (2025, May 2026) that would otherwise fill every page.
+ */
+export function listPendingOrdersBetween(afterIso: string, beforeIso: string, perPage = 100): Promise<WooRestOrder[]> {
+  const q = new URLSearchParams({ status: 'pending', after: afterIso, before: beforeIso, dates_are_gmt: 'true', orderby: 'date', order: 'asc', per_page: String(perPage) });
+  return wcFetch<WooRestOrder[]>(`/orders?${q.toString()}`, { method: 'GET' });
+}
+
+/**
+ * Records a refund that already happened elsewhere (in Stripe). `api_refund: false` stops WooCommerce asking a payment
+ * gateway to move money; it only books the refund on the order (a full refund moves the order to "refunded").
+ */
+export function recordRefund(id: number, amountMajor: string, reason: string): Promise<{ id: number }> {
+  return wcFetch<{ id: number }>(`/orders/${id}/refunds`, {
+    method: 'POST',
+    body: { amount: amountMajor, reason: reason.slice(0, 200), api_refund: false, api_restock: false },
+  });
 }
 
 /** set_paid makes WooCommerce record date_paid, move to processing and reduce stock. */

@@ -114,7 +114,7 @@ pushes them to Vercel; nothing else changes between stages).
 | 0 (today) | production wdlocks-frontend.vercel.app | none (`NEXT_PUBLIC_CHECKOUT_MODE=demo`) | pretend provider, pretend orders | everyone — nothing is charged |
 | **1 sandbox** ✅ 12 Nov | **staging** wdlocks-frontend-staging.vercel.app | `pk_test_` + `sk_test_` + `whsec_` | real Stripe Payment Element in **test mode**, Stripe's dummy cards, real test-mode PaymentIntents; the order stays a pretend one (cookie), WooCommerce untouched | Pritam + Paramjit, on any phone (no login wall, `noindex`) |
 | 2 orders ✅ 12 Nov | staging | + `ck_`/`cs_` WooCommerce REST key | test-card orders appear in the WooCommerce admin as `pending` → `processing`, marked by the webhook; test orders are cancelled afterwards | same |
-| 3 live | production | `pk_live_` + `sk_live_` + `whsec_` + `ck_`/`cs_` | real money; Apple Pay / Google Pay need the production domain registered under Payment method domains | shoppers |
+| 3 live | production (own Node server at wdlocks.co.uk) | `pk_live_` + `sk_live_` + `whsec_` + `ck_`/`cs_` | real money; prepared 16 Nov, not switched on: runbook in **docs/go-live-payments.md** (`--target server`, wallet domain, abandoned-order sweep, refund booking) | shoppers |
 
 Staging is its own Vercel project (`wdlocks-frontend-staging`, deployed from the `staging` branch via the git worktree
 `../wdlocks-frontend-staging`): preview deployments on this plan sit behind Vercel Authentication, which neither the
@@ -160,6 +160,7 @@ Runbook:
    Payments appear in the Stripe Dashboard (test mode) → Payments.
 4. Stage 2: WooCommerce → Settings → Advanced → REST API → Add key (Read/Write) into `.env.local`
    (`WC_CONSUMER_KEY/SECRET`), rerun step 2 and 3.
-5. Stage 3: live keys in `.env.local`, `node scripts/stripe-setup.mjs --target production`, `vercel deploy --prod --yes`,
-   register the domain for Apple Pay / Google Pay, remove `NEXT_PUBLIC_CHECKOUT_MODE` from production.
+5. Stage 3: see docs/go-live-payments.md. Production runs on our own Node server, so it is `--target server` with the
+   live keys in `.env.live` (never `.env.local`); the script registers the webhook and the wallet domain and writes
+   `.env.server` for the server. (`--target production` still pushes to the Vercel project.)
 
