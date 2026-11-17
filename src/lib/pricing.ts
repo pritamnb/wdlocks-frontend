@@ -11,6 +11,7 @@ import { splitVat, type BasketLineInput } from '@/lib/basket';
 import type { ShippingOption } from '@/lib/shipping-options';
 import { getShippingOptionsSSR } from '@/lib/shipping-rates';
 import { quoteCoupon } from '@/lib/coupon';
+import { isExampleCoupon, quoteExampleCoupon } from '@/lib/example-coupons';
 import type { CouponQuote, WooProduct } from '@/types';
 
 export const PRICE_CACHE_SECONDS = 300;
@@ -156,14 +157,27 @@ export async function priceBasket(items: readonly BasketLineInput[], shippingOpt
   const shipping = options.find((o) => o.id === shippingOptionId);
   if (!shipping) throw new PricingError(400, 'shipping_required', 'That delivery option is no longer offered. Please choose delivery again.');
   const ids = items.map((i) => i.id);
-  // The promo code is checked by WooCommerce in parallel with the price lookup (CouponError 400 when it no longer applies).
-  const [first, coupon] = await Promise.all([getProductsForIds(ids), couponCode ? quoteCoupon(items, couponCode) : Promise.resolve(null)]);
-  let priced = assemble(items, first, shipping, coupon);
+  // Example codes (test checkouts only, src/lib/example-coupons.ts) are worked out from these prices; any other code is
+  // checked by WooCommerce in parallel with the price lookup (CouponError 400 when it no longer applies).
+  const example = couponCode !== undefined && isExampleCoupon(couponCode);
+  const [first, wcCoupon] = await Promise.all([getProductsForIds(ids), couponCode && !example ? quoteCoupon(items, couponCode) : Promise.resolve(null)]);
+  const couponFor = (products: Map<number, WooProduct>) => (example ? quoteExampleCoupon(couponCode!, itemsPenceFor(items, products)) : wcCoupon);
+  let priced = assemble(items, first, shipping, couponFor(first));
   if (expectedTotalPence !== undefined && priced.totalPence !== expectedTotalPence) {
     const fresh = await getProductsForIds(ids, true);
-    priced = assemble(items, fresh, shipping, coupon);
+    priced = assemble(items, fresh, shipping, couponFor(fresh));
   }
   return priced;
+}
+
+function itemsPenceFor(items: readonly BasketLineInput[], products: Map<number, WooProduct>): number {
+  return items.reduce((n, i) => n + priceLine(i, products.get(i.id)).linePence, 0);
+}
+
+/** The /api/checkout/coupon answer for an example code: priced from the Store API like the order will be. */
+export async function quoteExampleForItems(items: readonly BasketLineInput[], code: string): Promise<CouponQuote> {
+  const products = await getProductsForIds(items.map((i) => i.id));
+  return quoteExampleCoupon(code, itemsPenceFor(items, products));
 }
 
 function assemble(items: readonly BasketLineInput[], products: Map<number, WooProduct>, shipping: ShippingOption, coupon: CouponQuote | null): PricedBasket {

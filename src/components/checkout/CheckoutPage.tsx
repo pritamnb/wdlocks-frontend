@@ -307,7 +307,7 @@ export function CheckoutPage({ preview = false }: { preview?: boolean }) {
       </div>
       {stripeLive && STRIPE_TEST_MODE && (
         <p role="status" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
-          <strong>Test mode.</strong> This checkout runs on Stripe&rsquo;s test keys: real cards are refused and nothing is charged. Pay with 4242 4242 4242 4242 (any future expiry, any CVC); 4000 0000 0000 0002 is declined and 4000 0025 0000 3155 asks for 3-D Secure.
+          <strong>Test mode.</strong> This checkout runs on Stripe&rsquo;s test keys: real cards are refused and nothing is charged. Pay with 4242 4242 4242 4242 (any future expiry, any CVC); 4000 0000 0000 0002 is declined and 4000 0025 0000 3155 asks for 3-D Secure. Example promo codes: EXAMPLE10 (10&nbsp;% off), EXAMPLE5 (£5 off), EXAMPLE50 (£10 off a £50 basket), EXAMPLEOLD (expired).
         </p>
       )}
       {preview && !stripeLive && !demo && (
