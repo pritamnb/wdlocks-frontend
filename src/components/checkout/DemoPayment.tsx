@@ -43,6 +43,9 @@ export interface DemoPaymentProps {
   returnUrl: (order: CreatePaymentIntentResponse) => string;
   disabled: boolean;
   onError: (message: string) => void;
+  /** The page's own check (contact, address, delivery, terms). Gets this form's card problem, if any, so every error
+   * shows in ONE pass; returns false (and shows the message) when anything is missing. */
+  checkForm?: (paymentIssue?: string | null) => boolean;
   children?: React.ReactNode;
 }
 
@@ -76,7 +79,7 @@ function luhn(num: string) {
  * Stripe keys exist. Test cards: 4242 4242 4242 4242 pays, 4000 0000 0000 0002 declines, 4000 0025 0000 3155
  * shows a 3-D Secure style challenge. No money moves and no order reaches WooCommerce.
  */
-export function DemoPayment({ amount, prepare, returnUrl, disabled, onError, children }: DemoPaymentProps) {
+export function DemoPayment({ amount, prepare, returnUrl, disabled, onError, checkForm, children }: DemoPaymentProps) {
   const [method, setMethod] = React.useState<Method>('card');
   const [card, setCard] = React.useState('');
   const [expiry, setExpiry] = React.useState('');
@@ -107,8 +110,9 @@ export function DemoPayment({ amount, prepare, returnUrl, disabled, onError, chi
 
   const pay = async () => {
     setTouched(true);
-    if (method === 'card' && !cardFormOk) {
-      onError('Check the card details: number, expiry, security code and the name on the card.');
+    const cardIssue = method === 'card' && !cardFormOk ? 'Check the card details: number, expiry, security code and the name on the card.' : null;
+    if (checkForm ? !checkForm(cardIssue) : cardIssue) {
+      if (!checkForm && cardIssue) onError(cardIssue);
       return;
     }
     setBusy('authorising');
