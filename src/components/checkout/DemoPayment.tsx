@@ -159,7 +159,7 @@ export function DemoPayment({ amount, prepare, returnUrl, disabled, onError, che
   return (
     <div className="space-y-4">
       <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
-        <strong>Demo payment.</strong> Nothing is charged and no order is created. Test cards: 4242 4242 4242 4242 pays · 4000 0000 0000 0002 declines · 4000 0025 0000 3155 asks for 3-D Secure.
+        <strong>Demo payment.</strong> Nothing is charged and no order is created. Test cards: 4242 4242 4242 4242 pays · 4000 0000 0000 0002 declines · 4000 0025 0000 3155 asks for 3-D Secure. Promo codes: EXAMPLE10 · EXAMPLE5 · EXAMPLE50 · EXAMPLEOLD.
       </p>
 
       <div role="tablist" aria-label="Payment method" className="grid grid-cols-2 gap-2 sm:grid-cols-5">
