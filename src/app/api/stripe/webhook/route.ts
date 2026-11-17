@@ -95,6 +95,13 @@ async function onPaymentSucceeded(intent: Stripe.PaymentIntent): Promise<void> {
 async function onPaymentFailed(intent: Stripe.PaymentIntent): Promise<void> {
   const order = await orderForIntent(intent);
   if (!order || isOrderPaid(order)) return;
+  // Events can arrive late and out of order: after a declined card the shopper may already be paying again on the same
+  // intent (the checkout reuses it). Only mark the order Failed when the intent is still waiting for a new method.
+  const current = await getStripe().paymentIntents.retrieve(intent.id);
+  if (current.status !== 'requires_payment_method') {
+    await addOrderNote(order.id, `Stripe reported an earlier failed attempt on ${intent.id} (${intent.last_payment_error?.message ?? 'no message'}); the payment has since moved on (${current.status}), so the order was not marked Failed.`);
+    return;
+  }
   const reason = intent.last_payment_error?.message ?? 'no error message supplied';
   if (order.status !== 'failed') await updateOrder(order.id, { status: 'failed' });
   await addOrderNote(order.id, `Stripe payment failed: ${intent.id} — ${reason}`);

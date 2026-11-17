@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { errorResponse } from '@/lib/request-utils';
-import { isWcRestConfigured, getOrder, isOrderPaid, toCheckoutStatus, WcRestError } from '@/lib/wc-rest';
+import { isWcRestConfigured, getOrder, isOrderPaid, majorToMinor, orderMeta, toCheckoutStatus, STRIPE_INTENT_META, WcRestError, type WooRestOrder } from '@/lib/wc-rest';
 import { isDemoCheckout, isStripeSandbox, readDemoOrder, writeDemoOrder, toDemoStatus, type DemoOrder } from '@/lib/demo-checkout';
-import { getStripe, describeStripeError } from '@/lib/stripe-server';
+import { getStripe, describeStripeError, isStripeConfigured } from '@/lib/stripe-server';
 import type { CheckoutOrderStatus, CheckoutStatusResponse } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +23,31 @@ function statusFromIntent(status: string, hadError: boolean): CheckoutOrderStatu
       return hadError ? 'failed' : 'pending';
     default:
       return 'pending';
+  }
+}
+
+/**
+ * Live stage: what Stripe says about an order WooCommerce does not show as paid yet. The webhook can trail the shopper
+ * by seconds, and a late "payment failed" event for an earlier declined attempt can briefly mark a retried order
+ * Failed (rehearsal, 17 Nov). Stripe is the record of whether money moved, so the return page asks it directly.
+ * Only an intent that belongs to this order (metadata) and matches its total counts.
+ */
+async function liveStatusFromStripe(order: WooRestOrder, current: CheckoutOrderStatus): Promise<{ status: CheckoutOrderStatus; paid: boolean } | null> {
+  if (!isStripeConfigured()) return null;
+  const intentId = orderMeta(order, STRIPE_INTENT_META) ?? (order.transaction_id?.startsWith('pi_') ? order.transaction_id : undefined);
+  if (!intentId) return null;
+  try {
+    const intent = await getStripe().paymentIntents.retrieve(intentId);
+    if (intent.metadata.wc_order_id !== String(order.id) || intent.amount !== majorToMinor(order.total, 2)) return null;
+    if (intent.status === 'succeeded') return { status: 'processing', paid: true };
+    if (intent.status === 'processing') return { status: 'on-hold', paid: false };
+    // A retry is under way on the same intent: not failed (yet).
+    if (current === 'failed' && (intent.status === 'requires_confirmation' || intent.status === 'requires_action')) return { status: 'pending', paid: false };
+    return null;
+  } catch (err) {
+    const info = describeStripeError(err);
+    console.warn('[checkout/status] could not read the PaymentIntent; using the order status', { type: info.type, code: info.code });
+    return null;
   }
 }
 
@@ -68,11 +93,17 @@ export async function GET(req: Request) {
     const order = await getOrder(orderId);
     if (order.order_key !== key) return errorResponse(404, 'order_not_found', 'Order not found.');
 
+    let status = toCheckoutStatus(order.status);
+    let paid = isOrderPaid(order);
+    if (!paid && (status === 'pending' || status === 'failed')) {
+      const fromStripe = await liveStatusFromStripe(order, status);
+      if (fromStripe) ({ status, paid } = fromStripe);
+    }
     const payload: CheckoutStatusResponse = {
       orderId: order.id,
       orderNumber: order.number,
-      status: toCheckoutStatus(order.status),
-      paid: isOrderPaid(order),
+      status,
+      paid,
       total: order.total,
       currency: order.currency,
       ...(order.billing.email ? { email: order.billing.email } : {}),

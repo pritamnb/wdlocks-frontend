@@ -6,13 +6,14 @@
  *    checkout); REST orders like ours would stay "Pending payment" forever. The sweep cancels OUR pending orders
  *    (`_headless_site` meta, never anyone else's) once they are older than ABANDONED_ORDER_MINUTES (default 120).
  *    Pending orders hold no stock (stock drops when the order is paid), and a payment that arrives later still
- *    reopens the order: the webhook marks it paid whatever its status. It runs at most every 15 minutes, in the
- *    background of a checkout request, so it needs no cron job on the server.
+ *    reopens the order: the webhook marks it paid whatever its status. It runs at most every 15 minutes, after a
+ *    checkout request has been answered (Next's after()), so it needs no cron job on the server.
  *
  * 2. Refunds made in the Stripe Dashboard. The webhook books the refunded amount on the WooCommerce order (no money
  *    moves; `api_refund: false`), so the order shows "Refunded" and the shop's reports stay right. Idempotent: it
  *    records only the difference between what Stripe has refunded and what the order already shows.
  */
+import { after } from 'next/server';
 import { HEADLESS_SITE_META, addOrderNote, getOrder, listPendingOrdersBetween, orderMeta, updateOrder, type WooRestOrder } from '@/lib/wc-rest';
 
 export const DEFAULT_ABANDONED_MINUTES = 120;
@@ -81,7 +82,7 @@ export function maybeSweepAbandonedOrders(now = Date.now()): void {
   if (sweeping || now - lastSweepAt < SWEEP_EVERY_MS) return;
   lastSweepAt = now;
   sweeping = true;
-  sweepAbandonedOrders(now)
+  const run = () => sweepAbandonedOrders(now)
     .then(({ cancelled, minutes }) => {
       if (cancelled.length) console.info('[orders] cancelled abandoned headless orders', { count: cancelled.length, ids: cancelled, minutes });
     })
@@ -89,6 +90,13 @@ export function maybeSweepAbandonedOrders(now = Date.now()): void {
     .finally(() => {
       sweeping = false;
     });
+  // after() keeps a serverless function alive until the sweep ends (Vercel) and runs it once the response is sent on a
+  // plain Node server. Outside a request (scripts, tests) it throws, so run it directly there.
+  try {
+    after(run);
+  } catch {
+    void run();
+  }
 }
 
 /* ---------------------------------------------------------------------------
