@@ -29,7 +29,10 @@ and this branch adds what only matters once real shoppers use it:
   the customer its refund email. Partial and repeated refunds book only the difference. Stock is not put back
   automatically. `MIRROR_STRIPE_REFUNDS=off` goes back to a note only.
 - **Declined card, second try.** The same order and PaymentIntent are reused (the order goes back from "Failed" to
-  "Pending payment"), instead of a second order being left behind.
+  "Pending payment"), instead of a second order being left behind. Because Stripe's "payment failed" event for the first
+  attempt can arrive after the retry has succeeded, the webhook only marks an order Failed while the payment still
+  needs a new card, and the confirmation page asks Stripe directly when WooCommerce has not caught up yet (found in the
+  rehearsal, see below).
 - **Mixed keys.** A live publishable key with a test secret key (or the reverse) makes the checkout refuse to start a
   payment (503, logged) instead of failing in the shopper's browser.
 
@@ -98,7 +101,11 @@ arrive in the same Orders list. The differences:
 - orders are guest orders;
 - the payment method reads "Card / wallet (Stripe)";
 - refunds are made in Stripe and then show on the order by themselves;
-- unpaid orders disappear after two hours instead of piling up.
+- unpaid orders are cancelled after two hours instead of piling up.
+
+E-mails (seen in the rehearsal): "New order" for each paid order; WooCommerce's "Failed order" when a card is declined;
+"Cancelled order" when the clean-up cancels an abandoned checkout. WooCommerce's own checkout sends the same three
+e-mails. Any of them can be switched off under WooCommerce → Settings → Emails.
 
 ## Tested on this branch (16 Nov 2026)
 
@@ -117,7 +124,26 @@ No real WooCommerce order was created, changed or e-mailed:
   missing `.env.live`; `--verify` against staging passes all checks.
 - Production build passes; typecheck and lint clean.
 
-**Not yet run:** a stage-2 rehearsal of the new pieces against the real shop (test card → real WooCommerce order →
-refund in Stripe → order Refunded). It creates real orders that e-mail the client, so it waits for Pritam's go. It
-would run on staging with the staging WooCommerce key added back for the duration, and the orders would be cancelled
-afterwards (docs/stripe-checkout-plan.md §5).
+## Rehearsal against the real shop (17 Nov 2026, Pritam's go)
+
+How it was run:
+- Staging ran this branch with the staging WooCommerce key and `ABANDONED_ORDER_MINUTES=30`, so Stripe was in test
+  mode with real WooCommerce orders.
+- Product: Bruno (£19.99 + £6.40 delivery = £26.39; stock not tracked, so no stock moved).
+- Afterwards all seven test orders (#6240, #6241, #6243–#6246, #6249) were cancelled with a note. The key and the
+  setting were removed from staging, staging was redeployed from its own branch, and it makes pretend orders again
+  (checked: order #939466, no new WooCommerce order).
+
+| Run | What happened | Result |
+|---|---|---|
+| R1 #6240 | Paid with 4242 → refunded in Stripe | Processing with "Stripe payment succeeded" note, "New order" e-mail sent; after the refund **Refunded**, refund record −£26.39, note "booked on this order automatically", WooCommerce's customer refund e-mail fired |
+| R2 #6241 | 3-D Secure challenge left open | Stripe failed the attempt when the challenge expired; the webhook marked it **Failed** (so the sweep correctly left it) |
+| R3 #6243 | Declined (0002), then paid (4242) | Same order and PaymentIntent reused, order paid, **but the confirmation page said "Payment didn't go through"**: the late "failed" event had marked the reused order Failed and the page trusted it. **Fixed** in 0399190 (see above); without the fix a shopper charged once could have paid again |
+| R4b #6246 | Same as R3, after the fix | Both attempts on #6246 / one PaymentIntent, **"Thank you, your order is confirmed"**, basket emptied, order Processing |
+| R5 #6244 | Order created, payment never attempted (browser blocked Stripe's confirm call) | Pending payment for 30 minutes, then **Cancelled** by the sweep with its note, triggered by R6's checkout (works on Vercel through `after()`) |
+| R6 #6249 | Paid with 4242 | Confirmed; ran the sweep; refunded in Stripe → Refunded |
+| — | Refunds of #6243, #6246, #6249 in Stripe | Each turned Refunded with its refund record |
+
+Two things to tell the client before launch: test purchases send the shop real "New order" e-mails (the rehearsal sent
+four), and cancelling an abandoned checkout sends "Cancelled order" (the same as WooCommerce's own unpaid-order
+clean-up today).
