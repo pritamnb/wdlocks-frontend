@@ -1,5 +1,7 @@
 # Can WP Engine's Headless Platform host the new front end?
 
+> **Superseded 18 Nov 2026:** the front end goes on a Fasthosts VPS and WordPress stays where it is (see `fasthosts-runbook.md`). Kept for the record.
+
 Researched 13 Nov 2026 from WP Engine's own documentation and the npm registry. Background: Tomia hosts wdlocks.co.uk on WP Engine's standard (PHP/WordPress) platform, which cannot run Next.js. Vercel is ruled out by Pritam. The question is whether WP Engine's separate Headless Platform (formerly Atlas) can run this app.
 
 ## Short answer
