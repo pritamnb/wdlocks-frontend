@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ConsentProvider } from '@/hooks/useConsent';
 import { CookieConsent } from '@/components/layout/CookieConsent';
+import { GoogleTags } from '@/components/layout/GoogleTags';
 import { getMenuProductsSSR } from '@/lib/api';
 import { getShippingOptionsSSR } from '@/lib/shipping-rates';
 
@@ -36,6 +37,7 @@ export async function RootLayout({ children }: { children: ReactNode }) {
           </main>
           <Footer products={products} />
           <CookieConsent />
+          <GoogleTags />
           <CartDrawer products={products} />
         </ConsentProvider>
       </CartProvider>

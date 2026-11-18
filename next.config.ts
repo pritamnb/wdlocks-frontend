@@ -1,10 +1,24 @@
 import type { NextConfig } from 'next';
 import { legacyRedirects } from './legacy-redirects';
+import { GOOGLE_TAGS_ENABLED, IS_PRODUCTION_SITE } from './src/lib/site-flags';
 
 const WC_HOST = new URL(process.env.NEXT_PUBLIC_WC_BASE ?? 'https://wdlocks.co.uk').host;
 const isDev = process.env.NODE_ENV === 'development';
 /** Cloudflare Turnstile (src/hooks/useTurnstile.tsx) is allowed only on builds that have its site key. */
 const TURNSTILE = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ? ' https://challenges.cloudflare.com' : '';
+/**
+ * Google tags (src/lib/google-tags.ts), only on builds that include them (the live site). The Tag Manager container
+ * GTM-KMBS7ZK also runs Google Ads conversion tags, Microsoft Clarity and a Meta pixel, so their hosts are allowed too.
+ * Hosts follow Google's CSP guide for Tag Manager, GA4 and Google Ads (developers.google.com/tag-platform/security/guides/csp).
+ */
+const GT = GOOGLE_TAGS_ENABLED
+  ? {
+      script: ' https://*.googletagmanager.com https://www.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://*.clarity.ms',
+      img: ' https://*.google-analytics.com https://*.googletagmanager.com https://www.google.com https://www.google.co.uk https://googleads.g.doubleclick.net https://*.g.doubleclick.net https://www.googleadservices.com https://*.clarity.ms https://c.bing.com https://www.facebook.com',
+      connect: ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net https://www.google.com https://www.google.co.uk https://pagead2.googlesyndication.com https://www.googleadservices.com https://*.clarity.ms https://www.facebook.com',
+      frame: ' https://td.doubleclick.net https://www.googletagmanager.com',
+    }
+  : { script: '', img: '', connect: '', frame: '' };
 
 /**
  * Content-Security-Policy.
@@ -22,14 +36,14 @@ const TURNSTILE = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ? ' https:/
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://js.stripe.com https://*.js.stripe.com https://m.stripe.network${TURNSTILE}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://js.stripe.com https://*.js.stripe.com https://m.stripe.network${TURNSTILE}${GT.script}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://${WC_HOST} https://*.stripe.com`,
+  `img-src 'self' data: blob: https://${WC_HOST} https://*.stripe.com${GT.img}`,
   "font-src 'self' data:",
-  `connect-src 'self' https://${WC_HOST} https://api.stripe.com https://m.stripe.network https://q.stripe.com https://r.stripe.com${isDev ? ' ws: wss:' : ''}`,
+  `connect-src 'self' https://${WC_HOST} https://api.stripe.com https://m.stripe.network https://q.stripe.com https://r.stripe.com${GT.connect}${isDev ? ' ws: wss:' : ''}`,
   // The Home Truths crime checker embeds an OpenStreetMap frame centred on the searched postcode.
   // youtube-nocookie: the Sky Sports advert on the homepage ("How we protect you").
-  `frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://checkout.stripe.com${TURNSTILE}`,
+  `frame-src https://www.openstreetmap.org https://www.youtube-nocookie.com https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://checkout.stripe.com${TURNSTILE}${GT.frame}`,
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
@@ -46,6 +60,8 @@ const securityHeaders = [
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self), payment=(self "https://js.stripe.com")' },
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
+  // Preview, staging and test builds: keep every response (pages, images, files) out of search results.
+  ...(IS_PRODUCTION_SITE ? [] : [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }]),
 ];
 
 const nextConfig: NextConfig = {

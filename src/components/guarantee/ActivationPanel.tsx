@@ -6,6 +6,7 @@ import { BRAND_RENDERS, GUARANTEE, GUARANTEE_PAGE } from '@/lib/constants';
 import { Modal, CloseButton } from '@/components/ui/Modal';
 import { cn } from '@/lib/cn';
 import { useTurnstile, turnstileHeaders } from '@/hooks/useTurnstile';
+import { trackFormSent } from '@/lib/google-tags';
 
 /**
  * Ultion's `/guarantee-registration/` section: dark two-column panel, "Activate your protection.", the three
@@ -155,7 +156,10 @@ function ProxyForm({ onHelp, onData }: { onHelp: () => void; onData: () => void 
       });
       const json = (await res.json()) as { ok?: boolean; message?: string; error?: string; redirect?: string };
       if (!res.ok || !json.ok) setStatus({ kind: 'error', message: json.error ?? 'Something went wrong.', redirect: json.redirect });
-      else setStatus({ kind: 'done', message: json.message ?? 'Your guarantee is being activated.' });
+      else {
+        trackFormSent('guarantee_registration');
+        setStatus({ kind: 'done', message: json.message ?? 'Your guarantee is being activated.' });
+      }
     } catch {
       setStatus({ kind: 'error', message: 'We could not reach the registration service.', redirect: GUARANTEE.registerUrl });
     }

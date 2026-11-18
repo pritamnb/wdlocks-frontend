@@ -18,6 +18,7 @@ import { LockFeatureSections } from '@/components/product/LockFeatureSections';
 import { KeysConfigurator } from '@/components/product/KeysConfigurator';
 import { KeysFeatureSections } from '@/components/product/KeysFeatureSections';
 import { ProductFeatureTiles, KeyedAlikeDoors, ProductCloser } from '@/components/product/ProductFeatureTiles';
+import { PRODUCT_META_DESCRIPTIONS } from '@/lib/product-meta';
 import { InlineFilm } from '@/components/media/InlineFilm';
 import { ChapterLoop } from '@/components/media/ChapterLoop';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -36,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const product = await getProductBySlugSSR(slug);
   if (!product) return { title: 'Product not found' };
   const name = decodeEntities(product.name);
-  const description = stripHtml(product.short_description || product.description, 155) || SITE.description;
+  const description = PRODUCT_META_DESCRIPTIONS[slug] ?? (stripHtml(product.short_description || product.description, 155) || SITE.description);
   const image = product.images[0]?.src;
   return {
     title: name,

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { TRADE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import { useTurnstile, turnstileHeaders } from '@/hooks/useTurnstile';
+import { trackFormSent } from '@/lib/google-tags';
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'error'; message: string; redirect?: string } | { kind: 'done'; message: string };
 
@@ -71,7 +72,10 @@ function ProxyForm() {
       const res = await fetch('/api/trade', { method: 'POST', headers: { 'Content-Type': 'application/json', ...turnstileHeaders(token) }, body: JSON.stringify(v) });
       const json = (await res.json()) as { ok?: boolean; message?: string; error?: string; redirect?: string };
       if (!res.ok || !json.ok) setStatus({ kind: 'error', message: json.error ?? 'Something went wrong.', redirect: json.redirect });
-      else setStatus({ kind: 'done', message: json.message ?? 'Your application has been sent.' });
+      else {
+        trackFormSent('trade_application');
+        setStatus({ kind: 'done', message: json.message ?? 'Your application has been sent.' });
+      }
     } catch {
       setStatus({ kind: 'error', message: 'We could not reach the application service.', redirect: TRADE.applyUrl });
     }

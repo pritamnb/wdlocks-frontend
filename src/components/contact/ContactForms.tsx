@@ -4,6 +4,7 @@ import * as React from 'react';
 import { CONTACT, SITE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import { useTurnstile, turnstileHeaders, type TurnstileHandle } from '@/hooks/useTurnstile';
+import { trackFormSent } from '@/lib/google-tags';
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'error'; message: string } | { kind: 'done'; via: 'email' | 'mail-app' };
 
@@ -34,7 +35,10 @@ async function deliver(turnstile: TurnstileHandle, payload: Record<string, strin
       return { kind: 'done', via: 'mail-app' };
     }
     const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', ...turnstileHeaders(token) }, body: JSON.stringify(payload) });
-    if (res.ok) return { kind: 'done', via: 'email' };
+    if (res.ok) {
+      trackFormSent(payload.kind === 'callback' ? 'contact_callback' : 'contact_message');
+      return { kind: 'done', via: 'email' };
+    }
     const json = (await res.json().catch(() => ({}))) as { error?: string; reason?: string };
     if (res.status === 503 || json.reason === 'not-configured' || json.reason === 'upstream') {
       window.location.href = `mailto:${SITE.email}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;

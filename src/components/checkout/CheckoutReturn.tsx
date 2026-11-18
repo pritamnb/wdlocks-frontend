@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/Button';
 import { useCart } from '@/hooks/useCart';
 import { getCheckoutStatus } from '@/lib/cart-client';
 import { formatPrice } from '@/lib/wdlocks-api';
+import { trackPurchase } from '@/lib/google-tags';
 import { GUARANTEE, SITE } from '@/lib/constants';
 import type { CheckoutStatusResponse } from '@/types';
 
@@ -50,6 +51,7 @@ function ReturnInner() {
           setState('paid');
           if (!cleared.done) {
             cleared.done = true;
+            trackPurchase(next);
             try {
               sessionStorage.removeItem('wd:checkout-form');
             } catch {

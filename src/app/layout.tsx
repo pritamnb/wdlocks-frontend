@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { outfit } from '@/lib/fonts';
 import { RootLayout as SiteChrome } from '@/components/layout/RootLayout';
-import { IS_STAGING, SITE, SITE_URL } from '@/lib/constants';
+import { IS_PRODUCTION_SITE, SITE, SITE_URL } from '@/lib/constants';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -28,7 +28,8 @@ export const metadata: Metadata = {
     title: `${SITE.name} | BSI Kitemarked 3 Star Euro Cylinder Locks`,
     description: SITE.description,
   },
-  robots: IS_STAGING ? { index: false, follow: false } : { index: true, follow: true },
+  // Only the live address is indexed; preview, staging and test copies say noindex (src/lib/site-flags.ts).
+  robots: IS_PRODUCTION_SITE ? { index: true, follow: true } : { index: false, follow: false },
   // Same tokens the WordPress site serves, so the existing Search Console and Meta domain verifications survive cutover.
   verification: {
     google: ['ekgPg_mbvWC66sp-DGiSTyl6gDoDZAnfJf9X778_UNE', 'mLwQfI66BfRMyoIe6eeXWxQx8QfREWjyosnVE4NKAz8'],
