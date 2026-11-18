@@ -165,22 +165,39 @@ Test orders land in WooCommerce as `pending` → `processing` with meta `_headle
 Place order creates a real WooCommerce order and a Stripe PaymentIntent, and the forms send email or post to
 wdlocks.co.uk, so every write route is rate limited per IP and (once keys are added) bot-checked.
 
-**Rate limits** (`src/lib/rate-limit.ts`, `RATE_LIMITS`), fixed windows per client IP, `429` + `Retry-After`:
+Everything here is switched and tuned with environment variables, so day-to-day changes (provider, limits, which
+forms are checked, the proxy setting) are a settings change and a restart, never a code change. See "Changing it
+without code" below.
 
-| Route | Limits |
-|---|---|
-| `POST /api/checkout/intent` | 10 / min, 30 / hour |
-| `POST /api/checkout/coupon` | 8 / min, 40 / hour |
-| `POST /api/contact` | 5 / 10 min, 20 / day |
-| `POST /api/trade` | 3 / 10 min, 10 / day |
-| `POST /api/guarantee` | 10 / 10 min, 50 / day |
-| `POST /api/crime` | 20 / min, 200 / day |
+**Rate limits** (`src/lib/rate-limit.ts`), fixed windows per client IP, `429` + `Retry-After`. Defaults:
 
-Counters live in a shared Redis over the Upstash REST protocol when `UPSTASH_REDIS_REST_URL` +
+| Route | Default limits | Override |
+|---|---|---|
+| `POST /api/checkout/intent` | 10 / min, 30 / hour | `RATE_LIMIT_CHECKOUT_INTENT` |
+| `POST /api/checkout/coupon` | 8 / min, 40 / hour | `RATE_LIMIT_CHECKOUT_COUPON` |
+| `POST /api/contact` | 5 / 10 min, 20 / day | `RATE_LIMIT_CONTACT` |
+| `POST /api/trade` | 3 / 10 min, 10 / day | `RATE_LIMIT_TRADE` |
+| `POST /api/guarantee` | 10 / 10 min, 50 / day | `RATE_LIMIT_GUARANTEE` |
+| `POST /api/crime` | 20 / min, 200 / day | `RATE_LIMIT_CRIME` |
+
+An override is up to four `count/window` pairs, units `s` `m` `h` `d` (`5/10m,20/1d`; `10/m` means per minute), or
+`off` to switch that route's limit off. An invalid value is logged and the defaults stay in force, so a typo never
+removes protection. Windows can be at most 7 days, and each pair needs a different window length.
+
+**Store.** Counters live in a shared Redis over the Upstash REST protocol when `UPSTASH_REDIS_REST_URL` +
 `UPSTASH_REDIS_REST_TOKEN` are set (Vercel's Upstash integration sets `KV_REST_API_URL` + `KV_REST_API_TOKEN`,
-also accepted). It is plain HTTPS, so it works the same on Vercel and on any Node host. Without those vars, or if the
-store does not answer within 800 ms, each server instance counts in its own memory (logged once a minute). IPs are
-stored as an HMAC, never in clear, and expire with their window.
+also accepted). Without those vars, or if the store does not answer within 800 ms, each server instance counts in
+its own memory (logged once a minute). IPs are stored as an HMAC, never in clear, and expire with their window. The
+protocol is an open HTTP API, so the provider can change by changing the two values:
+
+| Provider | URL / token |
+|---|---|
+| Upstash (recommended: free tier, HTTPS, any host) | the database's REST URL and token from the Upstash console |
+| Vercel KV / Upstash via the Vercel marketplace | nothing: Vercel sets `KV_REST_API_URL` + `KV_REST_API_TOKEN` |
+| Your own Redis (on the host, Redis Cloud, ElastiCache…) | run [serverless-redis-http](https://github.com/hiett/serverless-redis-http) next to it and point the URL at it with its `SRH_TOKEN`. Plain `http://` is accepted only for loopback, private (10/172.16–31/192.168) addresses and single-label hostnames such as a Docker service `srh`; anything else must be `https://` |
+
+A single long-running `next start` process already counts every request in one place, so a store is needed only once
+the site runs as several processes or instances (PM2 cluster, several containers, serverless).
 
 **Client IP** (`src/lib/client-ip.ts`). The first `X-Forwarded-For` entry is written by the visitor and is never used.
 
@@ -190,13 +207,27 @@ stored as an HMAC, never in clear, and expire with their window.
 | Behind Cloudflare | `CLIENT_IP_HEADER=cf-connecting-ip` (only if the origin accepts traffic from Cloudflare alone) |
 | nginx / Apache / a PaaS router in front of `next start` | `CLIENT_IP_HEADER=x-real-ip` if the proxy **overwrites** that header with the peer address (nginx `proxy_set_header X-Real-IP $remote_addr;`), otherwise leave it unset and set `TRUSTED_PROXY_COUNT` to the number of proxies that **append** to `X-Forwarded-For` (default `1`) |
 
-**Tomia (client host).** Where the Next.js app will run on Tomia's side is still open (WP Engine Headless Platform
-or another Node host). Before launch, ask Tomia which header their front proxy sets and pick a row above; if they
-cannot say, leave `CLIENT_IP_HEADER` unset with `TRUSTED_PROXY_COUNT=1` and test: send
-`curl -X POST https://<site>/api/crime -H 'Content-Type: application/json' -H 'X-Forwarded-For: 198.51.100.1' -d '{}'`
-21 times within a minute, changing the made-up address each time. The 21st must still answer `429`; if it does
-not, the setting trusts a header the visitor controls. Never expose `next start` directly: with no proxy in front,
-the visitor's own `X-Forwarded-For` is all there is.
+**Running on a plain server (production).** The host only provides the machine; everything in front of the app
+is ours, so no setting depends on the host's answers or help. On a Linux server with root:
+
+1. `deploy/wdlocks-frontend.service` runs `next start` on **127.0.0.1:3000 only**, with `CLIENT_IP_HEADER=x-real-ip`
+   and settings from `/srv/wdlocks-frontend/.env.production`.
+2. `deploy/Caddyfile` puts Caddy in front: it fetches and renews the HTTPS certificate on its own and **overwrites**
+   `X-Real-IP` with the address that really connected. Needs only ports 80/443 open and DNS pointing at the server.
+3. Leave the rate-limit store unset: one `next start` process counts every request in one place. Add
+   `UPSTASH_REDIS_REST_*` only if the site later runs as several processes or servers.
+
+On hosting without root, where the host's own proxy sits in front of Node, leave `CLIENT_IP_HEADER` unset
+(`TRUSTED_PROXY_COUNT=1` reads the address that proxy appends). Either way, check it ourselves after every deploy to
+a new server or proxy, no host involvement needed:
+
+```bash
+node scripts/check-client-ip.mjs https://<site>
+```
+
+It sends 21 requests with forged client-IP headers and must end in `429`; it then prints a one-line `curl` to run
+from a second network (a phone hotspot), which must not be limited. Never expose `next start` directly on a
+public port: with no proxy in front, the visitor's own `X-Forwarded-For` is all there is.
 
 **Turnstile** (Cloudflare's bot check): `src/hooks/useTurnstile.tsx` in the browser, `src/lib/turnstile.ts` in the
 routes. Covers Place order (`/api/checkout/intent`) and the contact, trade and guarantee forms; the token travels in
@@ -208,6 +239,27 @@ popup and runs whatever the visitor chose. If Cloudflare's verify endpoint is un
 through (logged) rather than stopping sales; the rate limits still apply. Cloudflare's test keys (site
 `1x00000000000000000000AA`, secret `1x0000000000000000000000000000000AA`; secret `2x0000000000000000000000000000000AA`
 always fails) are fine for local runs and staging.
+
+`NEXT_PUBLIC_TURNSTILE_FORMS` picks which forms are checked: any of `checkout`, `contact`, `trade`, `guarantee`, or
+`all` / `none` (default all). Like the site key it is read at build time, so changing it needs a rebuild, not a code
+change; an unknown name means all forms (logged by the server).
+
+**Changing it without code**
+
+| To… | Set | Takes effect |
+|---|---|---|
+| use a shared store / switch provider | `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (or `KV_REST_API_*`) | restart |
+| go back to per-instance memory | remove those two | restart |
+| tighten or loosen a route | `RATE_LIMIT_<ROUTE>=count/window,…` | restart |
+| switch a route's limit off | `RATE_LIMIT_<ROUTE>=off` | restart |
+| move host / proxy | `CLIENT_IP_HEADER` or `TRUSTED_PROXY_COUNT` (nothing on Vercel), then `node scripts/check-client-ip.mjs` | restart |
+| turn Turnstile on | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` | rebuild |
+| stop enforcing Turnstile at once | remove `TURNSTILE_SECRET_KEY` (the widget keeps running until the next build) | restart |
+| check only some forms | `NEXT_PUBLIC_TURNSTILE_FORMS=checkout,contact` | rebuild |
+| rotate Turnstile or store keys | new values in the same vars | restart (rebuild for the site key) |
+
+Code changes are needed only to protect a NEW route or form (one `rateLimit()` / `verifyTurnstile()` call plus a
+default in `RATE_LIMITS` or `TURNSTILE_FORMS`).
 
 **Stripe Radar** rules for card testing: `docs/stripe-radar-rules.md` (recommendations only; nothing is changed in
 the Stripe account from this repo).
@@ -233,7 +285,7 @@ are kept outside the repo at `../client-assets/wetransfer-2026-11-10/`, and the 
 - Install the mu-plugin above and set `NEXT_PUBLIC_CART_HANDOFF_PLUGIN=true` before launch.
 - Extra Keys (4266) orders go to wdlocks.co.uk until a key-number field is added to the headless flow.
 - Abuse protection needs its accounts before launch: an Upstash (or other) Redis for shared rate limits, Turnstile
-  keys, the client-IP setting for Tomia, and the Radar rules in `docs/stripe-radar-rules.md` (see Abuse protection).
+  keys, `node scripts/check-client-ip.mjs` against the production server, and the Radar rules in `docs/stripe-radar-rules.md` (see Abuse protection).
 - Replace the regex HTML sanitiser with `sanitize-html`/DOMPurify, or move to a nonce-based CSP.
 - `script-src 'unsafe-inline'` in the CSP is required by static generation; move to nonces if routes go dynamic.
 - **PENDING — Reviews (parked 2026-11-10):** the reviews section links out via `TRUSTPILOT_URL` and asserts no rating.
