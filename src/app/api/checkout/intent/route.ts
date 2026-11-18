@@ -5,7 +5,8 @@ import { CouponError, normaliseCouponCode } from '@/lib/coupon';
 import { cartHash } from '@/lib/checkout-cart-hash';
 import type { BasketLineInput } from '@/lib/basket';
 import { priceBasket, PricingError, type PricedBasket } from '@/lib/pricing';
-import { getStripe, isStripeConfigured, describeStripeError } from '@/lib/stripe-server';
+import { getStripe, isStripeConfigured, describeStripeError, stripeKeyModeMismatch } from '@/lib/stripe-server';
+import { maybeSweepAbandonedOrders } from '@/lib/order-housekeeping';
 import {
   isWcRestConfigured,
   createOrder,
@@ -104,7 +105,11 @@ function orderTotalMinor(order: WooRestOrder): number {
   return majorToMinor(order.total, 2);
 }
 
-/** Reuses the pending order named in the cookie when it still matches this basket; refreshes its addresses. */
+/**
+ * Reuses the order named in the cookie when it still matches this basket and is unpaid: pending, or failed (a declined
+ * card followed by another try must not leave a second order behind). Refreshes its addresses; a failed one goes back
+ * to pending.
+ */
 async function findReusableOrder(req: Request, basket: PricedBasket, hash: string, body: ValidBody): Promise<WooRestOrder | null> {
   const cookie = readOrderCookie(req);
   if (!cookie || cookie.hash !== hash) return null;
@@ -114,10 +119,11 @@ async function findReusableOrder(req: Request, basket: PricedBasket, hash: strin
   } catch {
     return null;
   }
-  if (order.order_key !== cookie.orderKey || order.status !== 'pending') return null;
+  if (order.order_key !== cookie.orderKey || (order.status !== 'pending' && order.status !== 'failed')) return null;
   if (orderTotalMinor(order) !== basket.totalPence) return null;
   try {
     return await updateOrder(order.id, {
+      ...(order.status === 'failed' ? { status: 'pending' as const } : {}),
       billing: toRestBillingAddress(body.billing),
       shipping: toRestShippingAddress(body.shipping),
       customer_note: body.customerNote ?? '',
@@ -174,6 +180,11 @@ export async function POST(req: Request) {
   const demo = isDemoCheckout() && !sandbox && !(isStripeConfigured() && isWcRestConfigured());
   if (!demo && !sandbox && (!isStripeConfigured() || !isWcRestConfigured())) {
     return errorResponse(503, 'not-configured', 'Card payments are not available yet. Please use the WooCommerce checkout.');
+  }
+
+  if (isStripeConfigured() && stripeKeyModeMismatch()) {
+    console.error('[checkout/intent] Stripe publishable and secret keys are from different modes (live vs test); refusing payments');
+    return errorResponse(503, 'not-configured', 'Card payments are temporarily unavailable. Please try again later or call us.');
   }
 
   const raw = await readJson(req);
@@ -271,6 +282,9 @@ export async function POST(req: Request) {
     writeDemoOrder(req, res, order);
     return res;
   }
+
+  // Live stage only: tidy up orders from checkouts that were never paid (background, at most every 15 minutes).
+  maybeSweepAbandonedOrders();
 
   // 2. WooCommerce order (reuse or create)
   let order: WooRestOrder;

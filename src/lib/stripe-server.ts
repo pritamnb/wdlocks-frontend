@@ -34,6 +34,18 @@ export function getStripe(): Stripe {
   return client;
 }
 
+/**
+ * True when the publishable key (baked into the build) and the secret key (read at runtime) come from different Stripe
+ * modes, e.g. pk_live_ with sk_test_. Every payment would fail in the browser, so the checkout refuses to start one.
+ * Server code must spell out process.env.NEXT_PUBLIC_… literally or Next does not inline it.
+ */
+export function stripeKeyModeMismatch(): boolean {
+  const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
+  const sk = readServerEnv().stripeSecretKey ?? '';
+  if (!pk || !sk) return false;
+  return pk.startsWith('pk_live_') !== /^(sk|rk)_live_/.test(sk);
+}
+
 /** Returns the webhook signing secret or null; the webhook route answers 503 when null. */
 export function getStripeWebhookSecret(): string | null {
   return readServerEnv().stripeWebhookSecret ?? null;

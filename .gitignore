@@ -34,6 +34,7 @@ yarn-error.log*
 .env
 .env.*
 !.env.local.example
+!.env.live.example
 
 # vercel
 .vercel
@@ -51,6 +52,8 @@ yarn-error.log*
 .eslintcache
 
 .env*
+!.env.local.example
+!.env.live.example
 
 # playwright
 /test-results/
