@@ -44,7 +44,7 @@ and this branch adds what only matters once real shoppers use it:
 | 2 | PayPal activated in the Stripe Dashboard (live), if PayPal should show | Pritam | Settings → Payment methods → PayPal (test mode needed no activation) |
 | 3 | Radar rules added | client / Pritam | `docs/stripe-radar-rules.md` |
 | 4 | Server running the site: Node 24, Caddy, systemd | Pritam | `deploy/` and README "Running on a plain server" (PR #15) |
-| 5 | WordPress moved to its own address, e.g. `shop.wdlocks.co.uk`, so the new site can take `wdlocks.co.uk` | Tomia (WP Engine hosts it) | The one step that needs the WordPress host. Keep the MX (email) records as they are when DNS changes |
+| 5 | WordPress keeps `https://wdlocks.co.uk` on 20i; the VPS passes `/wp-*` paths to it (`fasthosts-runbook.md`) and Tomia points `@`/`www` at the VPS | Tomia (20i hosts it) | The one step that needs the WordPress host. Keep the MX (email) records as they are when DNS changes |
 | 6 | A production WooCommerce REST key | Pritam, in wp-admin | WooCommerce → Settings → Advanced → REST API → Add key, description "Headless checkout (production)", Read/Write. Separate from the staging key so either can be revoked alone |
 | 7 | WooCommerce e-mails checked | client | "New order" goes to the shop, "Processing order" and "Refunded order" go to the customer, as today |
 
@@ -52,7 +52,7 @@ and this branch adds what only matters once real shoppers use it:
 
 1. **Fill `.env.live`** (copy `.env.live.example`): live publishable and secret keys from the Stripe Dashboard with
    test mode off (Developers → API keys, Copy buttons, never through chat), the production WooCommerce key, and
-   `NEXT_PUBLIC_SITE_URL=https://wdlocks.co.uk`, `NEXT_PUBLIC_WC_BASE=https://shop.wdlocks.co.uk` (WordPress's new
+   `NEXT_PUBLIC_SITE_URL=https://wdlocks.co.uk`, `NEXT_PUBLIC_WC_BASE=https://wdlocks.co.uk` (WordPress keeps its
    address). The file is gitignored.
 2. **Check:** `node scripts/stripe-setup.mjs --target server --check`. Changes nothing. Expect "Stripe live mode",
    "charges enabled", "WooCommerce REST key accepted".

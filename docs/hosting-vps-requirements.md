@@ -4,6 +4,12 @@
 the client owns, choosing between **Fasthosts** and **Hostinger KVM 2**. Tomia (on 20i) hosts WordPress only, so it
 cannot run this app.
 
+> **Final plan (18 Nov 2026), see `fasthosts-runbook.md`:** only the Next.js site moves, onto a Fasthosts **VPS 2**.
+> WordPress/WooCommerce stays with Tomia on 20i at the same address (`/wp-admin`, `/wp-json`, `/wp-content` are passed
+> through to it by Caddy). **DNS stays on 20i**, because 20i renews WordPress's wildcard certificate only while its
+> nameservers are authoritative. No WordPress subdomain, no nameserver move. Sections below that discuss moving DNS,
+> a WordPress subdomain or moving WordPress are the options that were considered before this decision.
+
 ## What is true today (checked 18 Nov 2026)
 
 | Item | Finding |
@@ -18,20 +24,18 @@ cannot run this app.
 ## Requirements
 
 ### 1. Domain and DNS
-- Login to the client's **Fasthosts** account (registrar) and control of DNS (currently at 20i through Tomia).
-- Move DNS to a place the client controls: Fasthosts DNS, the new host's DNS, or **Cloudflare (free, recommended)**.
-- Copy these records **exactly** before switching nameservers, or email stops: MX, SPF TXT, `MS=ms71555982` TXT and the
-  second verification TXT.
-- New records: `wdlocks.co.uk` and `www` → new server (A + AAAA); a WordPress subdomain (e.g. `shop.wdlocks.co.uk`) → wherever WordPress lives.
-- Add while there: DMARC (`_dmarc` TXT, start with `p=none`), and Resend's SPF/DKIM records so contact-form emails
-  from `CONTACT_FROM` are not marked as spam.
-- Lower TTL to 300 seconds a day before the switch.
+- **Decided:** DNS stays on 20i (Tomia). Tomia changes only `@` and `www` (A + AAAA) → the VPS at go-live, and adds
+  `new` for testing. Every Microsoft 365 record stays as it is.
+- Worth asking Tomia while there: DMARC (`_dmarc` TXT, start with `p=none`), and Resend's SPF/DKIM records so
+  contact-form emails from `CONTACT_FROM` are not marked as spam.
+- TTL of `@` and `www` to 300 seconds a day before the switch.
 
 ### 2. SSL (HTTPS)
-- Free Let's Encrypt certificates with **automatic renewal** for `wdlocks.co.uk`, `www.wdlocks.co.uk` and the
-  WordPress subdomain (Caddy does this automatically; with Nginx use Certbot). Cloudflare can also front it.
+- Free Let's Encrypt certificates with **automatic renewal** for `wdlocks.co.uk` and `www.wdlocks.co.uk` on the VPS
+  (Caddy does this automatically). WordPress on 20i keeps its own wildcard certificate, renewed by 20i.
 - HTTP → HTTPS redirect and `www` → apex redirect.
-- Because the site sends HSTS with `includeSubDomains`, **every subdomain must work over HTTPS** (including the WordPress one).
+- Because the site sends HSTS with `includeSubDomains`, **every subdomain must work over HTTPS**. Checked 18 Nov:
+  `mail`, `webmail` and `ftp` do not answer on the web at all, so nothing in use breaks.
 
 ### 3. Server for the Next.js app
 - Linux VPS (Ubuntu 24.04 LTS), **UK data centre** (customers are UK; Vercel runs it in London today).
@@ -42,7 +46,7 @@ cannot run this app.
   **8 GB if WordPress moves onto the same server**. 10 GB of writable disk for the app, its page cache and image cache.
 - Outbound HTTPS allowed to Stripe, the WooCommerce site, Resend, Upstash, Cloudflare Turnstile and the police/postcode APIs.
 - Secrets set as environment variables on the server (never in git):
-  `NEXT_PUBLIC_SITE_URL=https://wdlocks.co.uk`, `NEXT_PUBLIC_WC_BASE` (new WordPress address),
+  `NEXT_PUBLIC_SITE_URL=https://wdlocks.co.uk`, `NEXT_PUBLIC_WC_BASE=https://wdlocks.co.uk` (WordPress keeps its address),
   `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `WC_CONSUMER_KEY`,
   `WC_CONSUMER_SECRET`, `RESEND_API_KEY`, `CONTACT_FROM`, `CONTACT_TO`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`,
   `TURNSTILE_SECRET_KEY`. The unit sets `CLIENT_IP_HEADER=x-real-ip`; one process needs no Upstash store
@@ -53,10 +57,9 @@ cannot run this app.
   (pull → `npm ci` → `npm run build` → restart), keeping the previous build for a one-command rollback.
 
 ### 4. WordPress / WooCommerce (still needed for products, stock, orders, guarantee form)
-- WordPress moves off the main domain onto a subdomain such as `shop.wdlocks.co.uk`: change WordPress Address and
-  Site Address, run a database search-and-replace, update WooPayments and PayPal webhook URLs.
-- **Decision needed:** keep WordPress with Tomia/20i (they host WordPress well) or move it onto the new VPS (needs PHP
-  8.3/8.4, MySQL/MariaDB, about 1–2 GB RAM, and someone to apply WordPress and plugin updates).
+- **Decided:** WordPress stays with Tomia on 20i at `https://wdlocks.co.uk`. Its address, settings and webhook URLs do
+  not change. Caddy on the VPS passes `/wp-admin`, `/wp-login.php`, `/wp-json`, `/wp-content`, `/wp-includes`,
+  `/wp-cron.php`, `/xmlrpc.php` and `?wc-api=` to it. Tomia allow-lists the VPS IP and trusts its `X-Forwarded-For`.
 
 ### 5. Security and upkeep (both options are self-managed servers)
 - Firewall open only on 22, 80, 443; SSH keys only, no password logins; fail2ban; automatic security updates; non-root user.
@@ -101,8 +104,7 @@ databases, S3 backups, CloudFront, SES email). For the website alone it costs ab
 ### What to buy
 | Item | Choice | Why |
 |---|---|---|
-| Plan if WordPress stays with Tomia | **VPS 2**: 2 vCPU / 4 GB / 120 GB NVMe, £4/mo for 3 months, then £12/mo | Enough for the Next.js app alone |
-| Plan if WordPress moves too | **RAM VPS 2**: 2 vCPU / 8 GB / 120 GB, £12/mo for 3 months, then £17/mo | Room for builds plus PHP and MySQL. VPS 4 (4 vCPU / 8 GB / 240 GB, then £22/mo) only if more CPU is needed |
+| Plan | **VPS 2**: 2 vCPU / 4 GB / 120 GB NVMe, £4/mo for 3 months, then £12/mo (prices as checked 18 Nov) | Enough for the Next.js app alone; WordPress stays on 20i |
 | Contract | 12 months, pay monthly or upfront | Upfront gives a bigger discount |
 | Data centre | **UK** | Customers are UK |
 | Operating system | **Ubuntu 24.04 LTS** | Long support, best Node.js guides |
@@ -112,21 +114,10 @@ databases, S3 backups, CloudFront, SES email). For the website alone it costs ab
 
 Fasthosts shows prices with a VAT toggle; confirm the VAT-inclusive total at checkout. Upgrading to a bigger plan later is a few clicks in the Cloud Panel.
 
-### Setup order
-1. **Buy the server** in the same Fasthosts account that holds the domain, so there is one login and one bill.
-2. **Cloud Panel firewall**: allow only 22 (SSH), 80 and 443. Add an SSH key; turn off password logins.
-3. **Server basics**: non-root user, automatic security updates, fail2ban, Node.js 24 LTS, Caddy, systemd service.
-4. **Deploy the app** from GitHub with the environment variables listed in section 3, build, and start the systemd service.
-5. **Test under a temporary name**: point `new.wdlocks.co.uk` at the server (A + AAAA) and check every page, checkout in Stripe test mode, and the forms.
-6. **Move DNS to Fasthosts** (included with the domain) or Cloudflare. Recreate the Microsoft 365 records first: MX, SPF, both verification TXT records. Add DMARC and the Resend records.
-7. **WordPress subdomain**: point `shop.wdlocks.co.uk` at Tomia (or this server) and change the WordPress addresses, as in section 4.
-8. **Switch**: lower TTL a day before, point `wdlocks.co.uk` and `www` at the server, update the Stripe webhook, then run the post-switch checks in section 6.
-9. **Afterwards**: daily Cyber Protect backup confirmed, UptimeRobot alerts on, deploy script or GitHub Action in place.
-
-### Who does what
-- **Client (account owner)**: buys the server and add-ons, and gives SSH access by adding our public key. Passwords stay with them.
-- **Tomia**: releases DNS control (or confirms the nameserver change) and changes the WordPress address if WordPress stays with them.
-- **Us**: steps 2 to 9.
+### Setup order and who does what
+Step by step in `fasthosts-runbook.md`. In short: the client buys VPS 2 and adds our SSH key; we install and deploy,
+test on `new.wdlocks.co.uk`, and switch on live payments; Tomia adds the `new` record, allow-lists the VPS IP and, at
+go-live, points `@` and `www` at the VPS. Rollback is pointing them back.
 
 ## Earlier recommendation (before Fasthosts was chosen)
 
