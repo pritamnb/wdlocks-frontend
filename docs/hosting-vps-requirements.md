@@ -4,11 +4,10 @@
 the client owns, choosing between **Fasthosts** and **Hostinger KVM 2**. Tomia (on 20i) hosts WordPress only, so it
 cannot run this app.
 
-> **Final plan (18 Nov 2026), see `fasthosts-runbook.md`:** only the Next.js site moves, onto a Fasthosts **VPS 2**.
-> WordPress/WooCommerce stays with Tomia on 20i at the same address (`/wp-admin`, `/wp-json`, `/wp-content` are passed
-> through to it by Caddy). **DNS stays on 20i**, because 20i renews WordPress's wildcard certificate only while its
-> nameservers are authoritative. No WordPress subdomain, no nameserver move. Sections below that discuss moving DNS,
-> a WordPress subdomain or moving WordPress are the options that were considered before this decision.
+> **Final plan (19 Nov 2026), see `fasthosts-runbook.md`:** everything for wdlocks.co.uk leaves Tomia. The Next.js
+> site and WordPress/WooCommerce run on one Fasthosts 8 GB VPS (**RAM VPS 2**); WordPress keeps its address
+> (`/wp-admin`, `/wp-json`, `/wp-content` are served by PHP on the same server). **DNS moves to Fasthosts**, where the
+> domain is registered. No WordPress subdomain. This replaces the 18 Nov plan (WordPress and DNS staying on 20i).
 
 ## What is true today (checked 18 Nov 2026)
 
@@ -24,15 +23,15 @@ cannot run this app.
 ## Requirements
 
 ### 1. Domain and DNS
-- **Decided:** DNS stays on 20i (Tomia). Tomia changes only `@` and `www` (A + AAAA) → the VPS at go-live, and adds
-  `new` for testing. Every Microsoft 365 record stays as it is.
-- Worth asking Tomia while there: DMARC (`_dmarc` TXT, start with `p=none`), and Resend's SPF/DKIM records so
-  contact-form emails from `CONTACT_FROM` are not marked as spam.
-- TTL of `@` and `www` to 300 seconds a day before the switch.
+- **Decided:** DNS moves from 20i to Fasthosts DNS. The Fasthosts zone is first made an exact copy of the live one
+  (every Microsoft 365 record included), then the nameservers are switched; the record list is in the runbook, phase 2.
+- After that we change `@` and `www` (A + AAAA) → the VPS at go-live ourselves, with TTL 300.
+- Add after go-live: DMARC (`_dmarc` TXT, start with `p=none`), and Resend's SPF/DKIM records so contact-form emails
+  from `CONTACT_FROM` are not marked as spam. Neither exists today (checked 19 Nov).
 
 ### 2. SSL (HTTPS)
 - Free Let's Encrypt certificates with **automatic renewal** for `wdlocks.co.uk` and `www.wdlocks.co.uk` on the VPS
-  (Caddy does this automatically). WordPress on 20i keeps its own wildcard certificate, renewed by 20i.
+  (Caddy does this automatically). WordPress is served under the same names, so it needs no certificate of its own.
 - HTTP → HTTPS redirect and `www` → apex redirect.
 - Because the site sends HSTS with `includeSubDomains`, **every subdomain must work over HTTPS**. Checked 18 Nov:
   `mail`, `webmail` and `ftp` do not answer on the web at all, so nothing in use breaks.
@@ -57,9 +56,11 @@ cannot run this app.
   (pull → `npm ci` → `npm run build` → restart), keeping the previous build for a one-command rollback.
 
 ### 4. WordPress / WooCommerce (still needed for products, stock, orders, guarantee form)
-- **Decided:** WordPress stays with Tomia on 20i at `https://wdlocks.co.uk`. Its address, settings and webhook URLs do
-  not change. Caddy on the VPS passes `/wp-admin`, `/wp-login.php`, `/wp-json`, `/wp-content`, `/wp-includes`,
-  `/wp-cron.php`, `/xmlrpc.php` and `?wc-api=` to it. Tomia allow-lists the VPS IP and trusts its `X-Forwarded-For`.
+- **Decided:** WordPress moves onto the same VPS and keeps `https://wdlocks.co.uk`. Its address, settings and webhook
+  URLs do not change. Caddy serves `/wp-admin`, `/wp-login.php`, `/wp-json`, `/wp-content`, `/wp-includes`,
+  `/wp-cron.php`, `/xmlrpc.php` and `?wc-api=` from PHP-FPM (PHP 8.3, MariaDB 10.11, files in `/srv/wordpress`).
+- It is restored from an UpdraftPlus backup: a rehearsal with the 18 Nov backup, then a fresh one at go-live.
+- WordPress, plugin and theme updates and the daily database backup become our job; Tomia did them until now.
 
 ### 5. Security and upkeep (both options are self-managed servers)
 - Firewall open only on 22, 80, 443; SSH keys only, no password logins; fail2ban; automatic security updates; non-root user.
@@ -74,7 +75,7 @@ cannot run this app.
 - Build and test on the new server under a temporary name first (e.g. `new.wdlocks.co.uk`), then switch DNS, keep the
   old site for 48 hours, and test checkout, Stripe webhook, contact, trade and guarantee forms straight after.
 
-## Fasthosts vs Hostinger (prices as shown on their UK pages, 18 Nov 2026; check VAT at checkout)
+## Fasthosts vs Hostinger (prices as shown on their UK pages, 18 Nov 2026, unchanged on 19 Nov; check VAT at checkout)
 
 | | Hostinger KVM 2 | Fasthosts VPS 2 | Fasthosts RAM VPS 2 |
 |---|---|---|---|
@@ -104,7 +105,7 @@ databases, S3 backups, CloudFront, SES email). For the website alone it costs ab
 ### What to buy
 | Item | Choice | Why |
 |---|---|---|
-| Plan | **VPS 2**: 2 vCPU / 4 GB / 120 GB NVMe, £4/mo for 3 months, then £12/mo (prices as checked 18 Nov) | Enough for the Next.js app alone; WordPress stays on 20i |
+| Plan | **RAM VPS 2**: 2 vCPU / 8 GB / 120 GB NVMe, £12/mo for 3 months, then £17/mo (prices rechecked 19 Nov) | Room for the Next.js app, its builds, PHP and MariaDB. Upgrade to VPS 4 (4 vCPU / 8 GB / 240 GB, £22/mo) if builds slow the shop. The account's existing VPS XL is the alternative, see the runbook, phase 1 |
 | Contract | 12 months, pay monthly or upfront | Upfront gives a bigger discount |
 | Data centre | **UK** | Customers are UK |
 | Operating system | **Ubuntu 24.04 LTS** | Long support, best Node.js guides |
@@ -115,9 +116,11 @@ databases, S3 backups, CloudFront, SES email). For the website alone it costs ab
 Fasthosts shows prices with a VAT toggle; confirm the VAT-inclusive total at checkout. Upgrading to a bigger plan later is a few clicks in the Cloud Panel.
 
 ### Setup order and who does what
-Step by step in `fasthosts-runbook.md`. In short: the client buys VPS 2 and adds our SSH key; we install and deploy,
-test on `new.wdlocks.co.uk`, and switch on live payments; Tomia adds the `new` record, allow-lists the VPS IP and, at
-go-live, points `@` and `www` at the VPS. Rollback is pointing them back.
+Step by step in `fasthosts-runbook.md`. In short: the client decides the server and adds our SSH key; we move DNS to
+Fasthosts, install, restore WordPress as a rehearsal, deploy and test on `new.wdlocks.co.uk`; at go-live we restore a
+fresh backup, switch on live payments and point `@` and `www` at the VPS. Tomia is asked only for a zone export, a
+copy of `wp-config.php` and the notice period, and its package is cancelled after two stable weeks. Until then,
+rollback is pointing `@` and `www` back.
 
 ## Earlier recommendation (before Fasthosts was chosen)
 
