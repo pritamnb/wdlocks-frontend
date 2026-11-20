@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { GUARANTEE } from '@/lib/constants';
+import { GUARANTEE, SITE_URL } from '@/lib/constants';
 import { rateLimit, retryAfterHeaders } from '@/lib/rate-limit';
 import { verifyTurnstile, TURNSTILE_FAILED_MESSAGE } from '@/lib/turnstile';
 
@@ -57,17 +57,16 @@ export async function POST(req: Request) {
   const human = await verifyTurnstile(req, 'guarantee');
   if (!human.ok) return NextResponse.json({ error: TURNSTILE_FAILED_MESSAGE, reason: 'turnstile' }, { status: 403 });
 
-  const message = [
-    `Key number${keys.length > 1 ? 's' : ''}: ${keys.join(', ')}`,
-    `Installation: ${body.installType === 'door-and-lock' ? 'new door and lock' : 'new lock'}`,
-    'Submitted from the headless site (/guarantee).',
-  ].join('\n');
+  // This field is the form's "Key Code", and the customer's confirmation email lists it as is, so it holds only what
+  // the customer typed. Where the registration came from is recorded as the submission's page URL instead.
+  const message = `${keys.join(', ')} (${body.installType === 'door-and-lock' ? 'new door and lock' : 'new lock'})`;
 
   const form = new URLSearchParams({
     action: 'elementor_pro_forms_send_form',
     post_id: String(GUARANTEE.form.postId),
     form_id: GUARANTEE.form.formId,
     referer_title: GUARANTEE.form.refererTitle,
+    referrer: `${SITE_URL}${GUARANTEE.href}`,
     queried_id: String(GUARANTEE.form.postId),
     'form_fields[name]': name,
     'form_fields[email]': email,

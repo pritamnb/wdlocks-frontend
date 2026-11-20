@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { TRADE } from '@/lib/constants';
+import { SITE_URL, TRADE } from '@/lib/constants';
 import { rateLimit, retryAfterHeaders } from '@/lib/rate-limit';
 import { verifyTurnstile, TURNSTILE_FAILED_MESSAGE } from '@/lib/turnstile';
 
@@ -67,6 +67,8 @@ export async function POST(req: Request) {
     post_id: String(TRADE.form.postId),
     form_id: TRADE.form.formId,
     referer_title: TRADE.form.refererTitle,
+    // Recorded as the submission's page URL, so the team can tell new-site applications apart.
+    referrer: `${SITE_URL}${TRADE.href}`,
     queried_id: String(TRADE.form.postId),
     [`form_fields[${f.company}]`]: company,
     [`form_fields[${f.contact}]`]: contact,
@@ -74,7 +76,7 @@ export async function POST(req: Request) {
     [`form_fields[${f.postcode}]`]: postcode,
     [`form_fields[${f.email}]`]: email,
     [`form_fields[${f.phone}]`]: phone,
-    [`form_fields[${f.business}]`]: [business, volume ? `Volume: ${volume}` : '', website ? `Website: ${website}` : '', 'Submitted from the headless site (/trade).'].filter(Boolean).join('\n'),
+    [`form_fields[${f.business}]`]: [business, volume ? `Volume: ${volume}` : '', website ? `Website: ${website}` : ''].filter(Boolean).join('\n'),
   });
 
   try {
