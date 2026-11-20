@@ -60,7 +60,7 @@ export const ANNOUNCEMENT =
 
 export const TRUST_SIGNALS = [
   { id: 'bsi', label: 'BSI Kitemarked', detail: 'TS 007 3-star rated', image: '/brand/bsi-kitemark.webp' },
-  { id: 'sold-secure', label: 'Sold Secure Diamond', detail: 'Highest standard, 2024', image: '/brand/sold-secure-diamond.png' },
+  { id: 'sold-secure', label: 'Sold Secure Diamond', detail: 'Highest standard, 2024', image: '/brand/accreditations/sold-secure-mark.png' },
   { id: 'checkatrade', label: 'Checkatrade', detail: 'Vetted and monitored', image: '/brand/checkatrade.png' },
   { id: 'sbd', label: 'Secured by Design', detail: 'Police preferred specification', image: '/brand/secured-by-design.png' },
 ] as const;
@@ -453,6 +453,8 @@ export const PRIMARY_IMAGE_OVERRIDES: Readonly<Partial<Record<number, { src: str
    */
   [PRODUCT_IDS.CYLINDER_LOCK]: { src: '/brand/product/cylinder-key-key.webp', width: 1440, height: 1260, alt: 'Watchdog 3 Star ALPS key-and-key euro cylinder with red anti-snap cam and BSI Kitemark markings' },
   [PRODUCT_IDS.THUMB_TURN]: { src: '/brand/product/cylinder-thumb-turn.webp', width: 1433, height: 1122, alt: 'Watchdog 3 Star ALPS thumb turn euro cylinder with red anti-snap cam and BSI Kitemark markings' },
+  /** Transparent render from Pritam, 20 Nov (watchdog-half-cylinder.png), kept at client-assets/product/cylinder-half-2026-11-20.png. */
+  [PRODUCT_IDS.HALF_CYLINDER]: { src: '/brand/product/cylinder-half.webp', width: 1175, height: 1153, alt: 'Watchdog 3 Star ALPS half euro cylinder with red anti-snap cam and BSI Kitemark markings' },
 };
 
 export const EXTRA_GALLERY_RENDERS: Readonly<Partial<Record<number, ReadonlyArray<keyof typeof BRAND_RENDERS>>>> = {

@@ -3,10 +3,10 @@ import Image from 'next/image';
 /** Copy from the client's own accreditation panels on wdlocks.co.uk (10 Nov 2026); titles follow Ultion's pattern. */
 const items = [
   {
-    src: '/brand/accreditations/sold-secure-diamond-mark.png',
-    width: 218,
-    height: 230,
-    alt: 'Sold Secure Diamond',
+    src: '/brand/accreditations/sold-secure-mark.png',
+    width: 760,
+    height: 1232,
+    alt: 'Sold Secure: tested to reduce crime',
     title: 'The toughest test ever.',
     body: 'Sold Secure Diamond 2024. The Watchdog lock passes the most robust security standard there is: the test designed with the Master Locksmiths Association and carried out by locksmiths.',
   },
@@ -38,9 +38,10 @@ const items = [
  * the titles wrapping. Now: the columns stack until lg (one centred column, 420 px wide at most), then sit three
  * across with 72–96 px between them. Each mark fills a 6:5 box that follows its column (up to 400 px wide), so the
  * marks scale with the viewport instead of a fixed pixel height: Sold Secure ≈ 280 px tall on a phone and at 1440,
- * Secured by Design the full box width. Secured by Design is the old site's own 1240 px upload, trimmed; Sold Secure
- * (218 px) and the Kitemark (300 px) have no larger source and the official artwork is only issued to licensees, so
- * they are soft on 2× screens until the client supplies originals. Spacing: 40 px mark → title, 24 px title → text,
+ * Secured by Design the full box width. Secured by Design is the old site's own 1240 px upload, trimmed (the client's
+ * 20 Nov PDF has the same artwork at 630 px, so the sharper copy stays). Sold Secure is the client's 20 Nov artwork
+ * ("SS, SBD, BSI LOGOS.pdf", 960 × 1594 source) on its own white ground. The Kitemark (300 px) has no larger source
+ * yet, so it is soft on 2× screens until the client supplies one. Spacing: 40 px mark → title, 24 px title → text,
  * 80 px between stacked items, 16/24 px more section padding than Ultion.
  */
 export function Accreditations() {
