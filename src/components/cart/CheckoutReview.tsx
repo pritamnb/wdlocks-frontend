@@ -9,7 +9,7 @@ import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/wdlocks-api';
 import { buildCheckoutUrl, canCheckout } from '@/lib/checkout';
 import { estimateDelivery, formatCountdown, formatDeliveryDate } from '@/lib/delivery';
-import { SITE, WC_BASE } from '@/lib/constants';
+import { SITE } from '@/lib/constants';
 
 /**
  * Ultion-style checkout page, step one. Details and payment are taken on the WooCommerce checkout at
