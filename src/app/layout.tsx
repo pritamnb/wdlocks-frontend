@@ -35,7 +35,6 @@ export const metadata: Metadata = {
     google: ['ekgPg_mbvWC66sp-DGiSTyl6gDoDZAnfJf9X778_UNE', 'mLwQfI66BfRMyoIe6eeXWxQx8QfREWjyosnVE4NKAz8'],
     other: { 'facebook-domain-verification': 'b9jbj0o5lwkurowscxn4bejtni594b' },
   },
-  icons: { icon: '/favicon.ico' },
 };
 
 export const viewport: Viewport = {
