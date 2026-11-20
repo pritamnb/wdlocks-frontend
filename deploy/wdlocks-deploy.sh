@@ -27,8 +27,9 @@ case "$ENV_NAME" in
     PUBLIC_URL=https://ip79-99-44-153.pbiaas.com
     ;;
   production)
-    # wdlocks.co.uk resolves to 127.0.0.1 on this server (/etc/hosts) and Caddy serves it with a real Let's Encrypt
-    # certificate (issued before go-live by DNS check). So these checks test the production setup here, before and after DNS.
+    # wdlocks.co.uk resolves to this server's own public IP, 79.99.44.153 (/etc/hosts), and Caddy serves it with a real
+    # Let's Encrypt certificate (issued before go-live by DNS check). Not 127.0.0.1: Next 16's image optimiser refuses
+    # local addresses, so every WooCommerce photo would fail with "url parameter is not allowed". So these checks test the production setup here, before and after DNS.
     BASE=/srv/wdlocks-production
     UNIT=wdlocks-production
     APP_USER=wdlocks

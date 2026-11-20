@@ -97,7 +97,9 @@ sha=$(git rev-parse origin/main); git archive --format=tar.gz origin/main | ssh 
 Settings: `/srv/wdlocks-production/shared/.env.production` (`NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_WC_BASE` =
 `https://wdlocks.co.uk`, `NEXT_PUBLIC_CHECKOUT_MODE=demo` until the live Stripe keys go in).
 
-**Why it already works without DNS:** on the server, `/etc/hosts` maps `wdlocks.co.uk` and `www` to 127.0.0.1, Caddy
+**Why it already works without DNS:** on the server, `/etc/hosts` maps `wdlocks.co.uk` and `www` to the server's own public IP
+`79.99.44.153` (never 127.0.0.1: Next 16's image optimiser refuses local addresses, and every WooCommerce photo then
+fails with HTTP 400 "url parameter is not allowed"; changed 20 Nov 2026), Caddy
 serves both names with a real Let's Encrypt certificate issued before go-live by the DNS check (20 Nov 2026, files in
 `/etc/caddy/certs/wdlocks.co.uk/`, expires 18 Feb 2027), so nothing special needs trusting. (Caddy's earlier internal
 root stays in `/usr/local/share/ca-certificates/caddy-local-root.crt`, harmless.) So the build reads
