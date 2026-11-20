@@ -1,0 +1,67 @@
+# Caddy on the Fasthosts VPS (/etc/caddy/Caddyfile). Staging = the test address, production = wdlocks.co.uk.
+# WordPress paths go to PHP, everything else to the Next.js site. The two pre-launch `tls` lines are removed by
+# `wdlocks-golive tls` once DNS points here. /etc/caddy/production-frontend.caddy is written by `wdlocks-golive frontend`.
+(wordpress_staging) {
+	root * /srv/wordpress-staging
+	php_fastcgi unix//run/php/php8.5-fpm.sock
+	file_server
+}
+
+ip79-99-44-153.pbiaas.com {
+	encode zstd gzip
+
+	# Uploaded files are never run as code.
+	@uploadsphp path_regexp ^/wp-content/uploads/.*\.php$
+	@wordpress path /wp-admin /wp-admin/* /wp-login.php /wp-json /wp-json/* /wp-content/* /wp-includes/* /wp-cron.php /xmlrpc.php
+	@wcapi query wc-api=*
+	handle @uploadsphp {
+		respond 403
+	}
+	handle @wordpress {
+		import wordpress_staging
+	}
+	handle @wcapi {
+		import wordpress_staging
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3001 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}
+
+# ---------------------------------------------------------------- production: wdlocks.co.uk
+(wordpress_production) {
+	root * /srv/wordpress
+	php_fastcgi unix//run/php/php8.5-fpm.sock
+	file_server
+}
+
+# Shop front for wdlocks.co.uk: Next.js normally, WordPress in an emergency (wdlocks-golive frontend ...).
+import /etc/caddy/production-frontend.caddy
+
+www.wdlocks.co.uk {
+	tls /etc/caddy/certs/wdlocks.co.uk/fullchain.pem /etc/caddy/certs/wdlocks.co.uk/privkey.pem # PRE-LAUNCH: Let's Encrypt certificate issued by DNS check (expires 18 Feb 2027); wdlocks-golive tls removes this line so Caddy renews it itself
+	redir https://wdlocks.co.uk{uri} permanent
+}
+
+wdlocks.co.uk {
+	tls /etc/caddy/certs/wdlocks.co.uk/fullchain.pem /etc/caddy/certs/wdlocks.co.uk/privkey.pem # PRE-LAUNCH: Let's Encrypt certificate issued by DNS check (expires 18 Feb 2027); wdlocks-golive tls removes this line so Caddy renews it itself
+	encode zstd gzip
+
+	@uploadsphp path_regexp ^/wp-content/uploads/.*\.php$
+	@wordpress path /wp-admin /wp-admin/* /wp-login.php /wp-json /wp-json/* /wp-content/* /wp-includes/* /wp-cron.php /xmlrpc.php
+	@wcapi query wc-api=*
+	handle @uploadsphp {
+		respond 403
+	}
+	handle @wordpress {
+		import wordpress_production
+	}
+	handle @wcapi {
+		import wordpress_production
+	}
+	handle {
+		import production_frontend
+	}
+}
