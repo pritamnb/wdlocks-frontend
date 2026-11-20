@@ -1,0 +1,42 @@
+# dev branch -> staging storefront on the Fasthosts VPS (https://ip79-99-44-153.pbiaas.com).
+# Sends `git archive` of the pushed commit over SSH. The deploy key can only run the release script
+# (deploy/wdlocks-deploy-gate.sh -> deploy/wdlocks-deploy.sh), which builds on the server, health-checks
+# and rolls back on failure. See docs/deploy-pipeline.md.
+name: Deploy to staging
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch: # "Run workflow" button; deploys the chosen branch to staging
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: staging
+      url: https://ip79-99-44-153.pbiaas.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        env:
+          SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+          DEPLOY_HOST: 79.99.44.153
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          git archive --format=tar.gz "$GITHUB_SHA" \
+            | ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes \
+                  -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 \
+                  "deploy@$DEPLOY_HOST" "deploy $GITHUB_SHA"
