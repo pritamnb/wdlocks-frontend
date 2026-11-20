@@ -1,0 +1,31 @@
+# systemd unit for the PRODUCTION storefront (main branch), served at https://wdlocks.co.uk.
+#   sudo cp deploy/wdlocks-production.service /etc/systemd/system/ && sudo systemctl enable --now wdlocks-production
+# Releases are installed by /usr/local/sbin/wdlocks-deploy (deploy/wdlocks-deploy.sh); `current` points at the live one.
+# Settings live in /srv/wdlocks-production/shared/.env.production. NEXT_PUBLIC_* values are baked in at build time,
+# so redeploy after changing those.
+
+[Unit]
+Description=WD Locks storefront - production (Next.js)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=wdlocks
+WorkingDirectory=/srv/wdlocks-production/current
+EnvironmentFile=/srv/wdlocks-production/shared/.env.production
+Environment=NODE_ENV=production
+Environment=CLIENT_IP_HEADER=x-real-ip
+Environment=NEXT_TELEMETRY_DISABLED=1
+# The server trusts Caddy's internal certificate before go-live (system store); Node needs the same list.
+Environment=NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+# 127.0.0.1 only: the app is reachable through Caddy, never directly.
+ExecStart=/usr/bin/npm run start -- -H 127.0.0.1 -p 3000
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

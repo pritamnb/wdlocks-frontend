@@ -23,6 +23,14 @@ case "$ENV_NAME" in
     PORT=3001
     PUBLIC_URL=https://ip79-99-44-153.pbiaas.com
     ;;
+  production)
+    # Until go-live, wdlocks.co.uk resolves to 127.0.0.1 on this server (/etc/hosts) and Caddy serves it with its
+    # own internal certificate, which the server trusts. So these checks already test the production setup here.
+    BASE=/srv/wdlocks-production
+    UNIT=wdlocks-production
+    PORT=3000
+    PUBLIC_URL=https://wdlocks.co.uk
+    ;;
   *) die "unknown environment '$ENV_NAME'" ;;
 esac
 [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || die "commit sha must be 40 lowercase hex characters"
@@ -59,6 +67,7 @@ runuser -u "$APP_USER" -- env -i \
   HOME="$BASE/shared" \
   npm_config_cache="$BASE/shared/.npm" \
   NEXT_TELEMETRY_DISABLED=1 \
+  NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt \
   bash -c "cd '$REL' && npm ci --no-audit --no-fund && npm run build"
 
 switch_to() {
