@@ -80,12 +80,19 @@ Settings: `/srv/wdlocks-production/shared/.env.production` (`NEXT_PUBLIC_SITE_UR
 `https://wdlocks.co.uk`, `NEXT_PUBLIC_CHECKOUT_MODE=demo` until the live Stripe keys go in).
 
 **Why it already works without DNS:** on the server, `/etc/hosts` maps `wdlocks.co.uk` and `www` to 127.0.0.1, Caddy
-serves both names with its own internal certificate (`tls internal`), and the server trusts that certificate
-(`/usr/local/share/ca-certificates/caddy-local-root.crt`; Node gets it through `NODE_EXTRA_CA_CERTS`). So the build reads
+serves both names with a real Let's Encrypt certificate issued before go-live by the DNS check (20 Nov 2026, files in
+`/etc/caddy/certs/wdlocks.co.uk/`, expires 18 Feb 2027), so nothing special needs trusting. (Caddy's earlier internal
+root stays in `/usr/local/share/ca-certificates/caddy-local-root.crt`, harmless.) So the build reads
 the production WordPress on the same box and the health checks run against `https://wdlocks.co.uk`. The hosts line
 stays after go-live (server-side calls stay local). To look from a Mac without touching DNS:
-`curl -k --resolve wdlocks.co.uk:443:79.99.44.153 https://wdlocks.co.uk/`, or a hosts line `79.99.44.153 wdlocks.co.uk`
-(the browser will warn about the certificate; remove the line afterwards).
+`curl --resolve wdlocks.co.uk:443:79.99.44.153 https://wdlocks.co.uk/`, or a hosts line `79.99.44.153 wdlocks.co.uk`
+(the certificate is valid, so the browser does not warn; remove the line afterwards).
+
+**The pre-issued certificate does not renew itself.** It was issued by `certbot --manual --preferred-challenges dns`
+with two TXT records (`_acme-challenge`, `_acme-challenge.www`) added and then removed by hand at Fasthosts; the certbot
+timer is disabled. After DNS points here, `wdlocks-golive tls` deletes the two pre-launch `tls` lines so Caddy fetches
+and renews its own certificate. If Caddy cannot get one within 2 minutes, the script puts the pre-issued certificate
+back. It must run before 18 Feb 2027; `wdlocks-golive status` shows the days left.
 
 **The production WordPress is sealed until go-live:**
 
@@ -94,7 +101,7 @@ stays after go-live (server-side calls stay local). To look from a Mac without t
 | Pre-launch guard: no email, no outgoing HTTP except to this site, no webhooks, no Action Scheduler runner, noindex | `wp-content/mu-plugins/0-0-prelaunch-guard.php` (`deploy/prelaunch-guard.php`) | `wdlocks-golive open` |
 | Firewall: PHP (user www-data) may only reach this machine, so plugins that bypass WordPress's HTTP functions are stopped too. Applies to staging WordPress as well | `/etc/ufw/before.rules`, block `wdlocks-php-egress` | `wdlocks-golive open` |
 | `WPMS_ON` + `WPMS_DO_NOT_SEND`, `WP_ENVIRONMENT_TYPE=staging`, `DISABLE_WP_CRON` and no system cron | `wp-config.php` | `wdlocks-golive open` (cron via `/etc/cron.d/wordpress-production`) |
-| Internal certificate | Caddyfile `tls internal` ×2 | `wdlocks-golive tls`, only once public DNS points here |
+| Pre-issued certificate (valid, but does not renew) | Caddyfile `tls /etc/caddy/certs/…` ×2 | `wdlocks-golive tls`, once the Fasthosts nameservers point here |
 
 `wdlocks-golive status` shows each one. The go-live order is in `docs/go-live-confidence.md` section 4.
 

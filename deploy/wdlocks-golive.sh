@@ -2,14 +2,18 @@
 # Go-live switches for wdlocks.co.uk on the Fasthosts VPS. Installed as /usr/local/sbin/wdlocks-golive (root:root 0755).
 #
 # Before go-live the production slot is a sealed copy of the live shop: a pre-launch guard (mu-plugin) and a firewall
-# rule stop WordPress from emailing anyone or calling PayPal / WooPayments / ManageWP / Google / Meta, Caddy serves
-# wdlocks.co.uk with its own internal certificate, and WordPress cron is off. Each step below lifts one of those, in
-# the order of docs/fasthosts-runbook.md phase 6.
+# rule stop WordPress from emailing anyone or calling PayPal / WooPayments / ManageWP / Google / Meta, and WordPress
+# cron is off. Each step below lifts one of those, in the order of docs/fasthosts-runbook.md phase 6.
+#
+# Certificate: Caddy serves wdlocks.co.uk and www with a real Let's Encrypt certificate that was issued BEFORE go-live
+# by the DNS check (certbot, TXT records added by hand at Fasthosts, 20 Nov 2026; files in /etc/caddy/certs/). So the
+# moment DNS points here, visitors get a valid certificate. That certificate does not renew itself (expires 18 Feb 2027):
+# `wdlocks-golive tls` hands renewal to Caddy once DNS points here.
 #
 #   wdlocks-golive status                  what is still sealed
 #   wdlocks-golive restore <dir>           1. final UpdraftPlus backup (db.gz + zips in <dir>) replaces the copy
 #   wdlocks-golive open                    2. unseal WordPress: guard + firewall off, email on, cron on
-#   wdlocks-golive tls                     3. AFTER DNS points here: real Let's Encrypt certificate instead of internal
+#   wdlocks-golive tls                     3. AFTER DNS points here (any time before Feb 2027): Caddy renews the certificate itself
 #   wdlocks-golive frontend wordpress      emergency: old WordPress shop front for every page (same database)
 #   wdlocks-golive frontend nextjs         back to the new Next.js shop front
 set -euo pipefail
@@ -32,12 +36,31 @@ reload_caddy() {
   systemctl reload caddy
 }
 
+PRELAUNCH_TLS='^[[:space:]]*tls (internal|/etc/caddy/certs/)'
+MANUAL_CERT=/etc/caddy/certs/wdlocks.co.uk/fullchain.pem
+
+served_cert() { # served_cert <openssl x509 option...>: the certificate Caddy is serving for wdlocks.co.uk right now
+  echo | openssl s_client -connect 127.0.0.1:443 -servername wdlocks.co.uk 2>/dev/null | openssl x509 -noout "$@" 2>/dev/null || true
+}
+
+cert_state() {
+  if grep -Eq '^[[:space:]]*tls internal' "$CADDYFILE"; then
+    echo "INTERNAL (browsers will warn)"
+  elif grep -Eq "$PRELAUNCH_TLS" "$CADDYFILE"; then
+    local end; end=$(openssl x509 -in "$MANUAL_CERT" -noout -enddate | cut -d= -f2)
+    local days=$(( ($(date -d "$end" +%s) - $(date +%s)) / 86400 ))
+    echo "pre-issued Let's Encrypt, does NOT renew, $days days left (run 'tls' after DNS)"
+  else
+    echo "automatic (Caddy renews), $(served_cert -issuer | sed 's/.*CN *= *//')"
+  fi
+}
+
 cmd_status() {
   printf '%-28s %s\n' "pre-launch guard (mu-plugin)" "$([ -f "$GUARD" ] && echo ON || echo off)"
   printf '%-28s %s\n' "PHP egress firewall" "$(grep -q 'BEGIN wdlocks-php-egress' "$UFW" && echo ON || echo off)"
   printf '%-28s %s\n' "WP Mail SMTP do-not-send" "$("${WP[@]}" config has WPMS_DO_NOT_SEND --skip-plugins --skip-themes 2>/dev/null && echo ON || echo off)"
   printf '%-28s %s\n' "WordPress cron" "$([ -f "$CRON" ] && echo on || echo OFF)"
-  printf '%-28s %s\n' "internal TLS certificate" "$(grep -q '^[[:space:]]*tls internal' "$CADDYFILE" && echo ON || echo off)"
+  printf '%-28s %s\n' "certificate" "$(cert_state)"
   printf '%-28s %s\n' "shop front" "$(grep -q reverse_proxy "$FRONTEND" && echo nextjs || echo WORDPRESS)"
   printf '%-28s %s\n' "checkout mode" "$(grep -E '^NEXT_PUBLIC_CHECKOUT_MODE=' /srv/wdlocks-production/shared/.env.production | cut -d= -f2 || true)"
   printf '%-28s %s\n' "siteurl" "$("${WP[@]}" option get siteurl --skip-plugins --skip-themes)"
@@ -97,19 +120,39 @@ EOF
 }
 
 cmd_tls() {
-  local ip; ip=$(dig +short A wdlocks.co.uk @1.1.1.1 | tail -1)
+  grep -Eq "$PRELAUNCH_TLS" "$CADDYFILE" || { say "Caddy already manages the certificate: $(cert_state)"; return 0; }
+  # Let's Encrypt asks the domain's own nameservers, so check those (a public resolver can hold the old answer for an hour).
   local me; me=$(curl -s -4 --max-time 10 https://api.ipify.org || true)
-  [ -n "$me" ] && [ "$ip" = "$me" ] || die "public DNS says wdlocks.co.uk = '${ip}', this server is '${me}'. Point DNS here first."
-  say "switching wdlocks.co.uk and www to a real certificate"
-  sed -i '/^[[:space:]]*tls internal/d' "$CADDYFILE"
-  reload_caddy
-  local i issuer=""
-  for i in $(seq 1 30); do
-    issuer=$(echo | openssl s_client -connect 127.0.0.1:443 -servername wdlocks.co.uk 2>/dev/null | openssl x509 -noout -issuer 2>/dev/null || true)
-    case "$issuer" in *"Caddy Local"*|"") sleep 4 ;; *) break ;; esac
+  [ -n "$me" ] || die "could not find this server's public IP"
+  local ns host ip
+  for ns in ns1.livedns.co.uk ns2.livedns.co.uk ns3.livedns.co.uk; do
+    for host in wdlocks.co.uk www.wdlocks.co.uk; do
+      ip=$(dig +short A "$host" @"$ns" | tail -1)
+      [ "$ip" = "$me" ] || die "$ns says $host = '${ip}', this server is '${me}'. Point DNS here first."
+    done
+    [ -z "$(dig +short AAAA wdlocks.co.uk @"$ns")" ] || die "$ns still has an AAAA (IPv6) record for wdlocks.co.uk: delete it first."
   done
-  echo "    $issuer"
-  case "$issuer" in *"Caddy Local"*|"") die "no public certificate yet: journalctl -u caddy -n 50" ;; esac
+
+  say "handing the wdlocks.co.uk certificate to Caddy (it fetches its own and renews it)"
+  local before; before=$(served_cert -serial)
+  local backup; backup="$CADDYFILE.bak-$(date +%Y%m%d-%H%M%S)-pre-tls"
+  cp -a "$CADDYFILE" "$backup"
+  sed -i -E "\#$PRELAUNCH_TLS#d" "$CADDYFILE"
+  reload_caddy
+  local i serial="" issuer=""
+  for i in $(seq 1 30); do
+    serial=$(served_cert -serial); issuer=$(served_cert -issuer)
+    if [ -n "$serial" ] && [ "$serial" != "$before" ] && ! grep -q "Caddy Local" <<<"$issuer"; then
+      echo "    $issuer"
+      echo "    $(served_cert -enddate)"
+      return 0
+    fi
+    sleep 4
+  done
+  say "Caddy did not get its own certificate within 2 minutes: putting the pre-issued one back"
+  cp -a "$backup" "$CADDYFILE"
+  reload_caddy
+  die "still on the pre-issued certificate (valid until $(openssl x509 -in "$MANUAL_CERT" -noout -enddate | cut -d= -f2)). See: journalctl -u caddy -n 80"
 }
 
 cmd_frontend() {
