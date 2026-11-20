@@ -17,7 +17,7 @@ GitHub Actions (push to dev)
       sudo /usr/local/sbin/wdlocks-deploy staging <sha>
         unpack into /srv/wdlocks-staging/releases/<time>-<sha>
         link shared/.env.production, reuse previous .next/cache
-        npm ci && npm run build                     as user wdlocks; build reads WordPress on the same box
+        npm ci && npm run build                     as user wdlocks-stg; build reads WordPress over HTTP
         current -> new release, restart wdlocks-staging (127.0.0.1:3001)
         health checks: / and a product page (local and via Caddy), /wp-login.php
         on failure: current -> previous release, restart, job fails
@@ -42,6 +42,24 @@ A build failure never touches the live site (the switch happens after the build)
 
 Caddy (`/etc/caddy/Caddyfile`) sends WordPress paths to PHP and everything else to 127.0.0.1:3001.
 The old single-folder copy in `/srv/wdlocks-frontend` (unit `wdlocks-frontend`) is stopped and disabled; port 3000 now belongs to production.
+
+## Who can read what (separated 20 Nov 2026)
+
+The only secret in GitHub is the staging deploy key, and anything it deploys is code that runs on this server. So
+staging code builds and runs as **its own user, `wdlocks-stg`**, which cannot read anything of production's. Production
+runs as `wdlocks`. No shop secret (Stripe, WooCommerce, database, email) is stored in GitHub.
+
+| Path | Owner, mode | Who can read it |
+|---|---|---|
+| `/srv/wdlocks-production` (incl. `shared/.env.production` with the live keys) | `root:wdlocks 0750`, file `0640` | root, `wdlocks` |
+| `/srv/wdlocks-staging` | `root:wdlocks-stg 0750`, contents `wdlocks-stg` | root, `wdlocks-stg` |
+| `/srv/wordpress`, `/srv/wordpress-staging` | `www-data:www-data 0750`, `wp-config.php 0640` | root, PHP (`www-data`), Caddy (in group `www-data`) |
+| `/srv/restore` (backup files for `wdlocks-golive restore`), `/srv/backups` | `root 0700` | root |
+| `/etc/caddy/certs` | `root:caddy 0750`, key `0640` | root, Caddy |
+
+On top of that, the staging unit has `ProtectHome=true` and `InaccessiblePaths=` for production, WordPress, the backups
+and `/root`. Checked on 20 Nov by trying, as `wdlocks-stg`, to read the production settings, both `wp-config.php`
+files, the backups, the restore folder, the certificate key and the database: all refused.
 
 ## GitHub secrets
 

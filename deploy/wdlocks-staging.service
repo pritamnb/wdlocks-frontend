@@ -11,7 +11,9 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=wdlocks
+# Own user, NOT wdlocks: staging code is deployed automatically from GitHub and must not reach production's settings.
+User=wdlocks-stg
+Group=wdlocks-stg
 WorkingDirectory=/srv/wdlocks-staging/current
 EnvironmentFile=/srv/wdlocks-staging/shared/.env.production
 Environment=NODE_ENV=production
@@ -24,6 +26,9 @@ RestartSec=3
 NoNewPrivileges=true
 ProtectSystem=full
 PrivateTmp=true
+ProtectHome=true
+# Second wall behind the file permissions: production, WordPress and backups do not exist for this service.
+InaccessiblePaths=/srv/wdlocks-production /srv/wordpress /srv/backups /srv/restore /srv/wdlocks-frontend /root
 
 [Install]
 WantedBy=multi-user.target

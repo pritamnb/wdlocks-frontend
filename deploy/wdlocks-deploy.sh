@@ -20,6 +20,9 @@ case "$ENV_NAME" in
   staging)
     BASE=/srv/wdlocks-staging
     UNIT=wdlocks-staging
+    # Staging code arrives automatically from GitHub, so it builds and runs as its own user, which cannot read
+    # anything of production's (/srv/wdlocks-production is root:wdlocks 0750).
+    APP_USER=wdlocks-stg
     PORT=3001
     PUBLIC_URL=https://ip79-99-44-153.pbiaas.com
     ;;
@@ -28,6 +31,7 @@ case "$ENV_NAME" in
     # certificate (issued before go-live by DNS check). So these checks test the production setup here, before and after DNS.
     BASE=/srv/wdlocks-production
     UNIT=wdlocks-production
+    APP_USER=wdlocks
     PORT=3000
     PUBLIC_URL=https://wdlocks.co.uk
     ;;
@@ -35,7 +39,6 @@ case "$ENV_NAME" in
 esac
 [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || die "commit sha must be 40 lowercase hex characters"
 
-APP_USER=wdlocks
 KEEP=5
 MAX_UPLOAD_BYTES=$((200 * 1024 * 1024))
 
