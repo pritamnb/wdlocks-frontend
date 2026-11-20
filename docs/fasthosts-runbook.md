@@ -264,6 +264,9 @@ At a quiet time. Roll back with `git checkout <previous commit>` and the same bu
 
 ## 6. Go-live (about 2 hours, quiet slot)
 
+> **20 Nov:** the server side of this phase is now scripted: `wdlocks-golive restore | open | tls | frontend` on the VPS
+> (`deploy/wdlocks-golive.sh`, order in `docs/go-live-confidence.md` section 4). The steps below remain the reference.
+
 The old shop takes orders until the moment of the final backup, so the steps run in this order without a break.
 
 1. **Old site:** fresh full UpdraftPlus backup, downloaded, copied to `/srv/restore/final/`. Then, **after** the backup,
