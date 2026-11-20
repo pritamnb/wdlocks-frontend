@@ -71,7 +71,7 @@ hosting level is one Tomia makes. Ask them for these once. It is a request for c
 | 6 | Quiet slot agreed with the client, for example a weekday evening (about 2 hours) | To do |
 
 **Production is set up on the VPS (20 Nov, later the same day)**, details in `deploy-pipeline.md` → "Production":
-- `wdlocks.co.uk` and `www` are configured in Caddy. Until DNS moves, Caddy uses its own internal certificate.
+- `wdlocks.co.uk` and `www` are configured in Caddy with a **real Let's Encrypt certificate issued before go-live** (DNS check, 20 Nov). Visitors get a valid certificate the moment DNS points here, so there is no warning window.
 - The production WordPress (`/srv/wordpress`) holds the **18 Nov live backup, restored with the exact go-live procedure**: 382 orders (newest #6254), 379 users, all 34 live plugins active on PHP 8.5, and no fatal errors.
 - The production Next.js (`wdlocks-production`, port 3000) is built from `main` against that WordPress. All its pages return 200, prices match the live shop, and old URLs redirect.
 - Staging now has its own WordPress copy and database, so staging tests never touch the production data.
@@ -85,12 +85,12 @@ Server notes:
 
 Server commands are `wdlocks-golive …` (`deploy/wdlocks-golive.sh`; `wdlocks-golive status` shows where things stand).
 
-1. **Old site:** take a final UpdraftPlus backup and download it. Then set WooCommerce → Settings → Site visibility → **Coming soon**. From this point the old shop cannot take orders, so no order can be lost.
+1. **Old site:** take a final UpdraftPlus backup and download it. **The old shop stays open** (no downtime, decided 20 Nov): the shop gets about one order a day, and any order placed on the old site between the backup and the DNS change is still paid through WooPayments and is picked up in step 6. From the backup on, nobody edits products, orders or settings in the old wp-admin. (Stricter option: WooCommerce → Settings → Site visibility → Coming soon, store pages only, closes the shop for about an hour instead.)
 2. **VPS:** copy the files to `/srv/restore/final/`, then run `wdlocks-golive restore /srv/restore/final`. It checks every file, keeps a safety copy of the database, lays the files over, and replaces the database whole. Compare the order count it prints with the old site.
 3. **VPS:** run `wdlocks-golive open` (removes the guard and firewall rule, turns email on, starts cron, sets environment = production). Add the live payment settings (`stripe-setup.mjs --target server`, docs/go-live-payments.md), remove `NEXT_PUBLIC_CHECKOUT_MODE=demo`, and redeploy `main` to production.
-4. **DNS:** `@` and `www` A records to `79.99.44.153`; delete the AAAA records and the `*` wildcard. When `dig wdlocks.co.uk @1.1.1.1` shows the VPS, run `wdlocks-golive tls`. It refuses to run before that, then fetches the real certificate and checks it.
+4. **DNS:** `@` and `www` A records to `79.99.44.153`; delete the AAAA records and the `*` wildcard. The certificate is already valid. When the Fasthosts nameservers answer with the VPS (a few minutes), run `wdlocks-golive tls` so Caddy takes over renewal; it checks the nameservers first and puts the pre-issued certificate back if Caddy cannot get its own.
 5. **Check:** home page, product, basket, one real low-value order (then refund it), wp-admin login, email test, forms, five old URLs.
-6. **Old site, after 48 hours:** confirm that no new orders or payment notifications reached it while DNS was changing over. It stays in Coming soon.
+6. **Old site, right after the switch and again after 48 hours:** look for orders newer than the last one restored. Copy any across (or fulfil them from the old wp-admin). After 48 hours, set the old site to Coming soon.
 
 ## 5. Switching back: three levels
 

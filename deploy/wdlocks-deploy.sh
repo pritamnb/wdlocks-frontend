@@ -24,8 +24,8 @@ case "$ENV_NAME" in
     PUBLIC_URL=https://ip79-99-44-153.pbiaas.com
     ;;
   production)
-    # Until go-live, wdlocks.co.uk resolves to 127.0.0.1 on this server (/etc/hosts) and Caddy serves it with its
-    # own internal certificate, which the server trusts. So these checks already test the production setup here.
+    # wdlocks.co.uk resolves to 127.0.0.1 on this server (/etc/hosts) and Caddy serves it with a real Let's Encrypt
+    # certificate (issued before go-live by DNS check). So these checks test the production setup here, before and after DNS.
     BASE=/srv/wdlocks-production
     UNIT=wdlocks-production
     PORT=3000

@@ -1,5 +1,5 @@
 # Caddy on the Fasthosts VPS (/etc/caddy/Caddyfile). Staging = the test address, production = wdlocks.co.uk.
-# WordPress paths go to PHP, everything else to the Next.js site. The two `tls internal` lines are removed by
+# WordPress paths go to PHP, everything else to the Next.js site. The two pre-launch `tls` lines are removed by
 # `wdlocks-golive tls` once DNS points here. /etc/caddy/production-frontend.caddy is written by `wdlocks-golive frontend`.
 (wordpress_staging) {
 	root * /srv/wordpress-staging
@@ -41,12 +41,12 @@ ip79-99-44-153.pbiaas.com {
 import /etc/caddy/production-frontend.caddy
 
 www.wdlocks.co.uk {
-	tls internal # PRE-LAUNCH: self-signed until DNS points here; wdlocks-golive removes this line
+	tls /etc/caddy/certs/wdlocks.co.uk/fullchain.pem /etc/caddy/certs/wdlocks.co.uk/privkey.pem # PRE-LAUNCH: Let's Encrypt certificate issued by DNS check (expires 18 Feb 2027); wdlocks-golive tls removes this line so Caddy renews it itself
 	redir https://wdlocks.co.uk{uri} permanent
 }
 
 wdlocks.co.uk {
-	tls internal # PRE-LAUNCH: self-signed until DNS points here; wdlocks-golive removes this line
+	tls /etc/caddy/certs/wdlocks.co.uk/fullchain.pem /etc/caddy/certs/wdlocks.co.uk/privkey.pem # PRE-LAUNCH: Let's Encrypt certificate issued by DNS check (expires 18 Feb 2027); wdlocks-golive tls removes this line so Caddy renews it itself
 	encode zstd gzip
 
 	@uploadsphp path_regexp ^/wp-content/uploads/.*\.php$
