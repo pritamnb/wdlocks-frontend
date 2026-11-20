@@ -19,6 +19,11 @@ const REDIRECTS: [string, string][] = [
   ['/door-lock-replacement', 'https://wdlocksmiths.co.uk/lock-replacement/'],
   ['/about-us', 'https://wdlocksmiths.co.uk/about-watchdog-locksmiths-greenford/'],
   ['/kilburn-locksmithss', 'https://wdlocksmiths.co.uk/locksmith-near-me/locksmith-kilburn/'],
+  // Found after go-live (20 Nov 2026): 404s on the new site
+  ['/cart', '/basket'],
+  ['/sitemap_index.xml', '/sitemap.xml'],
+  ['/product-sitemap.xml', '/sitemap.xml'],
+  ['/wp-sitemap.xml', '/sitemap.xml'],
 ];
 
 for (const [from, to] of REDIRECTS) {

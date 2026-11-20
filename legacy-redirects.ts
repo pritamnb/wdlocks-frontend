@@ -90,7 +90,21 @@ const SHOP_PAGES: Record<string, string> = {
   'wdlocks-alps': '/products',
   '.shop': '/products', // odd URL, but WordPress serves it and it gets search visits
   'my-blog': '/blog',
+  cart: '/basket', // WooCommerce's default basket address (the old site used /basket/, but people and bots still try /cart/)
 };
+
+/**
+ * Rank Math's sitemap index and its sub-sitemaps (as listed on 2026-11-20 go-live), plus WordPress core's own:
+ * Search Console may still have them submitted, so they point at our single /sitemap.xml instead of a 404.
+ */
+const OLD_SITEMAPS = [
+  'sitemap_index.xml',
+  'post-sitemap.xml',
+  'page-sitemap.xml',
+  'product-sitemap.xml',
+  'category-sitemap.xml',
+  'wp-sitemap.xml',
+];
 
 /** WooCommerce product URLs WordPress already 301s to a product under another slug. Must come before /product/:slug. */
 const RENAMED_PRODUCTS: Record<string, string> = {
@@ -130,6 +144,7 @@ export const legacyRedirects: Redirect[] = [
   // WordPress post categories (e.g. /category/locks/) → blog index
   { source: '/category/:path*', destination: '/blog', permanent: true },
   ...Object.entries(SHOP_PAGES).map(([from, to]) => ({ source: `/${from}`, destination: to, permanent: true })),
+  ...OLD_SITEMAPS.map((file) => ({ source: `/${file}`, destination: '/sitemap.xml', permanent: true })),
   ...Object.entries(AREA_PAGES).map(([from, town]) => ({
     source: `/${from}`,
     destination: `${LOCKSMITHS}/locksmith-near-me/locksmith-${town}/`,
