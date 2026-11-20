@@ -12,7 +12,6 @@ import { ProductFaq } from '@/components/product/ProductFaq';
 import { faqsForProduct } from '@/lib/faqs';
 import { decodeEntities, productPriceLabel, stripHtml } from '@/lib/wdlocks-api';
 import { sanitizeProductHtml } from '@/lib/sanitize';
-import { galleryImagesFor } from '@/lib/product-helpers';
 import { BRAND_VIDEO, BROCHURE, KEY_PRODUCT_IDS, PRODUCT_BULLETS, PRODUCT_FEATURES, PRODUCT_IDS, PRODUCT_PILLS, PRODUCT_SUBTITLES, SITE, SITE_URL } from '@/lib/constants';
 import { LockFeatureSections } from '@/components/product/LockFeatureSections';
 import { KeysConfigurator } from '@/components/product/KeysConfigurator';
@@ -62,7 +61,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const name = decodeEntities(product.name);
   const entry = catalogueEntry(product);
   const variationPrices = await getVariationPricesSSR(product);
-  const gallery = galleryImagesFor(product.id, product.images);
+  // Featured image then the product gallery, exactly as set in WooCommerce.
+  const gallery = product.images;
   const category = entry.category || undefined;
   const price = Number.parseInt(product.prices.price, 10) / 10 ** product.prices.currency_minor_unit;
 
