@@ -13,7 +13,7 @@ import { parseTurnstileForms } from '../../src/lib/turnstile-forms';
 import { clientIp, rightmostForwardedFor } from '../../src/lib/client-ip';
 
 /**
- * Abuse protection (README "Abuse protection"): per-IP rate limits on the six write routes, the client-IP source,
+ * Abuse protection (docs/developer-guide.md "Abuse protection"): per-IP rate limits on the six write routes, the client-IP source,
  * and the Turnstile check.
  *
  * Local builds only: on a deployed site every request comes from the tester's real IP, so filling the buckets would

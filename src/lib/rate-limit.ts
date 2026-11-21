@@ -8,7 +8,7 @@
  *
  * IPs are stored as an HMAC (keyed by the store token), never in clear, and expire with their window.
  *
- * Everything is configuration, so tuning needs no code change (README "Abuse protection"):
+ * Everything is configuration, so tuning needs no code change (docs/developer-guide.md "Abuse protection"):
  * - limits: `RATE_LIMIT_<ROUTE>=10/1m,30/1h` overrides a route's defaults below, `off` switches the route's limit off;
  * - store: any server that speaks the Upstash REST protocol (Upstash, Vercel KV, or self-hosted Redis behind
  *   serverless-redis-http). `http://` is accepted only for loopback / private addresses and single-label hostnames.

@@ -43,7 +43,7 @@ and this branch adds what only matters once real shoppers use it:
 | 1 | Stripe account fully activated in live mode, payouts bank account, statement descriptor | client / Pritam | `--check` prints "charges enabled" when Stripe is happy |
 | 2 | PayPal activated in the Stripe Dashboard (live), if PayPal should show | Pritam | Settings → Payment methods → PayPal (test mode needed no activation) |
 | 3 | Radar rules added | client / Pritam | `docs/stripe-radar-rules.md` |
-| 4 | Server running the site: Node 24, Caddy, systemd | Pritam | `deploy/` and README "Running on a plain server" (PR #15) |
+| 4 | Server running the site: Node 24, Caddy, systemd | Pritam | `deploy/` and docs/developer-guide.md "Running on a plain server" (PR #15) |
 | 5 | WordPress keeps `https://wdlocks.co.uk` but moves onto the same VPS (`fasthosts-runbook.md`, phases 4 and 6); `@`/`www` are pointed at the VPS in the Fasthosts DNS panel | Pritam | No step needs Tomia. Keep the MX (email) records as they are when DNS changes |
 | 6 | A production WooCommerce REST key | Pritam, in wp-admin | WooCommerce → Settings → Advanced → REST API → Add key, description "Headless checkout (production)", Read/Write. Separate from the staging key so either can be revoked alone |
 | 7 | WooCommerce e-mails checked | client | "New order" goes to the shop, "Processing order" and "Refunded order" go to the customer, as today |

@@ -1,4 +1,4 @@
-# systemd unit for the Next.js app on a plain Linux server (README "Running on a plain server").
+# systemd unit for the Next.js app on a plain Linux server (docs/developer-guide.md "Running on a plain server").
 #   sudo cp deploy/wdlocks-frontend.service /etc/systemd/system/
 #   sudo systemctl enable --now wdlocks-frontend
 # Settings live in /srv/wdlocks-frontend/.env.production (see .env.local.example); change them there and
