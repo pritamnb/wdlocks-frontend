@@ -1,5 +1,7 @@
 # WD Locks — headless storefront
 
+[![CI](https://github.com/pritamnb/wdlocks-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/pritamnb/wdlocks-frontend/actions/workflows/ci.yml)
+
 Next.js frontend for [wdlocks.co.uk](https://wdlocks.co.uk). WooCommerce stays live as the backend: products
 come from the public Store API, the basket is proxied through Next.js route handlers, and checkout hands over
 to the existing WooCommerce checkout.
