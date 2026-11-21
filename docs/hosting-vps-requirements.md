@@ -49,7 +49,7 @@ cannot run this app.
   `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `WC_CONSUMER_KEY`,
   `WC_CONSUMER_SECRET`, `RESEND_API_KEY`, `CONTACT_FROM`, `CONTACT_TO`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`,
   `TURNSTILE_SECRET_KEY`. The unit sets `CLIENT_IP_HEADER=x-real-ip`; one process needs no Upstash store
-  (README "Running on a plain server", PR #15).
+  (docs/developer-guide.md "Running on a plain server", PR #15).
 - **Stripe webhook**: change the endpoint in the Stripe dashboard to `https://wdlocks.co.uk/api/stripe/webhook` at
   cutover and update `STRIPE_WEBHOOK_SECRET`.
 - Deploys: Vercel's push-to-deploy goes away. Replace with a deploy script or a GitHub Action over SSH

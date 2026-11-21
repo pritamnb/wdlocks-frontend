@@ -1,4 +1,4 @@
-# Reverse proxy for a plain Linux server we manage ourselves (README "Running on a plain server").
+# Reverse proxy for a plain Linux server we manage ourselves (docs/developer-guide.md "Running on a plain server").
 # Caddy gets and renews the HTTPS certificate on its own. Nothing here needs the host's help, only ports 80/443
 # open and the domain's DNS pointing at the server.
 #

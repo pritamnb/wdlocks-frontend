@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Checks, from outside, that the deployed site keys its rate limits on the visitor's real IP and not on a header the
- * visitor can forge (README "Abuse protection"). Needs nothing from the host: run it after every move to a new server
+ * visitor can forge (docs/developer-guide.md "Abuse protection"). Needs nothing from the host: run it after every move to a new server
  * or proxy.
  *
  *   node scripts/check-client-ip.mjs https://<site> [--limit 20]

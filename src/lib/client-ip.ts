@@ -12,7 +12,7 @@
  *   from, so with `TRUSTED_PROXY_COUNT=N` (default 1) the Nth entry from the right is the address the outermost trusted
  *   proxy saw. Entries further left were written by the client and are ignored.
  *
- * README "Abuse protection" documents the setting for the client's host.
+ * docs/developer-guide.md "Abuse protection" documents the setting for the client's host.
  */
 
 const MAX_IP_LENGTH = 64;
