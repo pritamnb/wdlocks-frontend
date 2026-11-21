@@ -52,27 +52,50 @@ STAMP=$(date -u +%Y%m%d-%H%M%S)
 REL="$BASE/releases/$STAMP-${SHA:0:12}"
 PREV=$(readlink -f "$BASE/current" 2>/dev/null || true)
 
+# Root never follows a symlink the upload or the app user controls (security review, 21 Nov 2026). The upload and every
+# earlier release are untrusted: staging code arrives automatically from GitHub, and a release folder belongs to the app
+# user once it is built. So:
+#  - releases/ is root-owned (the app user can read its releases but not swap one for a symlink);
+#  - the new release is unpacked into a root-owned folder, and an upload containing any symlink is refused before root
+#    writes anything into it (the repository has none; git archive would keep them);
+#  - root only writes two names it creates itself; the folder is handed to the app user after that;
+#  - the build cache is copied from the previous release by the app user, never by root;
+#  - root never reads a file inside a release (the rollback message uses the folder name, which holds the commit).
+chown root:"$APP_USER" "$BASE/releases"
+chmod 750 "$BASE/releases"
+
 echo "==> $ENV_NAME: unpacking ${SHA:0:12} into $REL"
-mkdir -p "$REL"
-head -c "$MAX_UPLOAD_BYTES" | tar -xz -C "$REL" --no-same-owner
-[ -f "$REL/package.json" ] || die "upload did not contain package.json"
-ln -s "$BASE/shared/.env.production" "$REL/.env.production"
-echo "$SHA" > "$REL/.deployed-commit"
-# Reuse the previous build cache so unchanged pages and images are not rebuilt from scratch.
-if [ -n "$PREV" ] && [ -d "$PREV/.next/cache" ]; then
-  mkdir -p "$REL/.next"
-  cp -a "$PREV/.next/cache" "$REL/.next/cache"
+mkdir -m 755 "$REL"
+head -c "$MAX_UPLOAD_BYTES" | tar -xz -C "$REL" --no-same-owner --no-same-permissions
+links=$(find "$REL" -type l -printf '%P -> %l\n' | head -5)
+if [ -n "$links" ]; then
+  rm -rf -- "$REL"
+  die "upload contains symlinks, refused: ${links//$'\n'/; }"
 fi
-chown -R "$APP_USER:$APP_USER" "$REL"
+[ -f "$REL/package.json" ] || { rm -rf -- "$REL"; die "upload did not contain package.json"; }
+rm -rf -- "$REL/.env.production" "$REL/.deployed-commit" "$REL/.next"
+ln -sT "$BASE/shared/.env.production" "$REL/.env.production"
+printf '%s\n' "$SHA" > "$REL/.deployed-commit"
+chown -hR "$APP_USER:$APP_USER" "$REL"
+
+run_as_app() {
+  runuser -u "$APP_USER" -- env -i \
+    PATH=/usr/local/bin:/usr/bin:/bin \
+    HOME="$BASE/shared" \
+    npm_config_cache="$BASE/shared/.npm" \
+    NEXT_TELEMETRY_DISABLED=1 \
+    NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt \
+    bash -c "$1"
+}
+
+# Reuse the previous build cache so unchanged pages and images are not rebuilt from scratch. Done as the app user: the
+# previous release is the app user's, so it can only copy what that user may read anyway. Best effort.
+if [ -n "$PREV" ] && [ -d "$PREV" ]; then
+  run_as_app "cd '$REL' && mkdir .next && [ -d '$PREV/.next/cache' ] && cp -a '$PREV/.next/cache' .next/cache" || true
+fi
 
 echo "==> $ENV_NAME: npm ci and next build (as $APP_USER)"
-runuser -u "$APP_USER" -- env -i \
-  PATH=/usr/local/bin:/usr/bin:/bin \
-  HOME="$BASE/shared" \
-  npm_config_cache="$BASE/shared/.npm" \
-  NEXT_TELEMETRY_DISABLED=1 \
-  NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt \
-  bash -c "cd '$REL' && npm ci --no-audit --no-fund && npm run build"
+run_as_app "cd '$REL' && npm ci --no-audit --no-fund && npm run build"
 
 switch_to() {
   ln -sfn "$1" "$BASE/current.next"
@@ -110,7 +133,7 @@ switch_to "$REL"
 echo "==> $ENV_NAME: health checks"
 if ! healthy; then
   if [ -n "$PREV" ] && [ -d "$PREV" ]; then
-    echo "==> $ENV_NAME: health check FAILED, rolling back to $(cat "$PREV/.deployed-commit" 2>/dev/null || echo "$PREV")"
+    echo "==> $ENV_NAME: health check FAILED, rolling back to $(basename "$PREV")"
     switch_to "$PREV"
     healthy || echo "    previous release is not healthy either: check 'journalctl -u $UNIT'"
   fi
