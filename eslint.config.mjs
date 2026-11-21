@@ -5,7 +5,7 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  // Plain Node scripts (e.g. the Playwright runner scripts in scripts/pw) are CommonJS.
+  // Plain Node scripts (e.g. the screenshot script in scripts/pw) are CommonJS.
   {
     files: ["scripts/**/*.js"],
     rules: { "@typescript-eslint/no-require-imports": "off" },

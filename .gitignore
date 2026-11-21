@@ -63,3 +63,9 @@ yarn-error.log*
 
 # review screenshots from scripts/pw
 /screenshots/
+
+# AI assistant tooling (Claude Code): local to each machine, never part of the project
+/.claude/
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json

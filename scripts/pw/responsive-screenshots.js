@@ -1,16 +1,16 @@
 /**
  * Responsive screenshot set for review.
- *   npm run pw:shots                      → production, into screenshots/<date>/
- *   TARGET_URL=http://localhost:3000 npm run pw:shots
- *   PW_HEADED=1 npm run pw:shots          → watch it in a real window
+ *   npm run shots                         → the live site, into screenshots/<date>/
+ *   TARGET_URL=http://localhost:3000 npm run shots
+ *   PW_HEADED=1 npm run shots             → watch it in a real window
  *
- * Runs through the playwright-skill executor (`run.js`), which supplies `playwright`.
+ * Uses the project's own Playwright (@playwright/test); run `npx playwright install chromium` once.
  */
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require('playwright');
+const { chromium } = require('@playwright/test');
 
-const targetUrl = (process.env.TARGET_URL || 'https://wdlocks-frontend.vercel.app').replace(/\/$/, '');
+const targetUrl = (process.env.TARGET_URL || 'https://wdlocks.co.uk').replace(/\/$/, '');
 const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
 const outDir = process.env.PW_ARTIFACT_DIR || path.join(process.cwd(), 'screenshots', stamp);
 
@@ -40,7 +40,9 @@ const VIEWPORTS = [
       const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: vp.mobile, hasTouch: vp.mobile, deviceScaleFactor: 2 });
       const page = await context.newPage();
       for (const [name, route] of PAGES) {
-        await page.goto(targetUrl + route, { waitUntil: 'networkidle' });
+        // 'load', not 'networkidle': the live site keeps a connection open (tags, films), so it never goes idle.
+        await page.goto(targetUrl + route, { waitUntil: 'load' });
+        await page.waitForTimeout(1500);
         // Let lazy images and films settle, then capture the whole page.
         await page.evaluate(async () => {
           window.scrollTo(0, document.body.scrollHeight);
